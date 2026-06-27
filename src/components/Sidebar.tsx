@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Plus, MessageSquare, Sparkles, User, LogOut } from 'lucide-react'
+import {
+  Plus,
+  MessageSquare,
+  Sparkles,
+  User,
+  LogOut,
+  PanelLeft,
+} from 'lucide-react'
 import { useProjects } from '../projects/store'
 import { useAuth } from '../auth/store'
 
@@ -16,7 +23,13 @@ function initials(name: string): string {
  * v0-style collapsible sidebar: brand → home, new project, project history, and
  * the user profile pinned bottom-left. Collapses to an icon rail.
  */
-export function Sidebar({ collapsed }: { collapsed: boolean }) {
+export function Sidebar({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean
+  onToggle: () => void
+}) {
   const { projects } = useProjects()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -28,19 +41,31 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         collapsed ? 'w-14' : 'w-64'
       }`}
     >
-      {/* Brand → home */}
-      <Link
-        to="/app"
-        className="flex h-14 items-center gap-2.5 px-4 hover:bg-zinc-900/50"
-        title="Stellarable — home"
-      >
-        <Sparkles className="h-5 w-5 shrink-0 text-violet-400" />
+      {/* Brand → home, with the collapse toggle to its right */}
+      <div className="flex h-14 items-center justify-between px-3">
         {!collapsed && (
-          <span className="text-[15px] font-medium tracking-tight">
-            Stellarable
-          </span>
+          <Link
+            to="/app"
+            className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-zinc-900/50"
+            title="Stellarable — home"
+          >
+            <Sparkles className="h-5 w-5 shrink-0 text-violet-400" />
+            <span className="text-[15px] font-medium tracking-tight">
+              Stellarable
+            </span>
+          </Link>
         )}
-      </Link>
+        <button
+          onClick={onToggle}
+          title="Toggle sidebar"
+          aria-label="Toggle sidebar"
+          className={`rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100 ${
+            collapsed ? 'mx-auto' : ''
+          }`}
+        >
+          <PanelLeft className="h-4 w-4" />
+        </button>
+      </div>
 
       {/* New project */}
       <div className="px-2 py-2">

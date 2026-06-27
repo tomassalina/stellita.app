@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
-import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { useAuth } from '../auth/store'
 
-/** Authed app layout: collapsible sidebar + (top bar + routed body). */
+/** Authed app layout: collapsible sidebar + routed body (no top header). */
 export function AppShell() {
   const { user } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
@@ -14,9 +13,8 @@ export function AppShell() {
 
   return (
     <div className="flex h-full bg-black text-zinc-50">
-      <Sidebar collapsed={collapsed} />
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar onToggleSidebar={() => setCollapsed((c) => !c)} />
         <Outlet />
       </div>
     </div>

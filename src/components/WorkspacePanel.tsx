@@ -4,6 +4,7 @@ import {
   SandpackPreview,
   SandpackCodeEditor,
   SandpackFileExplorer,
+  Navigator,
 } from '@codesandbox/sandpack-react'
 import { Monitor, Smartphone, Download, History } from 'lucide-react'
 import type { FileTree } from '../../shared/types'
@@ -36,8 +37,8 @@ function VersionMenu({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-1 max-h-80 w-72 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-950 p-1 shadow-xl">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-50 mt-1 max-h-80 w-72 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-950 p-1 shadow-xl">
             {versions
               .map((v, i) => ({ v, n: i + 1 }))
               .reverse()
@@ -86,14 +87,64 @@ function hashTree(tree: FileTree): number {
 }
 
 /**
+ * Custom preview top bar: the route navigator (back/forward/url) on the left,
+ * and reload + device toggle + versions + download on the right — all in one
+ * row. Must render inside SandpackProvider (uses the navigation client).
+ */
+function PreviewBar({
+  device,
+  setDevice,
+  versions,
+  onRestore,
+  fileTree,
+  projectName,
+}: {
+  device: Device
+  setDevice: (d: Device) => void
+  versions: Version[]
+  onRestore?: (id: string) => void
+  fileTree: FileTree
+  projectName: string
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-1.5 border-b border-zinc-800 px-2 py-1.5">
+      <Navigator clientId="default" className="min-w-0 flex-1" />
+      <div className="flex items-center rounded-md border border-zinc-800 p-0.5">
+        <button
+          onClick={() => setDevice('desktop')}
+          title="Desktop"
+          className={`rounded p-1 transition-colors ${device === 'desktop' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+        >
+          <Monitor className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={() => setDevice('mobile')}
+          title="Mobile"
+          className={`rounded p-1 transition-colors ${device === 'mobile' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+        >
+          <Smartphone className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {onRestore && <VersionMenu versions={versions} onRestore={onRestore} />}
+      <button
+        onClick={() => void downloadProjectZip(projectName, fileTree)}
+        title="Download project"
+        className="flex items-center gap-1.5 rounded-md border border-zinc-800 px-2.5 py-1.5 text-[12.5px] text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"
+      >
+        <Download className="h-3.5 w-3.5" />
+        Download
+      </button>
+    </div>
+  )
+}
+
+/**
  * Right column: live preview + code in one Sandpack instance.
  *
  * - Tailwind is injected via `externalResources` (the only thing that works in
  *   the classic bundler).
  * - The provider remounts (via `key`) when file content changes, so updates are
  *   always reflected.
- * - Default (light) theme — the generated apps are light, so we don't want a
- *   dark Sandpack chrome showing through.
  * - The `absolute inset-0` wrapper gives the iframe a concrete pixel box.
  */
 export function WorkspacePanel({
@@ -129,33 +180,11 @@ export function WorkspacePanel({
           ))}
         </div>
         <div className="flex items-center gap-2">
-          {tab === 'preview' && (
-            <div className="flex items-center rounded-md border border-zinc-800 p-0.5">
-              <button
-                onClick={() => setDevice('desktop')}
-                title="Desktop"
-                className={`rounded p-1.5 transition-colors ${device === 'desktop' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                <Monitor className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setDevice('mobile')}
-                title="Mobile"
-                className={`rounded p-1.5 transition-colors ${device === 'mobile' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                <Smartphone className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-          {onRestore && (
-            <VersionMenu versions={versions} onRestore={onRestore} />
-          )}
-          <button
-            onClick={() => void downloadProjectZip(projectName, fileTree)}
-            className="flex items-center gap-1.5 rounded-md border border-zinc-800 px-3 py-1.5 text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"
-          >
-            <Download className="h-4 w-4" />
-            Download
+          <button className="rounded-full border border-zinc-800 px-3.5 py-1.5 text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50">
+            Connect wallet
+          </button>
+          <button className="rounded-full bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white">
+            Deploy
           </button>
         </div>
       </nav>
@@ -173,21 +202,29 @@ export function WorkspacePanel({
             <div className="flex h-full flex-col">
               <div
                 className={
-                  tab === 'preview'
-                    ? 'flex min-h-0 flex-1 justify-center bg-zinc-900/30'
-                    : 'hidden'
+                  tab === 'preview' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'
                 }
               >
-                <div
-                  className="h-full"
-                  style={{ width: device === 'mobile' ? 390 : '100%' }}
-                >
-                  <SandpackPreview
-                    showNavigator
-                    showOpenInCodeSandbox={false}
-                    showRefreshButton
-                    style={{ height: '100%' }}
-                  />
+                <PreviewBar
+                  device={device}
+                  setDevice={setDevice}
+                  versions={versions}
+                  onRestore={onRestore}
+                  fileTree={fileTree}
+                  projectName={projectName}
+                />
+                <div className="flex min-h-0 flex-1 justify-center bg-zinc-900/30">
+                  <div
+                    className="h-full"
+                    style={{ width: device === 'mobile' ? 390 : '100%' }}
+                  >
+                    <SandpackPreview
+                      showNavigator={false}
+                      showOpenInCodeSandbox={false}
+                      showRefreshButton={false}
+                      style={{ height: '100%' }}
+                    />
+                  </div>
                 </div>
               </div>
               <div className={tab === 'code' ? 'flex min-h-0 flex-1' : 'hidden'}>
