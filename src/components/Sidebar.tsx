@@ -1,5 +1,6 @@
-import { Link, NavLink } from 'react-router-dom'
-import { Plus, MessageSquare, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Plus, MessageSquare, Sparkles, User, LogOut } from 'lucide-react'
 import { useProjects } from '../projects/store'
 import { useAuth } from '../auth/store'
 
@@ -17,7 +18,9 @@ function initials(name: string): string {
  */
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const { projects } = useProjects()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <aside
@@ -86,30 +89,67 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         </nav>
       </div>
 
-      {/* User profile (bottom-left) */}
+      {/* User profile (bottom-left) — opens a popover menu */}
       {user && (
-        <div className="border-t border-zinc-800 p-2">
-          <NavLink
-            to="/profile"
+        <div className="relative border-t border-zinc-800 p-2">
+          {menuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setMenuOpen(false)}
+              />
+              <div className="absolute bottom-full left-2 z-20 mb-1 w-56 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-1 shadow-xl">
+                <div className="border-b border-zinc-800 px-2.5 py-2">
+                  <p className="truncate text-[13px] text-zinc-100">
+                    {user.name}
+                  </p>
+                  <p className="truncate text-[11.5px] text-zinc-500">
+                    {user.email}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false)
+                    navigate('/profile')
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-50"
+                >
+                  <User className="h-4 w-4" />
+                  Profile
+                </button>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false)
+                    logout()
+                    navigate('/')
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-red-400"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
+              </div>
+            </>
+          )}
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
             title={user.name}
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors ${
-                isActive ? 'bg-zinc-900' : 'hover:bg-zinc-900/50'
-              } ${collapsed ? 'justify-center' : ''}`
-            }
+            className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-zinc-900/50 ${
+              collapsed ? 'justify-center' : ''
+            }`}
           >
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-[11px] font-semibold text-violet-300">
               {initials(user.name)}
             </div>
             {!collapsed && (
-              <div className="min-w-0">
+              <div className="min-w-0 text-left">
                 <p className="truncate text-[13px] text-zinc-200">{user.name}</p>
                 <p className="truncate text-[11px] text-zinc-500">
                   {user.email}
                 </p>
               </div>
             )}
-          </NavLink>
+          </button>
         </div>
       )}
     </aside>
