@@ -43,6 +43,17 @@ HARD RULES:
 - Keep components simple, self-contained and visually clean.
 - Only touch files you need to. Put a short, friendly summary in "message".
 
+DEPENDENCIES:
+- To use any npm package, add it to "dependencies" in /package.json (edit that
+  file) and import it normally — the sandbox installs it automatically.
+- Keep /package.json valid JSON. Do not remove "react"/"react-dom".
+
+ROUTING (multi-page apps):
+- For apps with multiple pages/routes (e.g. "/", "/profile", "/settings"), add
+  "react-router-dom" to /package.json dependencies and use BrowserRouter with
+  <Routes>/<Route> in /App.tsx. Use <Link>/<NavLink> for navigation.
+- The preview has a browser-style address bar, so real routes work and are testable.
+
 CONTRACTS:
 - For this build, leave "contracts" empty. Contract deploy/invoke is not enabled yet.
 

@@ -26,6 +26,8 @@ export interface ProjectState {
 }
 
 interface ProjectsContextValue {
+  /** All projects, newest first — for the sidebar history. */
+  projects: ProjectState[]
   getProject: (slug: string) => ProjectState | undefined
   /** Create a project from the first prompt, kick off generation, return its slug. */
   createProject: (prompt: string) => string
@@ -133,6 +135,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   }
 
   const value: ProjectsContextValue = {
+    projects: Object.values(ref.current).reverse(),
     getProject: (slug) => ref.current[slug],
     createProject,
     createFromFiles,

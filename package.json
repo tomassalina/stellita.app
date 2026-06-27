@@ -17,8 +17,10 @@
     "@fontsource-variable/geist-mono": "^5.2.8",
     "ai": "^7.0.3",
     "jszip": "^3.10.1",
+    "lucide-react": "^1.21.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-resizable-panels": "^2.1.9",
     "react-router-dom": "^7.18.0",
     "zod": "^4.4.3"
   },

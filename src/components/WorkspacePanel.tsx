@@ -5,9 +5,12 @@ import {
   SandpackCodeEditor,
   SandpackFileExplorer,
 } from '@codesandbox/sandpack-react'
+import { Monitor, Smartphone, Download } from 'lucide-react'
 import type { FileTree } from '../../shared/types'
 import { SANDPACK_TEMPLATE, TAILWIND_CDN, sandpackTheme } from '../lib/project'
 import { downloadProjectZip } from '../lib/export'
+
+type Device = 'desktop' | 'mobile'
 
 type Tab = 'preview' | 'code' | 'contract'
 const TABS: { id: Tab; label: string }[] = [
@@ -45,9 +48,10 @@ export function WorkspacePanel({
   projectName?: string
 }) {
   const [tab, setTab] = useState<Tab>('preview')
+  const [device, setDevice] = useState<Device>('desktop')
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col">
+    <section className="flex h-full min-w-0 flex-1 flex-col">
       <nav className="flex shrink-0 items-center justify-between border-b border-zinc-800 px-3 py-2.5 text-[13px]">
         <div className="flex items-center gap-1">
           {TABS.map((t) => (
@@ -64,12 +68,33 @@ export function WorkspacePanel({
             </button>
           ))}
         </div>
-        <button
-          onClick={() => void downloadProjectZip(projectName, fileTree)}
-          className="rounded-md border border-zinc-800 px-3 py-1.5 text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"
-        >
-          Download
-        </button>
+        <div className="flex items-center gap-2">
+          {tab === 'preview' && (
+            <div className="flex items-center rounded-md border border-zinc-800 p-0.5">
+              <button
+                onClick={() => setDevice('desktop')}
+                title="Desktop"
+                className={`rounded p-1.5 transition-colors ${device === 'desktop' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                <Monitor className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setDevice('mobile')}
+                title="Mobile"
+                className={`rounded p-1.5 transition-colors ${device === 'mobile' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                <Smartphone className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+          <button
+            onClick={() => void downloadProjectZip(projectName, fileTree)}
+            className="flex items-center gap-1.5 rounded-md border border-zinc-800 px-3 py-1.5 text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"
+          >
+            <Download className="h-4 w-4" />
+            Download
+          </button>
+        </div>
       </nav>
 
       <div className="relative min-h-0 flex-1 bg-zinc-950">
@@ -83,13 +108,24 @@ export function WorkspacePanel({
             style={{ height: '100%' }}
           >
             <div className="flex h-full flex-col">
-              <div className={tab === 'preview' ? 'min-h-0 flex-1' : 'hidden'}>
-                <SandpackPreview
-                  showNavigator={false}
-                  showOpenInCodeSandbox={false}
-                  showRefreshButton
-                  style={{ height: '100%' }}
-                />
+              <div
+                className={
+                  tab === 'preview'
+                    ? 'flex min-h-0 flex-1 justify-center bg-zinc-900/30'
+                    : 'hidden'
+                }
+              >
+                <div
+                  className="h-full"
+                  style={{ width: device === 'mobile' ? 390 : '100%' }}
+                >
+                  <SandpackPreview
+                    showNavigator
+                    showOpenInCodeSandbox={false}
+                    showRefreshButton
+                    style={{ height: '100%' }}
+                  />
+                </div>
               </div>
               <div className={tab === 'code' ? 'flex min-h-0 flex-1' : 'hidden'}>
                 <SandpackFileExplorer style={{ height: '100%', width: 200 }} />
