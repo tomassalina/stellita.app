@@ -9,7 +9,7 @@ import tailwindcss from '@tailwindcss/vite'
  */
 function devApi(env: Record<string, string>): Plugin {
   return {
-    name: 'stellable-dev-api',
+    name: 'stellarable-dev-api',
     configureServer(server: ViteDevServer) {
       server.middlewares.use(async (req, res, next) => {
         if (!req.url?.startsWith('/api/')) return next()
@@ -22,7 +22,7 @@ function devApi(env: Record<string, string>): Plugin {
 
         try {
           if (req.url.startsWith('/api/health')) {
-            return send(200, { ok: true, service: 'stellable-api', dev: true })
+            return send(200, { ok: true, service: 'stellarable-api', dev: true })
           }
 
           if (req.url.startsWith('/api/chat')) {
