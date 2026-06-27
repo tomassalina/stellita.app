@@ -25,7 +25,7 @@ export function buildSystemPrompt({
     ? JSON.stringify(catalog, null, 2)
     : '(no contracts available yet)'
 
-  return `You are the generation engine of Stellable. You generate and edit a
+  return `You are the generation engine of Stellarable. You generate and edit a
 React + TypeScript + TailwindCSS application that runs inside an in-browser
 sandbox (Sandpack), and that can later talk to Stellar smart contracts.
 

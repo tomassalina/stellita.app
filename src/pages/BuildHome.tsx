@@ -1,22 +1,16 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PromptInput } from '../components/PromptInput'
 import { useProjects } from '../projects/store'
+import { PromptInput } from '../components/PromptInput'
 import { EXAMPLE_APPS } from '../lib/project'
 
-/** Route "/" — v0-style empty state: one centered prompt, a few starters. */
-export function Landing() {
+/** Route "/app" — the build home inside the authed shell. */
+export function BuildHome() {
   const navigate = useNavigate()
   const { createProject, createFromFiles } = useProjects()
-  const [busy, setBusy] = useState(false)
 
-  // Free-text prompt → LLM generates.
   const startWithPrompt = (text: string) => {
-    setBusy(true)
     navigate(`/projects/${createProject(text)}`)
   }
-
-  // Example chip → load predefined files instantly, no LLM.
   const startWithExample = (label: string, files: Record<string, string>) => {
     navigate(`/projects/${createFromFiles(label, files)}`)
   }
@@ -29,7 +23,7 @@ export function Landing() {
         </h1>
         <PromptInput
           onSend={startWithPrompt}
-          busy={busy}
+          busy={false}
           autoFocus
           placeholder="Describe a Stellar app in plain language…"
         />

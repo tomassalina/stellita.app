@@ -86,7 +86,7 @@ const PACKAGE_JSON = `{
 
 const README = `# Stellar App
 
-Built with Stellable — React + TypeScript + TailwindCSS, ready to talk to
+Built with Stellarable — React + TypeScript + TailwindCSS, ready to talk to
 Stellar smart contracts.
 
 \`\`\`bash

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { ChatPanel } from '../components/ChatPanel'
@@ -9,13 +10,16 @@ export function Editor() {
   const { slug } = useParams<{ slug: string }>()
   const { getProject, send, restoreVersion } = useProjects()
   const project = slug ? getProject(slug) : undefined
+  // While dragging the divider, kill pointer events on the preview so the
+  // Sandpack iframe doesn't swallow the mouse and freeze the resize.
+  const [resizing, setResizing] = useState(false)
 
   // No persistence yet (Milestone 5): a direct hit / refresh has no project.
   if (!project) return <Navigate to="/" replace />
 
   return (
     <PanelGroup direction="horizontal" className="min-h-0 flex-1">
-      <Panel defaultSize={34} minSize={22} maxSize={55}>
+      <Panel defaultSize={34} minSize={22} maxSize={70}>
         <ChatPanel
           messages={project.messages}
           busy={project.busy}
@@ -25,14 +29,19 @@ export function Editor() {
           onSend={(text) => send(project.slug, text)}
         />
       </Panel>
-      <PanelResizeHandle className="w-px bg-zinc-800 transition-colors hover:bg-violet-500/60 data-[resize-handle-state=drag]:bg-violet-500" />
+      <PanelResizeHandle
+        onDragging={setResizing}
+        className="w-1 bg-zinc-800 transition-colors hover:bg-violet-500/60 data-[resize-handle-state=drag]:bg-violet-500"
+      />
       <Panel defaultSize={66} minSize={30}>
-        <WorkspacePanel
-          fileTree={project.fileTree}
-          projectName={project.slug}
-          versions={project.versions}
-          onRestore={(id) => restoreVersion(project.slug, id)}
-        />
+        <div className={`h-full ${resizing ? 'pointer-events-none' : ''}`}>
+          <WorkspacePanel
+            fileTree={project.fileTree}
+            projectName={project.slug}
+            versions={project.versions}
+            onRestore={(id) => restoreVersion(project.slug, id)}
+          />
+        </div>
       </Panel>
     </PanelGroup>
   )
