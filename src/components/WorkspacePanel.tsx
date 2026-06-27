@@ -96,15 +96,13 @@ function PreviewBar({
   setDevice,
   versions,
   onRestore,
-  fileTree,
-  projectName,
+  onDownload,
 }: {
   device: Device
   setDevice: (d: Device) => void
   versions: Version[]
   onRestore?: (id: string) => void
-  fileTree: FileTree
-  projectName: string
+  onDownload: () => void
 }) {
   return (
     <div className="flex shrink-0 items-center gap-1.5 border-b border-zinc-800 px-2 py-1.5">
@@ -127,7 +125,7 @@ function PreviewBar({
       </div>
       {onRestore && <VersionMenu versions={versions} onRestore={onRestore} />}
       <button
-        onClick={() => void downloadProjectZip(projectName, fileTree)}
+        onClick={onDownload}
         title="Download project"
         className="flex items-center gap-1.5 rounded-md border border-zinc-800 px-2.5 py-1.5 text-[12.5px] text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"
       >
@@ -160,6 +158,7 @@ export function WorkspacePanel({
 }) {
   const [tab, setTab] = useState<Tab>('preview')
   const [device, setDevice] = useState<Device>('desktop')
+  const [downloadOpen, setDownloadOpen] = useState(false)
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col">
@@ -210,8 +209,7 @@ export function WorkspacePanel({
                   setDevice={setDevice}
                   versions={versions}
                   onRestore={onRestore}
-                  fileTree={fileTree}
-                  projectName={projectName}
+                  onDownload={() => setDownloadOpen(true)}
                 />
                 <div className="flex min-h-0 flex-1 justify-center bg-zinc-900/30">
                   <div
@@ -250,6 +248,42 @@ export function WorkspacePanel({
           </div>
         )}
       </div>
+
+      {downloadOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setDownloadOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-[15px] font-medium">Download project</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
+              Download <span className="text-zinc-200">{projectName}</span> as a
+              complete Vite + React + TypeScript project (.zip) that runs locally
+              with <code className="text-zinc-300">pnpm install &amp;&amp; pnpm dev</code>.
+            </p>
+            <div className="mt-5 flex justify-end gap-2 text-[13px]">
+              <button
+                onClick={() => setDownloadOpen(false)}
+                className="rounded-lg px-3.5 py-1.5 text-zinc-400 hover:text-zinc-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  void downloadProjectZip(projectName, fileTree)
+                  setDownloadOpen(false)
+                }}
+                className="rounded-lg bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

@@ -93,9 +93,8 @@ export function Sidebar({
             <NavLink
               key={p.slug}
               to={`/projects/${p.slug}`}
-              title={p.name}
               className={({ isActive }) =>
-                `flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+                `group relative flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
                   isActive
                     ? 'bg-zinc-900 text-zinc-50'
                     : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
@@ -104,6 +103,11 @@ export function Sidebar({
             >
               <MessageSquare className="h-4 w-4 shrink-0" />
               {!collapsed && <span className="truncate">{p.name}</span>}
+              {collapsed && (
+                <span className="pointer-events-none absolute left-full z-50 ml-2 hidden max-w-[220px] truncate whitespace-nowrap rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-[12.5px] text-zinc-100 shadow-xl group-hover:block">
+                  {p.name}
+                </span>
+              )}
             </NavLink>
           ))}
           {!collapsed && projects.length === 0 && (
