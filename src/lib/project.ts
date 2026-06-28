@@ -253,6 +253,7 @@ export type Movement = {
   counterparty: string
   amount: string
   time: string
+  txHash: string
 }
 
 /** Recent token movements (transfer/mint events) involving \`user\`, newest first. */
@@ -275,13 +276,14 @@ export async function getTokenActivity(
       const name = String(topic[0])
       const amount = fromUnits(BigInt(scValToNative(ev.value as any)), decimals)
       const time = (ev as any).ledgerClosedAt ?? ''
+      const txHash = (ev as any).txHash ?? ''
       if (name === 'transfer') {
         const from = String(topic[1]); const to = String(topic[2])
-        if (from === user) out.push({ kind: 'out', counterparty: to, amount, time })
-        else if (to === user) out.push({ kind: 'in', counterparty: from, amount, time })
+        if (from === user) out.push({ kind: 'out', counterparty: to, amount, time, txHash })
+        else if (to === user) out.push({ kind: 'in', counterparty: from, amount, time, txHash })
       } else if (name === 'mint') {
         const to = String(topic[1])
-        if (to === user) out.push({ kind: 'mint', counterparty: '', amount, time })
+        if (to === user) out.push({ kind: 'mint', counterparty: '', amount, time, txHash })
       }
     } catch {
       // skip events we can't decode
@@ -632,26 +634,32 @@ export default function App() {
               {activity.length === 0 ? (
                 <p className="text-xs text-slate-400">No movements yet. Claim or send to see them here.</p>
               ) : (
-                <ul className="space-y-2.5">
+                <ul className="space-y-1">
                   {activity.slice(0, 8).map((m, i) => (
-                    <li key={i} className="flex items-center justify-between gap-2 text-sm">
-                      <div className="flex items-center gap-2.5">
-                        <span className={'flex h-7 w-7 items-center justify-center rounded-full text-xs ' +
-                          (m.kind === 'out' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600')}>
-                          {m.kind === 'out' ? '↑' : '↓'}
-                        </span>
-                        <div>
-                          <p className="font-medium leading-none">
-                            {m.kind === 'out' ? 'Sent' : m.kind === 'mint' ? 'Claimed' : 'Received'}
-                          </p>
-                          <p className="mt-0.5 text-[11px] text-slate-400">
-                            {m.counterparty ? short(m.counterparty) + ' · ' : ''}{ago(m.time)}
-                          </p>
+                    <li key={i}>
+                      <a
+                        href={m.txHash ? 'https://stellar.expert/explorer/testnet/tx/' + m.txHash : undefined}
+                        target="_blank" rel="noreferrer"
+                        className={'-mx-2 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition ' + (m.txHash ? 'hover:bg-slate-50' : '')}>
+                        <div className="flex items-center gap-2.5">
+                          <span className={'flex h-7 w-7 items-center justify-center rounded-full text-xs ' +
+                            (m.kind === 'out' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600')}>
+                            {m.kind === 'out' ? '↑' : '↓'}
+                          </span>
+                          <div>
+                            <p className="font-medium leading-none">
+                              {m.kind === 'out' ? 'Sent' : m.kind === 'mint' ? 'Claimed' : 'Received'}
+                              {m.txHash && <span className="ml-1 text-[10px] text-slate-400">↗</span>}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-slate-400">
+                              {m.counterparty ? short(m.counterparty) + ' · ' : ''}{ago(m.time)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <span className={'font-semibold ' + (m.kind === 'out' ? 'text-rose-600' : 'text-emerald-600')}>
-                        {m.kind === 'out' ? '-' : '+'}{m.amount} {sym}
-                      </span>
+                        <span className={'font-semibold ' + (m.kind === 'out' ? 'text-rose-600' : 'text-emerald-600')}>
+                          {m.kind === 'out' ? '-' : '+'}{m.amount} {sym}
+                        </span>
+                      </a>
                     </li>
                   ))}
                 </ul>
@@ -726,7 +734,11 @@ export default function App() {
   }, [])
 
   const loadOwned = useCallback(async (a: string) => {
-    try { setOwned(await getOwnedNftIds(NFT_ID, a, VIEW_SOURCE)) } catch {}
+    try {
+      const ids = await getOwnedNftIds(NFT_ID, a, VIEW_SOURCE)
+      // Merge (don't replace): a just-minted id stays even if events lag indexing.
+      setOwned((prev) => Array.from(new Set([...prev, ...ids])).sort((x, y) => x - y))
+    } catch {}
   }, [])
 
   useEffect(() => {
@@ -797,7 +809,10 @@ export default function App() {
             {busy === 'mint' ? 'Minting…' : busy === 'connect' ? 'Connecting…' : address ? 'Mint NFT' : 'Connect Freighter'}
           </button>
           {address && (
-            <p className="text-xs text-zinc-500">You own <span className="font-semibold text-zinc-300">{owned.length}</span> in this collection</p>
+            <>
+              <p className="text-xs text-zinc-500">You own <span className="font-semibold text-zinc-300">{owned.length}</span> in this collection</p>
+              <p className="text-[10px] text-zinc-600">Gasless — the collection mints it to your wallet (no signature needed)</p>
+            </>
           )}
         </div>
 
