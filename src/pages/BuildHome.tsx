@@ -1,22 +1,32 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProjects } from '../projects/store'
 import { PromptInput } from '../components/PromptInput'
-import { EXAMPLE_APPS } from '../lib/project'
+import { fetchTemplates, type TemplateSummary } from '../lib/backend'
 
 /** Route "/app" — the build home inside the authed shell. */
 export function BuildHome() {
   const navigate = useNavigate()
-  const { createProject, createFromFiles } = useProjects()
+  const { createProject, openTemplate } = useProjects()
+  const [templates, setTemplates] = useState<TemplateSummary[]>([])
+
+  useEffect(() => {
+    fetchTemplates()
+      .then(setTemplates)
+      .catch((err) => console.warn('[templates] failed to load:', err))
+  }, [])
 
   const startWithPrompt = (text: string) => {
     navigate(`/projects/${createProject(text)}`)
   }
-  const startExample = (ex: (typeof EXAMPLE_APPS)[number]) => {
-    navigate(
-      ex.files
-        ? `/projects/${createFromFiles(ex.label, ex.files, ex.contracts)}`
-        : `/projects/${createProject(ex.prompt!)}`,
-    )
+
+  const openTpl = async (t: TemplateSummary) => {
+    try {
+      const slug = await openTemplate(t.id)
+      navigate(`/projects/${slug}`)
+    } catch (err) {
+      console.warn('[templates] failed to open:', err)
+    }
   }
 
   return (
@@ -32,13 +42,13 @@ export function BuildHome() {
           placeholder="Describe a Stellar app in plain language…"
         />
         <div className="mt-4 flex flex-wrap justify-center gap-2">
-          {EXAMPLE_APPS.map((ex) => (
+          {templates.map((t) => (
             <button
-              key={ex.label}
-              onClick={() => startExample(ex)}
+              key={t.id}
+              onClick={() => void openTpl(t)}
               className="rounded-full border border-zinc-800 px-3 py-1.5 text-[12.5px] text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
             >
-              {ex.label}
+              {t.name}
             </button>
           ))}
         </div>

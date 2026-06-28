@@ -7,6 +7,7 @@
     "dev": "concurrently -k -n web,api -c cyan,magenta \"vite\" \"tsx watch server/index.ts\"",
     "dev:web": "vite",
     "server": "tsx watch server/index.ts",
+    "seed:templates": "tsx scripts/seed-templates.ts",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b && tsc -p api/tsconfig.json && tsc -p server/tsconfig.json --noEmit",
     "lint": "eslint .",

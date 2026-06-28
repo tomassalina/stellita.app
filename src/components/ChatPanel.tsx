@@ -29,6 +29,8 @@ export function ChatPanel({
   onSend,
   onRunActions,
   onSkipActions,
+  readOnly = false,
+  onClone,
 }: {
   projectName: string
   onRename: (name: string) => void
@@ -41,6 +43,9 @@ export function ChatPanel({
   onSend: (text: string) => void
   onRunActions: (messageIndex: number, actions: AgentAction[]) => Promise<void>
   onSkipActions: (messageIndex: number) => void
+  /** Read-only view (template/shared): no chat, show a "Clone to build" CTA. */
+  readOnly?: boolean
+  onClone?: () => void | Promise<void>
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const [renaming, setRenaming] = useState(false)
@@ -53,14 +58,23 @@ export function ChatPanel({
     <section className="flex h-full flex-col">
       {/* Header — same height as the workspace tabs row */}
       <header className="flex shrink-0 items-center border-b border-zinc-800 px-3 py-2.5">
-        <button
-          onClick={() => setRenaming(true)}
-          title="Rename chat"
-          className="flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-zinc-200 transition-colors hover:bg-zinc-900"
-        >
-          <span className="truncate font-medium">{projectName}</span>
-          <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
-        </button>
+        {readOnly ? (
+          <div className="flex min-w-0 items-center gap-2 px-2 py-1.5 text-[13px] text-zinc-200">
+            <span className="truncate font-medium">{projectName}</span>
+            <span className="shrink-0 rounded-full border border-zinc-700 px-2 py-0.5 text-[10.5px] uppercase tracking-wide text-zinc-400">
+              Read-only
+            </span>
+          </div>
+        ) : (
+          <button
+            onClick={() => setRenaming(true)}
+            title="Rename chat"
+            className="flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-zinc-200 transition-colors hover:bg-zinc-900"
+          >
+            <span className="truncate font-medium">{projectName}</span>
+            <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+          </button>
+        )}
       </header>
 
       {renaming && (
@@ -95,9 +109,52 @@ export function ChatPanel({
         <div ref={endRef} />
       </div>
       <div className="border-t border-zinc-800 p-4">
-        <PromptInput onSend={onSend} busy={busy} filePaths={filePaths} />
+        {readOnly ? (
+          <CloneCta onClone={onClone} />
+        ) : (
+          <PromptInput onSend={onSend} busy={busy} filePaths={filePaths} />
+        )}
       </div>
     </section>
+  )
+}
+
+/** Read-only footer: explains the view + a primary "Clone to build" action. */
+function CloneCta({ onClone }: { onClone?: () => void | Promise<void> }) {
+  const [cloning, setCloning] = useState(false)
+  const handle = async () => {
+    if (!onClone) return
+    setCloning(true)
+    try {
+      await onClone()
+    } finally {
+      setCloning(false)
+    }
+  }
+  return (
+    <div className="flex flex-col gap-2.5">
+      <p className="text-[12.5px] leading-relaxed text-zinc-500">
+        This is a read-only view. Clone it to get your own editable copy and start
+        building.
+      </p>
+      <button
+        onClick={() => void handle()}
+        disabled={cloning}
+        className="flex items-center justify-center gap-2 rounded-lg bg-violet-600 py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
+      >
+        {cloning ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Cloning…
+          </>
+        ) : (
+          <>
+            <Copy className="h-4 w-4" />
+            Clone to build
+          </>
+        )}
+      </button>
+    </div>
   )
 }
 

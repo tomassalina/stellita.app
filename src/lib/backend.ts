@@ -44,6 +44,18 @@ export function fetchCatalog(): Promise<Manifest[]> {
   return api<Manifest[]>('/api/contracts')
 }
 
+export interface TemplateSummary {
+  id: string
+  slug: string
+  name: string
+  kind: string | null
+}
+
+/** System-owned starter templates shown as badges. */
+export function fetchTemplates(): Promise<TemplateSummary[]> {
+  return api<TemplateSummary[]>('/api/templates')
+}
+
 export function deployContract(
   projectId: string,
   manifestId: string,

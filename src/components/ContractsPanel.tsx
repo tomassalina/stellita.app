@@ -55,10 +55,13 @@ export function ContractsPanel({
   projectId,
   contracts,
   onDeployed,
+  readOnly = false,
 }: {
   projectId: string
   contracts: DeployedContract[]
   onDeployed: (c: DeployedContract) => void
+  /** Read-only view (template/shared): contracts are visible but not deployable. */
+  readOnly?: boolean
 }) {
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [selected, setSelected] = useState(0)
@@ -87,14 +90,16 @@ export function ContractsPanel({
             </button>
           ))}
         </div>
-        <div className="border-t border-zinc-800 p-2">
-          <button
-            onClick={() => setCatalogOpen(true)}
-            className="flex w-full items-center justify-center gap-1.5 rounded-md bg-zinc-50 px-2.5 py-2 text-[12.5px] font-medium text-black transition-colors hover:bg-white"
-          >
-            <Plus className="h-4 w-4" /> Add contract
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="border-t border-zinc-800 p-2">
+            <button
+              onClick={() => setCatalogOpen(true)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-zinc-50 px-2.5 py-2 text-[12.5px] font-medium text-black transition-colors hover:bg-white"
+            >
+              <Plus className="h-4 w-4" /> Add contract
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Right: detail / empty state */}
@@ -105,16 +110,18 @@ export function ContractsPanel({
           <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
             <Boxes className="h-8 w-8 text-zinc-700" />
             <p className="max-w-xs text-[13px] leading-relaxed text-zinc-500">
-              Deploy an audited contract to Stellar testnet, or connect an existing
-              protocol. Its address is wired into{' '}
-              <code className="text-zinc-400">src/contracts.ts</code>.
+              {readOnly
+                ? 'This is a read-only view. Clone the project to deploy and wire your own contracts.'
+                : 'Deploy an audited contract to Stellar testnet, or connect an existing protocol. Its address is wired into src/contracts.ts.'}
             </p>
-            <button
-              onClick={() => setCatalogOpen(true)}
-              className="flex items-center gap-1.5 rounded-md bg-zinc-50 px-3 py-2 text-[12.5px] font-medium text-black transition-colors hover:bg-white"
-            >
-              <Plus className="h-4 w-4" /> Add contract
-            </button>
+            {!readOnly && (
+              <button
+                onClick={() => setCatalogOpen(true)}
+                className="flex items-center gap-1.5 rounded-md bg-zinc-50 px-3 py-2 text-[12.5px] font-medium text-black transition-colors hover:bg-white"
+              >
+                <Plus className="h-4 w-4" /> Add contract
+              </button>
+            )}
           </div>
         )}
       </div>

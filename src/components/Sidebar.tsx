@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useParams } from 'react-router-dom'
 import {
   Plus,
   MessageSquare,
@@ -7,13 +7,17 @@ import {
   User,
   LogOut,
   PanelLeft,
+  Trash2,
 } from 'lucide-react'
 import { useProjects } from '../projects/store'
 import { useAuth } from '../auth/store'
+import { DeleteProjectModal } from './DeleteProjectModal'
 
 function initials(name: string): string {
-  return name
+  return (name ?? '')
+    .trim()
     .split(/\s+/)
+    .filter(Boolean)
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('')
@@ -30,10 +34,22 @@ export function Sidebar({
   collapsed: boolean
   onToggle: () => void
 }) {
-  const { projects } = useProjects()
+  const { projects, deleteProject } = useProjects()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { slug: activeSlug } = useParams<{ slug: string }>()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [deleting, setDeleting] = useState<{ slug: string; name: string } | null>(
+    null,
+  )
+
+  const handleDelete = async () => {
+    if (!deleting) return
+    const { slug } = deleting
+    await deleteProject(slug)
+    setDeleting(null)
+    if (activeSlug === slug) navigate('/app')
+  }
 
   return (
     <aside
@@ -90,25 +106,40 @@ export function Sidebar({
         )}
         <nav className="flex flex-col gap-0.5">
           {projects.map((p) => (
-            <NavLink
-              key={p.slug}
-              to={`/projects/${p.slug}`}
-              className={({ isActive }) =>
-                `group relative flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
-                  isActive
-                    ? 'bg-zinc-900 text-zinc-50'
-                    : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
-                } ${collapsed ? 'justify-center' : ''}`
-              }
-            >
-              <MessageSquare className="h-4 w-4 shrink-0" />
-              {!collapsed && <span className="truncate">{p.name}</span>}
-              {collapsed && (
-                <span className="pointer-events-none absolute left-full z-50 ml-2 hidden max-w-[220px] truncate whitespace-nowrap rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-[12.5px] text-zinc-100 shadow-xl group-hover:block">
-                  {p.name}
-                </span>
+            <div key={p.slug} className="group relative">
+              <NavLink
+                to={`/projects/${p.slug}`}
+                className={({ isActive }) =>
+                  `relative flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+                    isActive
+                      ? 'bg-zinc-900 text-zinc-50'
+                      : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
+                  } ${collapsed ? 'justify-center' : 'pr-8'}`
+                }
+              >
+                <MessageSquare className="h-4 w-4 shrink-0" />
+                {!collapsed && <span className="truncate">{p.name}</span>}
+                {collapsed && (
+                  <span className="pointer-events-none absolute left-full z-50 ml-2 hidden max-w-[220px] truncate whitespace-nowrap rounded-md border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-[12.5px] text-zinc-100 shadow-xl group-hover:block">
+                    {p.name}
+                  </span>
+                )}
+              </NavLink>
+              {!collapsed && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setDeleting({ slug: p.slug, name: p.name })
+                  }}
+                  title="Delete project"
+                  aria-label={`Delete ${p.name}`}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-500 opacity-0 transition-opacity hover:bg-zinc-800 hover:text-red-400 focus:opacity-100 group-hover:opacity-100"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               )}
-            </NavLink>
+            </div>
           ))}
           {!collapsed && projects.length === 0 && (
             <p className="px-2.5 py-2 text-[12.5px] text-zinc-600">
@@ -180,6 +211,14 @@ export function Sidebar({
             )}
           </button>
         </div>
+      )}
+
+      {deleting && (
+        <DeleteProjectModal
+          projectName={deleting.name}
+          onClose={() => setDeleting(null)}
+          onConfirm={handleDelete}
+        />
       )}
     </aside>
   )

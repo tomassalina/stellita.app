@@ -90,9 +90,12 @@ function SandpackSync({
 function CodeBar({
   editable,
   setEditable,
+  lock = false,
 }: {
   editable: boolean
   setEditable: (v: boolean) => void
+  /** When locked (read-only project), hide the edit toggle entirely. */
+  lock?: boolean
 }) {
   const { code } = useActiveCode()
   const [copied, setCopied] = useState(false)
@@ -113,17 +116,19 @@ function CodeBar({
           <Copy className="h-3.5 w-3.5" />
         )}
       </button>
-      <button
-        onClick={() => setEditable(!editable)}
-        title={editable ? 'Switch to read-only' : 'Edit file'}
-        className={`rounded-md border p-1.5 transition-colors ${
-          editable
-            ? 'border-violet-500/50 text-violet-300'
-            : 'border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'
-        }`}
-      >
-        {editable ? <Eye className="h-3.5 w-3.5" /> : <SquarePen className="h-3.5 w-3.5" />}
-      </button>
+      {!lock && (
+        <button
+          onClick={() => setEditable(!editable)}
+          title={editable ? 'Switch to read-only' : 'Edit file'}
+          className={`rounded-md border p-1.5 transition-colors ${
+            editable
+              ? 'border-violet-500/50 text-violet-300'
+              : 'border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'
+          }`}
+        >
+          {editable ? <Eye className="h-3.5 w-3.5" /> : <SquarePen className="h-3.5 w-3.5" />}
+        </button>
+      )}
     </div>
   )
 }
@@ -447,6 +452,7 @@ export function WorkspacePanel({
   onFixError,
   contracts = [],
   onDeployed,
+  readOnly = false,
 }: {
   fileTree: FileTree
   projectId?: string
@@ -465,6 +471,8 @@ export function WorkspacePanel({
   onFixError?: (text: string) => void
   contracts?: DeployedContract[]
   onDeployed?: (c: DeployedContract) => void
+  /** Read-only view (template/shared): no editing, no deploy, no share. */
+  readOnly?: boolean
 }) {
   const [tab, setTab] = useState<Tab>('preview')
   const [device, setDevice] = useState<Device>('desktop')
@@ -497,12 +505,14 @@ export function WorkspacePanel({
             </button>
           ))}
         </div>
-        <button
-          onClick={() => setShareOpen(true)}
-          className="rounded-full bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
-        >
-          Share
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setShareOpen(true)}
+            className="rounded-full bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
+          >
+            Share
+          </button>
+        )}
       </nav>
 
       <div className="relative min-h-0 flex-1 bg-zinc-950">
@@ -515,7 +525,7 @@ export function WorkspacePanel({
             options={{ externalResources: [TAILWIND_CDN] }}
             style={{ height: '100%' }}
           >
-            {onSyncFiles && (
+            {onSyncFiles && !readOnly && (
               <SandpackSync fileTree={fileTree} onSync={onSyncFiles} />
             )}
             <ErrorWatcher onError={setPreviewError} />
@@ -554,14 +564,18 @@ export function WorkspacePanel({
               >
                 <FileExplorer
                   fileTree={fileTree}
-                  onCreateFile={onCreateFile ?? (() => {})}
-                  onCreateFolder={onCreateFolder ?? (() => {})}
-                  onDelete={onDeleteEntry ?? (() => {})}
+                  onCreateFile={readOnly ? () => {} : onCreateFile ?? (() => {})}
+                  onCreateFolder={readOnly ? () => {} : onCreateFolder ?? (() => {})}
+                  onDelete={readOnly ? () => {} : onDeleteEntry ?? (() => {})}
                 />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <CodeBar editable={editable} setEditable={setEditable} />
+                  <CodeBar
+                    editable={editable}
+                    setEditable={setEditable}
+                    lock={readOnly}
+                  />
                   <SandpackCodeEditor
-                    readOnly={!editable}
+                    readOnly={readOnly || !editable}
                     showLineNumbers
                     showTabs={false}
                     style={{ height: '100%', flex: 1 }}
@@ -576,7 +590,12 @@ export function WorkspacePanel({
         </div>
 
         {tab === 'contracts' && (
-          <ContractsPanel projectId={projectId} contracts={contracts} onDeployed={onDeployed ?? (() => {})} />
+          <ContractsPanel
+            projectId={projectId}
+            contracts={contracts}
+            onDeployed={onDeployed ?? (() => {})}
+            readOnly={readOnly}
+          />
         )}
 
 

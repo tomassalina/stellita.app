@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useParams, useNavigate } from 'react-router-dom'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { ChatPanel } from '../components/ChatPanel'
 import { WorkspacePanel } from '../components/WorkspacePanel'
@@ -11,7 +11,9 @@ import type { AgentAction } from '../../shared/types'
 /** Route "/projects/:slug" — resizable chat | workspace (v0-style). */
 export function Editor() {
   const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
   const {
+    ready,
     getProject,
     send,
     openVersion,
@@ -24,17 +26,36 @@ export function Editor() {
     deleteEntry,
     addDeployedContract,
     resolveMessageActions,
+    cloneProject,
   } = useProjects()
   const project = slug ? getProject(slug) : undefined
   // While dragging the divider, kill pointer events on the preview so the
   // Sandpack iframe doesn't swallow the mouse and freeze the resize.
   const [resizing, setResizing] = useState(false)
 
-  // No persistence yet (Milestone 5): a direct hit / refresh has no project.
-  if (!project) return <Navigate to="/" replace />
+  // Don't decide the project is missing until the list has loaded — otherwise a
+  // hard reload / direct URL redirects away before the project is even known.
+  if (!project) {
+    if (!ready) {
+      return (
+        <div className="flex h-full items-center justify-center text-[13px] text-zinc-500">
+          Loading project…
+        </div>
+      )
+    }
+    // Genuinely unknown (or just-deleted) → back to the authed home.
+    return <Navigate to="/app" replace />
+  }
 
   const handleSkipActions = (i: number) => {
     resolveMessageActions(project.slug, i)
+  }
+
+  const handleClone = async () => {
+    const sourceId = project.cloneSourceId ?? project.id
+    if (!sourceId) return
+    const newSlug = await cloneProject(sourceId)
+    navigate(`/projects/${newSlug}`)
   }
 
   const handleRunActions = async (i: number, actions: AgentAction[]) => {
@@ -107,6 +128,8 @@ export function Editor() {
           onSend={(text) => send(project.slug, text)}
           onRunActions={handleRunActions}
           onSkipActions={handleSkipActions}
+          readOnly={project.readOnly}
+          onClone={handleClone}
         />
       </Panel>
       <PanelResizeHandle
@@ -134,6 +157,7 @@ export function Editor() {
             onDeleteEntry={(path) => deleteEntry(project.slug, path)}
             contracts={project.contracts}
             onDeployed={(c) => addDeployedContract(project.slug, c)}
+            readOnly={project.readOnly}
             onFixError={(err) =>
               send(
                 project.slug,

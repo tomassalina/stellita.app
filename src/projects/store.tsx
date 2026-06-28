@@ -60,18 +60,26 @@ export interface ProjectState {
   contracts: DeployedContract[]
   /** True once full project data has been loaded from the backend. */
   loaded?: boolean
+  /** Read-only: a template or a shared project. Chat/editor/deploy disabled
+   *  until the user clones it into their own account. */
+  readOnly?: boolean
+  /** Backend id of the source this read-only view was opened from (template or
+   *  shared project) — used by the "Clone to build" action. */
+  cloneSourceId?: string
 }
 
 interface ProjectsContextValue {
   /** All projects, newest first — for the sidebar history. */
   projects: ProjectState[]
+  /** False until the initial project list has loaded from the backend. Used to
+   *  avoid redirecting away from a valid project URL before we know it exists. */
+  ready: boolean
   getProject: (slug: string) => ProjectState | undefined
   createProject: (prompt: string) => string
-  createFromFiles: (
-    name: string,
-    files: FileTree,
-    contracts?: DeployedContract[],
-  ) => string
+  /** Open a system template (read-only) into the store. Returns its slug. */
+  openTemplate: (id: string) => Promise<string>
+  /** Delete a project (and its versions/messages/contracts). */
+  deleteProject: (slug: string) => Promise<void>
   send: (slug: string, text: string, opts?: { kind?: 'system' }) => void
   /** Load a checkpoint's files non-destructively (keeps all versions). */
   openVersion: (slug: string, versionId: string) => void
@@ -95,7 +103,7 @@ interface ProjectsContextValue {
   resolveMessageActions: (slug: string, messageIndex: number) => void
   /** Generate a share link for a project. Returns the share URL. */
   shareProject: (id: string) => Promise<string>
-  /** Clone a project. Returns the new project id. */
+  /** Clone a project/template into the caller's account. Returns the new slug. */
   cloneProject: (id: string) => Promise<string>
 }
 
@@ -167,6 +175,8 @@ type BackendProject = {
   name: string
   created_at: string
   updated_at: string
+  /** Authoritative current file tree (server keeps this in sync on every edit). */
+  current_files?: FileTree
 }
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
@@ -174,6 +184,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   // `ref` holds the latest map for synchronous async reads; `snapshot` mirrors
   // it for rendering so we never read a ref during render.
   const [snapshot, setSnapshot] = useState<Record<string, ProjectState>>({})
+  // False until the first GET /api/projects resolves — gates existence checks.
+  const [ready, setReady] = useState(false)
 
   const commit = (next: Record<string, ProjectState>) => {
     ref.current = next
@@ -220,6 +232,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         commit(next)
       })
       .catch((err) => console.warn('[projects] failed to load list from backend:', err))
+      .finally(() => setReady(true))
   }, [])
 
   const loadProject = async (slugOrId: string): Promise<void> => {
@@ -254,15 +267,21 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         createdAt: new Date(m.created_at).getTime(),
       }))
 
-      const latestTree = versions.at(-1)?.fileTree ?? {}
+      // current_files is the server's authoritative working tree (updated on
+      // every edit/restore). Fall back to the latest version, then empty.
+      const tree =
+        data.project.current_files ?? versions.at(-1)?.fileTree ?? {}
 
       patch(slug, {
         versions,
         messages,
         contracts: data.contracts ?? [],
-        fileTree: latestTree,
-        savedFileTree: latestTree,
+        fileTree: tree,
+        savedFileTree: tree,
         loaded: true,
+        // Bump generation so Sandpack remounts with the freshly loaded files —
+        // the stub mounted with an empty tree (default "Hello world" preview).
+        generation: (ref.current[slug]?.generation ?? 0) + 1,
       })
     } catch (err) {
       console.warn('[projects] failed to load project:', err)
@@ -271,7 +290,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const send = async (slug: string, text: string, opts?: { kind?: 'system' }) => {
     const p = ref.current[slug]
-    if (!p || p.busy) return
+    if (!p || p.busy || p.readOnly) return
     const history = p.messages
     const startedAt = now()
     const userMsg: ChatMessage = { role: 'user', content: text, createdAt: startedAt }
@@ -430,44 +449,88 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
 
   const createProject = (prompt: string): string => {
     const slug = `${kebab(deriveName(prompt)) || 'project'}-${uid().slice(0, 6)}`
-    make(slug, deriveName(prompt), initialFileTree(), [], [])
-    // Persist to backend best-effort
-    api<{ id: string; slug: string }>('/api/projects', {
+    const tree = initialFileTree()
+    make(slug, deriveName(prompt), tree, [], [])
+    patch(slug, { busy: true })
+    // Create server-side FIRST (persisting the scaffold), THEN send the prompt —
+    // so the chat stream always has a project id (no "not yet saved" race).
+    api<{ id: string; name: string }>('/api/projects', {
       method: 'POST',
-      body: JSON.stringify({ name: deriveName(prompt), slug }),
+      body: JSON.stringify({ name: deriveName(prompt), slug, current_files: tree }),
     })
-      .then(({ id }) => {
-        patch(slug, { id })
+      .then(({ id, name }) => {
+        patch(slug, { id, name })
+        void send(slug, prompt)
       })
-      .catch((err) => console.warn('[projects] failed to create project in backend:', err))
-    void send(slug, prompt)
+      .catch((err) => {
+        console.warn('[projects] failed to create project in backend:', err)
+        patch(slug, {
+          busy: false,
+          error: 'Could not start the project. Please try again.',
+        })
+      })
     return slug
   }
 
-  const createFromFiles = (
-    name: string,
-    files: FileTree,
-    contracts: DeployedContract[] = [],
-  ): string => {
-    const slug = `${kebab(name) || 'project'}-${uid().slice(0, 6)}`
-    make(
-      slug,
-      name,
-      files,
-      [{ role: 'assistant', content: `Loaded "${name}".` }],
-      [newVersion('Initial template', `Loaded "${name}".`, files)],
-      contracts,
-    )
-    // Persist to backend best-effort
-    api<{ id: string; slug: string }>('/api/projects', {
-      method: 'POST',
-      body: JSON.stringify({ name, slug, current_files: files }),
+  /** Load a system template into the store as a READ-ONLY project (chat/editor
+   *  disabled). The "Clone to build" action turns it into the user's own copy. */
+  const openTemplate = async (id: string): Promise<string> => {
+    const data = await api<{
+      project: BackendProject
+      versions: { id: string; label: string; summary: string; files: FileTree; created_at: string }[]
+      messages: { role: string; content: string; created_at: string }[]
+      contracts: DeployedContract[]
+    }>(`/api/projects/${id}`)
+
+    const slug = data.project.slug
+    const versions: Version[] = data.versions.map((v) => ({
+      id: v.id,
+      label: v.label ?? 'Version',
+      summary: v.summary ?? '',
+      fileTree: v.files ?? {},
+      createdAt: new Date(v.created_at).getTime(),
+    }))
+    const messages: ChatMessage[] = data.messages.map((m) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+      createdAt: new Date(m.created_at).getTime(),
+    }))
+    const tree = data.project.current_files ?? versions.at(-1)?.fileTree ?? {}
+
+    commit({
+      ...ref.current,
+      [slug]: {
+        id: data.project.id,
+        slug,
+        name: data.project.name,
+        messages,
+        fileTree: tree,
+        busy: false,
+        error: null,
+        activity: [],
+        streamingMessage: '',
+        versions,
+        generation: 1,
+        savedFileTree: tree,
+        dirty: false,
+        contracts: data.contracts ?? [],
+        loaded: true,
+        readOnly: true,
+        cloneSourceId: data.project.id,
+      },
     })
-      .then(({ id }) => {
-        patch(slug, { id })
-      })
-      .catch((err) => console.warn('[projects] failed to create project in backend:', err))
     return slug
+  }
+
+  /** Delete a project and remove it from the store. */
+  const deleteProject = async (slug: string): Promise<void> => {
+    const p = ref.current[slug]
+    if (p?.id) {
+      await api(`/api/projects/${p.id}`, { method: 'DELETE' })
+    }
+    const next = { ...ref.current }
+    delete next[slug]
+    commit(next)
   }
 
   /** Non-destructive: load a checkpoint's files but keep every version. */
@@ -630,11 +693,32 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   }
 
   const cloneProject = async (id: string): Promise<string> => {
-    const { id: newId } = await api<{ id: string }>(
+    const proj = await api<{ id: string; slug: string; name: string }>(
       `/api/projects/${id}/clone`,
       { method: 'POST' },
     )
-    return newId
+    // Add a stub so navigation works; full data hydrates on open (loaded:false).
+    commit({
+      ...ref.current,
+      [proj.slug]: {
+        id: proj.id,
+        slug: proj.slug,
+        name: proj.name,
+        messages: [],
+        fileTree: {},
+        busy: false,
+        error: null,
+        activity: [],
+        streamingMessage: '',
+        versions: [],
+        generation: 1,
+        savedFileTree: {},
+        dirty: false,
+        contracts: [],
+        loaded: false,
+      },
+    })
+    return proj.slug
   }
 
   const getProject = (slug: string): ProjectState | undefined => {
@@ -647,10 +731,17 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   }
 
   const value: ProjectsContextValue = {
-    projects: Object.values(snapshot).reverse(),
+    // Sidebar history = the user's OWN projects only. Read-only views (templates
+    // / shared projects) live in the store so the editor can render them, but
+    // they must never show up as if they were the user's projects.
+    projects: Object.values(snapshot)
+      .filter((p) => !p.readOnly)
+      .reverse(),
+    ready,
     getProject,
     createProject,
-    createFromFiles,
+    openTemplate,
+    deleteProject,
     send: (slug, text, opts) => void send(slug, text, opts),
     openVersion,
     restoreVersion,

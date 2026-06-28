@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, Navigate } from 'react-router-dom'
 import { Sparkles } from 'lucide-react'
 import { useAuth } from '../auth/store'
 import { useProjects } from '../projects/store'
 import { PromptInput } from '../components/PromptInput'
-import { EXAMPLE_APPS } from '../lib/project'
+import { fetchTemplates, type TemplateSummary } from '../lib/backend'
 import { LoginModal } from '../auth/LoginModal'
 
 const NAV_LINKS = ['Templates', 'Showcase', 'Pricing', 'Docs', 'FAQ']
@@ -13,9 +13,17 @@ const NAV_LINKS = ['Templates', 'Showcase', 'Pricing', 'Docs', 'FAQ']
 export function MarketingLanding() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { createProject, createFromFiles } = useProjects()
+  const { createProject, openTemplate } = useProjects()
   const [showLogin, setShowLogin] = useState(false)
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
+  const [pendingTemplate, setPendingTemplate] = useState<string | null>(null)
+  const [templates, setTemplates] = useState<TemplateSummary[]>([])
+
+  useEffect(() => {
+    fetchTemplates()
+      .then(setTemplates)
+      .catch((err) => console.warn('[templates] failed to load:', err))
+  }, [])
 
   const enter = () => {
     if (user) {
@@ -25,12 +33,26 @@ export function MarketingLanding() {
     }
   }
 
+  const openTpl = async (id: string) => {
+    try {
+      const slug = await openTemplate(id)
+      navigate(`/projects/${slug}`)
+    } catch (err) {
+      console.warn('[templates] failed to open:', err)
+      navigate('/app')
+    }
+  }
+
   const handleLoginClose = () => {
     setShowLogin(false)
     if (pendingPrompt !== null) {
       const text = pendingPrompt
       setPendingPrompt(null)
       navigate(`/projects/${createProject(text)}`)
+    } else if (pendingTemplate !== null) {
+      const id = pendingTemplate
+      setPendingTemplate(null)
+      void openTpl(id)
     } else {
       navigate('/app')
     }
@@ -45,21 +67,17 @@ export function MarketingLanding() {
     }
   }
 
-  const startExample = (ex: (typeof EXAMPLE_APPS)[number]) => {
-    const doStart = () => {
-      navigate(
-        ex.files
-          ? `/projects/${createFromFiles(ex.label, ex.files, ex.contracts)}`
-          : `/projects/${createProject(ex.prompt!)}`,
-      )
-    }
+  const startTemplate = (t: TemplateSummary) => {
     if (user) {
-      doStart()
+      void openTpl(t.id)
     } else {
-      setPendingPrompt(ex.prompt ?? null)
+      setPendingTemplate(t.id)
       setShowLogin(true)
     }
   }
+
+  // Logged-in users never see the public landing — send them to the app.
+  if (user) return <Navigate to="/app" replace />
 
   return (
     <div className="flex h-full select-none flex-col overflow-y-auto bg-black text-zinc-50">
@@ -79,18 +97,21 @@ export function MarketingLanding() {
           ))}
         </nav>
         <div className="flex items-center gap-2 text-[13.5px]">
-          <button
-            onClick={enter}
-            className="rounded-lg px-3.5 py-1.5 text-zinc-300 hover:text-zinc-50"
-          >
-            Sign In
-          </button>
-          <button
-            onClick={enter}
-            className="rounded-lg bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
-          >
-            Sign Up
-          </button>
+          {user ? (
+            <button
+              onClick={() => navigate('/app')}
+              className="rounded-lg bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
+            >
+              Go to app
+            </button>
+          ) : (
+            <button
+              onClick={enter}
+              className="rounded-lg bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
@@ -120,13 +141,13 @@ export function MarketingLanding() {
           </div>
 
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {EXAMPLE_APPS.map((ex) => (
+            {templates.map((t) => (
               <button
-                key={ex.label}
-                onClick={() => startExample(ex)}
+                key={t.id}
+                onClick={() => startTemplate(t)}
                 className="rounded-full border border-zinc-800 px-3 py-1.5 text-[12.5px] text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
               >
-                {ex.label}
+                {t.name}
               </button>
             ))}
           </div>

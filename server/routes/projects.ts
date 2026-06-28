@@ -6,20 +6,75 @@ const router = Router()
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173'
 
+/** Map a deployed_contracts row (snake_case) to the frontend DeployedContract
+ *  shape (camelCase). Without this, contractId/manifestId/explorerUrl come back
+ *  undefined and the Contracts tab shows a blank Contract ID. */
+function contractDTO(c: Record<string, unknown>) {
+  return {
+    manifestId: c['manifest_id'],
+    name: c['name'],
+    category: c['category'],
+    contractId: c['contract_id'],
+    network: c['network'] ?? 'testnet',
+    txHash: c['tx_hash'] ?? undefined,
+    explorerUrl: c['explorer_url'],
+    deployer: c['deployer'] ?? undefined,
+    config: c['config'] ?? {},
+    createdAt: c['created_at'] ? new Date(c['created_at'] as string).getTime() : 0,
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Projects
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** GET /api/projects — list all projects owned by the current user */
+/** GET /api/projects — list the current user's own projects (never templates) */
 router.get('/projects', requireUser, async (req, res) => {
   const { data, error } = await req.supabase
     .from('projects')
     .select('id,slug,name,created_at,updated_at')
+    .eq('owner_id', req.user.id)
+    .eq('is_template', false)
     .order('updated_at', { ascending: false })
 
   if (error) { res.status(500).json({ error: error.message }); return }
   res.json(data)
 })
+
+/** GET /api/templates — public, system-owned starter templates (for the badges).
+ *  Order is data-driven via projects.sort_order. */
+router.get('/templates', requireUser, async (req, res) => {
+  const { data, error } = await req.supabase
+    .from('projects')
+    .select('id,slug,name,kind,sort_order')
+    .eq('is_template', true)
+    .eq('published', true)
+    .order('sort_order', { ascending: true })
+
+  if (error) { res.status(500).json({ error: error.message }); return }
+  res.json(data)
+})
+
+/** Resolve a project name unique within the owner's projects: "X", "X 2", "X 3"… */
+async function uniqueName(
+  supabase: Express.Request['supabase'],
+  ownerId: string,
+  desired: string,
+): Promise<string> {
+  const { data: rows } = await supabase
+    .from('projects')
+    .select('name')
+    .eq('owner_id', ownerId)
+  const taken = new Set((rows ?? []).map((r: { name: string }) => r.name))
+  if (!taken.has(desired)) return desired
+  let n = 1
+  let name = desired
+  while (taken.has(name)) {
+    n += 1
+    name = `${desired} ${n}`
+  }
+  return name
+}
 
 /** POST /api/projects — create a new project */
 router.post('/projects', requireUser, async (req, res) => {
@@ -30,9 +85,11 @@ router.post('/projects', requireUser, async (req, res) => {
   }
   if (!name || !slug) { res.status(400).json({ error: 'name and slug required' }); return }
 
+  const finalName = await uniqueName(req.supabase, req.user.id, name)
+
   const { data, error } = await req.supabase
     .from('projects')
-    .insert({ owner_id: req.user.id, name, slug, current_files: current_files ?? {} })
+    .insert({ owner_id: req.user.id, name: finalName, slug, current_files: current_files ?? {} })
     .select()
     .single()
 
@@ -72,7 +129,7 @@ router.get('/projects/:id', requireUser, async (req, res) => {
     project: projectRes.data,
     versions: versionsRes.data ?? [],
     messages: messagesRes.data ?? [],
-    contracts: contractsRes.data ?? [],
+    contracts: (contractsRes.data ?? []).map(contractDTO),
   })
 })
 
@@ -337,14 +394,22 @@ router.post('/projects/:id/share', requireUser, async (req, res) => {
   })
 })
 
-/** POST /api/projects/:id/clone — clone a project (owner cloning their own) */
+/** POST /api/projects/:id/clone — clone a project or template into the caller's
+ *  account. Returns the new project's id + slug so the client can navigate. */
 router.post('/projects/:id/clone', requireUser, async (req, res) => {
   const { id } = req.params
-  const { data, error } = await req.supabase.rpc('clone_project', {
+  const { data: newId, error } = await req.supabase.rpc('clone_project', {
     p_source: id,
   })
   if (error) { res.status(500).json({ error: error.message }); return }
-  res.json({ id: data })
+
+  const { data: proj, error: fetchErr } = await req.supabase
+    .from('projects')
+    .select('id,slug,name')
+    .eq('id', newId)
+    .single()
+  if (fetchErr) { res.status(500).json({ error: fetchErr.message }); return }
+  res.json(proj)
 })
 
 /** GET /api/shared/:token — read-only public view (no auth required) */
@@ -362,7 +427,7 @@ router.get('/shared/:token', async (req, res) => {
 
   const projectId = share.project_id as string
 
-  const [projectRes, versionsRes, messagesRes] = await Promise.all([
+  const [projectRes, versionsRes, messagesRes, contractsRes] = await Promise.all([
     admin.from('projects').select('*').eq('id', projectId).single(),
     admin
       .from('project_versions')
@@ -374,6 +439,11 @@ router.get('/shared/:token', async (req, res) => {
       .select('*')
       .eq('project_id', projectId)
       .order('seq', { ascending: true }),
+    admin
+      .from('deployed_contracts')
+      .select('*')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: true }),
   ])
 
   if (projectRes.error) { res.status(404).json({ error: 'not found' }); return }
@@ -382,6 +452,7 @@ router.get('/shared/:token', async (req, res) => {
     project: projectRes.data,
     versions: versionsRes.data ?? [],
     messages: messagesRes.data ?? [],
+    contracts: (contractsRes.data ?? []).map(contractDTO),
   })
 })
 
@@ -398,13 +469,20 @@ router.post('/shared/:token/clone', requireUser, async (req, res) => {
 
   if (shareErr || !share) { res.status(404).json({ error: 'share not found' }); return }
 
-  const { data, error } = await req.supabase.rpc('clone_project', {
+  const { data: newId, error } = await req.supabase.rpc('clone_project', {
     p_source: share.project_id as string,
     p_share_token: token,
   })
 
   if (error) { res.status(500).json({ error: error.message }); return }
-  res.json({ id: data })
+
+  const { data: proj, error: fetchErr } = await req.supabase
+    .from('projects')
+    .select('id,slug,name')
+    .eq('id', newId)
+    .single()
+  if (fetchErr) { res.status(500).json({ error: fetchErr.message }); return }
+  res.json(proj)
 })
 
 export default router

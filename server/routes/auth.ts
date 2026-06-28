@@ -1,8 +1,29 @@
 import { Router } from 'express'
+import type { User } from '@supabase/supabase-js'
 import { serverClient } from '../lib/supabase.js'
 import { requireUser } from '../middleware/auth.js'
 
 const router = Router()
+
+/**
+ * Shape the raw Supabase auth user into the contract the frontend expects:
+ * { id, name, email, avatar_url }. Email-OTP users have no name → derive one
+ * from the email local-part so the UI never sees undefined.
+ */
+function publicUser(u: User) {
+  const meta = u.user_metadata ?? {}
+  const email = u.email ?? ''
+  const name =
+    (meta['full_name'] as string | undefined) ??
+    (meta['name'] as string | undefined) ??
+    (email ? email.split('@')[0] : 'user')
+  return {
+    id: u.id,
+    name,
+    email,
+    avatar_url: meta['avatar_url'] as string | undefined,
+  }
+}
 
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173'
 const API_BASE = process.env.API_BASE ?? 'http://localhost:8787'
@@ -49,7 +70,7 @@ router.post('/otp/verify', async (req, res) => {
     res.status(400).json({ error: error.message })
     return
   }
-  res.json({ user: data.user })
+  res.json({ user: data.user ? publicUser(data.user) : null })
 })
 
 /**
@@ -113,7 +134,7 @@ router.get('/me', requireUser, async (req, res) => {
     res.status(500).json({ error: error.message })
     return
   }
-  res.json({ user: req.user, profile })
+  res.json({ user: publicUser(req.user), profile })
 })
 
 export default router
