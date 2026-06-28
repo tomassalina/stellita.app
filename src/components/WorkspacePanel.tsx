@@ -113,12 +113,15 @@ function CodeBar({
 /** Dropdown listing local checkpoints; restore sets the project back to one. */
 function VersionMenu({
   versions,
+  onOpen,
   onRestore,
 }: {
   versions: Version[]
+  onOpen: (id: string) => void
   onRestore: (id: string) => void
 }) {
   const [open, setOpen] = useState(false)
+  const [confirm, setConfirm] = useState<{ id: string; n: number } | null>(null)
   if (versions.length === 0) return null
 
   return (
@@ -134,33 +137,123 @@ function VersionMenu({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-1 max-h-80 w-72 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-950 p-1 shadow-xl">
+          <div className="absolute right-0 z-50 mt-1 max-h-96 w-80 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-950 p-1 shadow-xl">
             {versions
-              .map((v, i) => ({ v, n: i + 1 }))
+              .map((v, i) => ({ v, n: i + 1, latest: i === versions.length - 1 }))
               .reverse()
-              .map(({ v, n }) => (
+              .map(({ v, n, latest }) => (
                 <div
                   key={v.id}
-                  className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 hover:bg-zinc-900"
+                  className="group rounded-md px-2.5 py-2 hover:bg-zinc-900"
                 >
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-zinc-300">
-                    <span className="text-zinc-500">v{n} · </span>
-                    {v.label}
-                  </span>
                   <button
                     onClick={() => {
-                      onRestore(v.id)
+                      onOpen(v.id)
                       setOpen(false)
                     }}
-                    className="shrink-0 rounded border border-zinc-800 px-2 py-1 text-[11.5px] text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                    className="block w-full text-left"
+                    title="Open this version"
                   >
-                    Restore
+                    <div className="flex items-center gap-2 text-[12.5px] text-zinc-200">
+                      <span className="text-zinc-500">v{n}</span>
+                      <span className="truncate font-medium">{v.label}</span>
+                      {latest && (
+                        <span className="ml-auto shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400">
+                          current
+                        </span>
+                      )}
+                    </div>
+                    {v.summary && (
+                      <p className="mt-0.5 line-clamp-2 text-[11.5px] text-zinc-500">
+                        {v.summary}
+                      </p>
+                    )}
                   </button>
+                  {/* Destructive restore: only for older versions, never at v1 */}
+                  {!latest && versions.length > 1 && (
+                    <button
+                      onClick={() => setConfirm({ id: v.id, n })}
+                      className="mt-1.5 rounded border border-zinc-800 px-2 py-0.5 text-[11px] text-zinc-500 hover:border-red-900 hover:text-red-400"
+                    >
+                      Restore (discard newer)
+                    </button>
+                  )}
                 </div>
               ))}
           </div>
         </>
       )}
+      {confirm && (
+        <RestoreConfirm
+          n={confirm.n}
+          onClose={() => setConfirm(null)}
+          onConfirm={() => {
+            onRestore(confirm.id)
+            setConfirm(null)
+            setOpen(false)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+/** Destructive-restore guard: user must type "restore" to proceed. */
+function RestoreConfirm({
+  n,
+  onClose,
+  onConfirm,
+}: {
+  n: number
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const [value, setValue] = useState('')
+  const ok = value.trim().toLowerCase() === 'restore'
+  return (
+    <div
+      className="fixed inset-0 z-70 flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-[15px] font-medium text-red-300">Restore to v{n}?</h2>
+        <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
+          This reverts the project to v{n} and{' '}
+          <span className="text-zinc-200">permanently discards every newer
+          version</span>
+          . This can't be undone. Type <code className="text-zinc-300">restore</code>{' '}
+          to confirm.
+        </p>
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && ok) onConfirm()
+            if (e.key === 'Escape') onClose()
+          }}
+          placeholder="restore"
+          className="mt-4 w-full select-text rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-[14px] text-zinc-100 outline-none focus:border-zinc-600"
+        />
+        <div className="mt-5 flex justify-end gap-2 text-[13px]">
+          <button
+            onClick={onClose}
+            className="rounded-lg px-3.5 py-1.5 text-zinc-400 hover:text-zinc-100"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={!ok}
+            className="rounded-lg bg-red-500 px-3.5 py-1.5 font-medium text-white transition-colors hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Restore
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -181,12 +274,14 @@ function PreviewBar({
   device,
   setDevice,
   versions,
+  onOpenVersion,
   onRestore,
   onDownload,
 }: {
   device: Device
   setDevice: (d: Device) => void
   versions: Version[]
+  onOpenVersion?: (id: string) => void
   onRestore?: (id: string) => void
   onDownload: () => void
 }) {
@@ -209,7 +304,13 @@ function PreviewBar({
           <Smartphone className="h-3.5 w-3.5" />
         </button>
       </div>
-      {onRestore && <VersionMenu versions={versions} onRestore={onRestore} />}
+      {onRestore && onOpenVersion && (
+        <VersionMenu
+          versions={versions}
+          onOpen={onOpenVersion}
+          onRestore={onRestore}
+        />
+      )}
       <button
         onClick={onDownload}
         title="Download project"
@@ -235,6 +336,7 @@ export function WorkspacePanel({
   fileTree,
   projectName = 'stellar-app',
   versions = [],
+  onOpenVersion,
   onRestore,
   generation = 0,
   dirty = false,
@@ -248,6 +350,7 @@ export function WorkspacePanel({
   fileTree: FileTree
   projectName?: string
   versions?: Version[]
+  onOpenVersion?: (id: string) => void
   onRestore?: (id: string) => void
   generation?: number
   dirty?: boolean
@@ -314,6 +417,7 @@ export function WorkspacePanel({
                   device={device}
                   setDevice={setDevice}
                   versions={versions}
+                  onOpenVersion={onOpenVersion}
                   onRestore={onRestore}
                   onDownload={() => setDownloadOpen(true)}
                 />

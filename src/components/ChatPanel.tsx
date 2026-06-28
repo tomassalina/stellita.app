@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, FilePlus2, FilePen, Trash2, Pencil } from 'lucide-react'
+import { Check, FilePlus2, FilePen, Trash2, Pencil, Copy } from 'lucide-react'
 import type { ChatMessage } from '../../shared/types'
 import type { Activity } from '../lib/api'
 import { PromptInput } from './PromptInput'
@@ -60,7 +60,7 @@ export function ChatPanel({
 
       <div className="flex-1 select-text space-y-4 overflow-y-auto p-4">
         {messages.map((m, i) => (
-          <Message key={i} role={m.role} content={m.content} />
+          <Message key={i} {...m} />
         ))}
         {busy && (
           <ThinkingTrace activity={activity} message={streamingMessage} />
@@ -79,20 +79,88 @@ export function ChatPanel({
   )
 }
 
-function Message({ role, content }: ChatMessage) {
+function Message({ role, content, files, versionName }: ChatMessage) {
   const isUser = role === 'user'
+  const [expanded, setExpanded] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const long = content.length > 300 || content.split('\n').length > 6
+
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>
       <div
-        className={
+        className={`group relative max-w-[85%] rounded-2xl px-3.5 py-2 text-[13.5px] ${
           isUser
-            ? 'max-w-[85%] rounded-2xl rounded-br-sm bg-zinc-100 px-3.5 py-2 text-[13.5px] whitespace-pre-wrap text-black'
-            : 'max-w-[85%] rounded-2xl rounded-bl-sm bg-zinc-900 px-3.5 py-2 text-[13.5px] whitespace-pre-wrap text-zinc-200'
-        }
+            ? 'rounded-br-sm bg-zinc-100 text-black'
+            : 'rounded-bl-sm bg-zinc-900 text-zinc-200'
+        }`}
       >
-        {content}
+        {!isUser && versionName && (
+          <div className="mb-1 text-[11px] font-medium text-zinc-500">
+            {versionName}
+          </div>
+        )}
+        <div
+          className={`whitespace-pre-wrap ${
+            long && !expanded ? 'max-h-28 overflow-hidden' : ''
+          }`}
+        >
+          {content}
+        </div>
+        {long && (
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            className={`mt-1 text-[12px] font-medium ${
+              isUser ? 'text-zinc-500 hover:text-black' : 'text-zinc-500 hover:text-zinc-200'
+            }`}
+          >
+            {expanded ? 'Show less' : 'Show more'}
+          </button>
+        )}
+        {files && files.length > 0 && <FileOpsTrace ops={files} />}
+
+        {/* Copy (appears on hover) */}
+        <button
+          onClick={() => {
+            void navigator.clipboard?.writeText(content)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1200)
+          }}
+          title="Copy message"
+          className={`absolute -top-2 right-2 rounded-md border p-1 opacity-0 transition-opacity group-hover:opacity-100 ${
+            isUser
+              ? 'border-zinc-300 bg-zinc-100 text-zinc-500 hover:text-black'
+              : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:text-zinc-100'
+          }`}
+        >
+          {copied ? (
+            <Check className="h-3 w-3 text-emerald-400" />
+          ) : (
+            <Copy className="h-3 w-3" />
+          )}
+        </button>
       </div>
     </div>
+  )
+}
+
+/** Static (persisted) list of files touched in a turn — stays in the chat. */
+function FileOpsTrace({ ops }: { ops: NonNullable<ChatMessage['files']> }) {
+  return (
+    <ul className="mt-2 space-y-1 border-t border-zinc-800 pt-2">
+      {ops.map((a, i) => {
+        const Icon = OP_ICON[a.op]
+        return (
+          <li
+            key={i}
+            className="flex items-center gap-1.5 text-[12px] text-zinc-500"
+          >
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <span>{VERB[a.op]}</span>
+            <code className="truncate text-zinc-400">{a.path}</code>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 

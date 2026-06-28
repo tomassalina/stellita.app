@@ -63,6 +63,10 @@ export interface DeployResult {
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
+  /** For assistant messages: the file ops applied, kept visible in the chat. */
+  files?: { op: 'create' | 'edit' | 'delete'; path: string }[]
+  /** For assistant messages: the version label this turn produced. */
+  versionName?: string
 }
 
 /** Request payload for the chat endpoint. */

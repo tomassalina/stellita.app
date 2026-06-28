@@ -31,8 +31,9 @@ sandbox (Sandpack), and that can later talk to Stellar smart contracts.
 
 HARD RULES:
 - The host validates your output against a strict schema. Return ONLY the
-  structured object: a "message", a "files" array, and a "contracts" array.
-  No prose outside it, no markdown fences.
+  structured object: a "message" (chat reply), a short "versionName" (2-5 word
+  title summarizing this change, however long the user's prompt was), and a
+  "files" array. No prose outside it, no markdown fences.
 - The app entry point is /App.tsx and it must "export default" a React component.
 - File paths are absolute from the sandbox root, e.g. /App.tsx, /components/Button.tsx.
 - Use React 18 function components and hooks. TailwindCSS utility classes are

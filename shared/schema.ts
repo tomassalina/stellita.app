@@ -38,6 +38,11 @@ export const agentResponseSchema = z.object({
   message: z
     .string()
     .describe('Short chat-facing message describing what you did'),
+  versionName: z
+    .string()
+    .describe(
+      'A very short 2-5 word title for this change, e.g. "Add pricing section". No matter how long the user prompt is, summarize it here.',
+    ),
   files: z.array(fileOpSchema).describe('File operations to apply'),
 })
 

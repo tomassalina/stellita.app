@@ -23,7 +23,10 @@ import { applyFileOps, initialFileTree } from '../lib/project'
  */
 export interface Version {
   id: string
+  /** Short LLM-given name for this version. */
   label: string
+  /** Concise summary of the change (the assistant message). */
+  summary: string
   fileTree: FileTree
   createdAt: number
 }
@@ -60,7 +63,9 @@ interface ProjectsContextValue {
   createProject: (prompt: string) => string
   createFromFiles: (name: string, files: FileTree) => string
   send: (slug: string, text: string) => void
-  /** Restore a project's files to a previous checkpoint. */
+  /** Load a checkpoint's files non-destructively (keeps all versions). */
+  openVersion: (slug: string, versionId: string) => void
+  /** Restore to a checkpoint AND discard everything after it (destructive). */
   restoreVersion: (slug: string, versionId: string) => void
   /** Rename a project (display name; reflected in the sidebar). */
   renameProject: (slug: string, name: string) => void
@@ -90,9 +95,14 @@ function deriveName(prompt: string): string {
   return words.length > 48 ? words.slice(0, 48) : words
 }
 
-const newVersion = (label: string, fileTree: FileTree): Version => ({
+const newVersion = (
+  label: string,
+  summary: string,
+  fileTree: FileTree,
+): Version => ({
   id: crypto.randomUUID().slice(0, 8),
   label,
+  summary,
   fileTree,
   createdAt: Date.now(),
 })
@@ -136,6 +146,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       )
       const latest = ref.current[slug]
       const nextTree = applyFileOps(latest.fileTree, res.files)
+      const ops = res.files.map((f) => ({ op: f.op, path: f.path }))
+      const name = res.versionName?.trim() || 'Update'
       patch(slug, {
         fileTree: nextTree,
         savedFileTree: nextTree,
@@ -143,12 +155,17 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         generation: latest.generation + 1,
         messages: [
           ...latest.messages,
-          { role: 'assistant', content: res.message },
+          {
+            role: 'assistant',
+            content: res.message,
+            files: ops,
+            versionName: name,
+          },
         ],
         busy: false,
         activity: [],
         streamingMessage: '',
-        versions: [...latest.versions, newVersion(text, nextTree)],
+        versions: [...latest.versions, newVersion(name, res.message, nextTree)],
       })
     } catch (err) {
       patch(slug, {
@@ -200,12 +217,13 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       name,
       files,
       [{ role: 'assistant', content: `Loaded "${name}".` }],
-      [newVersion('Initial template', files)],
+      [newVersion('Initial template', `Loaded "${name}".`, files)],
     )
     return slug
   }
 
-  const restoreVersion = (slug: string, versionId: string) => {
+  /** Non-destructive: load a checkpoint's files but keep every version. */
+  const openVersion = (slug: string, versionId: string) => {
     const p = ref.current[slug]
     if (!p) return
     const v = p.versions.find((x) => x.id === versionId)
@@ -214,6 +232,22 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       fileTree: v.fileTree,
       savedFileTree: v.fileTree,
       dirty: false,
+      generation: p.generation + 1,
+    })
+  }
+
+  const restoreVersion = (slug: string, versionId: string) => {
+    const p = ref.current[slug]
+    if (!p) return
+    const idx = p.versions.findIndex((x) => x.id === versionId)
+    if (idx === -1) return
+    const v = p.versions[idx]
+    patch(slug, {
+      fileTree: v.fileTree,
+      savedFileTree: v.fileTree,
+      dirty: false,
+      // Destructive: drop every version after this one.
+      versions: p.versions.slice(0, idx + 1),
       generation: p.generation + 1,
       messages: [
         ...p.messages,
@@ -293,6 +327,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     createProject,
     createFromFiles,
     send: (slug, text) => void send(slug, text),
+    openVersion,
     restoreVersion,
     renameProject,
     syncFiles,

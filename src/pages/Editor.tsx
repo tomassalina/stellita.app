@@ -11,6 +11,7 @@ export function Editor() {
   const {
     getProject,
     send,
+    openVersion,
     restoreVersion,
     renameProject,
     syncFiles,
@@ -52,6 +53,7 @@ export function Editor() {
             fileTree={project.fileTree}
             projectName={project.slug}
             versions={project.versions}
+            onOpenVersion={(id) => openVersion(project.slug, id)}
             onRestore={(id) => restoreVersion(project.slug, id)}
             generation={project.generation}
             dirty={project.dirty}
