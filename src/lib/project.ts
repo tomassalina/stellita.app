@@ -263,6 +263,7 @@ const STELLAR_LIB = `import {
   Address,
   nativeToScVal,
   scValToNative,
+  xdr,
 } from '@stellar/stellar-sdk'
 import freighterApi from '@stellar/freighter-api'
 
@@ -294,6 +295,17 @@ export async function readContract(
 export const addr = (a: string) => new Address(a).toScVal()
 export const i128 = (n: bigint | number) => nativeToScVal(BigInt(n), { type: 'i128' })
 export const u32 = (n: number) => nativeToScVal(n, { type: 'u32' })
+export const u64 = (n: bigint | number) => nativeToScVal(BigInt(n), { type: 'u64' })
+/** Build a Vec<Address> ScVal — e.g. a Soroswap swap path [tokenIn, tokenOut]. */
+export const pathVec = (addresses: string[]) =>
+  xdr.ScVal.scvVec(addresses.map((a) => new Address(a).toScVal()))
+
+/** Fund an account with 10,000 test XLM from Stellar friendbot (testnet only).
+ *  A 400 means the account is already funded — fine, it already holds XLM. */
+export async function fundWithFriendbot(address: string): Promise<void> {
+  const r = await fetch('https://friendbot.stellar.org?addr=' + encodeURIComponent(address))
+  if (!r.ok && r.status !== 400) throw new Error('Friendbot failed (' + r.status + ')')
+}
 
 /** Token ids of an NFT collection currently owned by \`user\` (verified via
  *  owner_of). Candidate ids are gathered from recent contract events. */
@@ -386,6 +398,96 @@ export async function getTokenActivity(
     }
   }
   return out.reverse()
+}
+
+export type Swap = { paid: string; paidSym: string; received: string; recvSym: string; time: string; txHash: string }
+
+/** Recent swaps between tokens \`a\` and \`b\` by \`user\`. Per tx, the token sent
+ *  FROM the user is "paid" and the token sent TO the user is "received". Pass the
+ *  LESS-busy token as \`b\` (it anchors — the native XLM SAC is too busy to find
+ *  in an unfiltered page, so we topic-filter server-side by the user's address).
+ *  Matches both 3-topic (token) and 4-topic (classic SAC) transfer layouts.
+ *  Newest first. Window = the RPC's event retention (~7 days on testnet). */
+export async function getSwapHistory(
+  user: string,
+  a: { id: string; sym: string },
+  b: { id: string; sym: string },
+  decimals = 7,
+): Promise<Swap[]> {
+  const latest = await server.getLatestLedger()
+  const sym = xdr.ScVal.scvSymbol('transfer').toXDR('base64')
+  const meScv = new Address(user).toScVal().toXDR('base64')
+  // user as sender (idx1) or recipient (idx2), for 3- and 4-topic transfers.
+  const involvingMe = [
+    [sym, meScv, '*'], [sym, '*', meScv],
+    [sym, meScv, '*', '*'], [sym, '*', meScv, '*'],
+  ]
+  const fetchEvents = async (contractId: string) => {
+    for (const back of [120000, 17000, 2000]) {
+      try {
+        const res = await server.getEvents({
+          startLedger: Math.max(latest.sequence - back, 1),
+          filters: [{ type: 'contract', contractIds: [contractId], topics: involvingMe }],
+          limit: 200,
+        })
+        return res.events ?? []
+      } catch {}
+    }
+    return []
+  }
+  const amountOf = (ev: any): bigint => {
+    const raw = scValToNative(ev.value)
+    const x = raw && typeof raw === 'object' && 'amount' in raw ? (raw as any).amount : raw
+    return BigInt(x)
+  }
+  // role: 'out' = user sent it, 'in' = user received it.
+  const legsOf = (events: any[]) => {
+    const m = new Map<string, { amount: bigint; role: 'in' | 'out'; time: string }>()
+    for (const ev of events) {
+      try {
+        const topic = (ev.topic as any[]).map((t) => scValToNative(t))
+        if (String(topic[0]) !== 'transfer') continue
+        const role = String(topic[1]) === user ? 'out' : String(topic[2]) === user ? 'in' : null
+        if (!role) continue
+        m.set((ev as any).txHash ?? '', {
+          amount: amountOf(ev),
+          role,
+          time: (ev as any).ledgerClosedAt ?? '',
+        })
+      } catch {}
+    }
+    return m
+  }
+  const [aEvents, bEvents] = await Promise.all([fetchEvents(a.id), fetchEvents(b.id)])
+  const aLegs = legsOf(aEvents)
+  const bLegs = legsOf(bEvents)
+  const swaps: Swap[] = []
+  for (const [tx, bLeg] of bLegs) {
+    const aLeg = aLegs.get(tx)
+    if (bLeg.role === 'in') {
+      // received b => paid a
+      swaps.push({
+        paid: aLeg ? fromUnits(aLeg.amount, decimals) : '—',
+        paidSym: a.sym,
+        received: fromUnits(bLeg.amount, decimals),
+        recvSym: b.sym,
+        time: bLeg.time,
+        txHash: tx,
+      })
+    } else {
+      // sent b => received a
+      swaps.push({
+        paid: fromUnits(bLeg.amount, decimals),
+        paidSym: b.sym,
+        received: aLeg ? fromUnits(aLeg.amount, decimals) : '—',
+        recvSym: a.sym,
+        time: bLeg.time,
+        txHash: tx,
+      })
+    }
+  }
+  swaps.sort((x, y) => String(y.time).localeCompare(String(x.time)))
+  return swaps
 }
 
 /** Human amount -> base units (scaled by the token's decimals). */
@@ -547,22 +649,14 @@ import {
   toUnits,
   fromUnits,
 } from './stellar'
-
-const TOKEN_ID = '${DEMO_TOKEN_ID}'
-const VIEW_SOURCE = '${DEMO_TOKEN_VIEW_SOURCE}'
-const EXPLORER = 'https://stellar.expert/explorer/testnet/contract/' + TOKEN_ID
-const short = (a: string) => a.slice(0, 4) + '…' + a.slice(-4)
-const fmt = (n: string | number) => Number(n).toLocaleString()
-const ago = (iso: string) => {
-  if (!iso) return ''
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
-  if (s < 60) return s + 's ago'
-  if (s < 3600) return Math.floor(s / 60) + 'm ago'
-  if (s < 86400) return Math.floor(s / 3600) + 'h ago'
-  return Math.floor(s / 86400) + 'd ago'
-}
-
-type Toast = { kind: 'ok' | 'err'; text: string } | null
+import { TOKEN_ID, VIEW_SOURCE, EXPLORER, short, fmt } from './lib'
+import type { Toast } from './lib'
+import Header from './components/Header'
+import BalanceCard from './components/BalanceCard'
+import FaucetCard from './components/FaucetCard'
+import SendForm from './components/SendForm'
+import ActivityList from './components/ActivityList'
+import ToastBar from './components/Toast'
 
 export default function App() {
   const [meta, setMeta] = useState<{ name: string; symbol: string; supply: string } | null>(null)
@@ -599,8 +693,6 @@ export default function App() {
   const loadActivity = useCallback(async (a: string) => {
     try {
       const fetched = await getTokenActivity(TOKEN_ID, a, decimals)
-      // Merge: keep just-submitted (optimistic) entries whose event hasn't been
-      // indexed by the RPC yet, deduped by txHash, on top.
       setActivity((prev) => {
         const seen = new Set(fetched.map((m) => m.txHash).filter(Boolean))
         const pending = prev.filter((m) => m.txHash && !seen.has(m.txHash))
@@ -657,52 +749,23 @@ export default function App() {
     finally { setBusy('') }
   }
 
-  const field =
-    'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-slate-100 px-4 py-10 font-sans text-slate-900">
       <div className="mx-auto w-full max-w-md space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white shadow-sm">D</div>
-            <div>
-              <h1 className="text-[15px] font-semibold leading-none">{meta?.name ?? 'Demo'} Wallet</h1>
-              <p className="mt-0.5 text-[11px] text-slate-500">Stellar testnet</p>
-            </div>
-          </div>
-          {address ? (
-            <button onClick={disconnect} title="Disconnect"
-              className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:ring-red-300 hover:text-red-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 group-hover:bg-red-500" />
-              <span className="group-hover:hidden">{short(address)}</span>
-              <span className="hidden group-hover:inline">Disconnect</span>
-            </button>
-          ) : (
-            <button onClick={connect} disabled={busy === 'connect'}
-              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60">
-              {busy === 'connect' ? 'Connecting…' : 'Connect wallet'}
-            </button>
-          )}
-        </div>
-
-        {/* Balance hero */}
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-600 p-6 text-white shadow-lg shadow-indigo-200">
-          <p className="text-xs font-medium uppercase tracking-wide text-indigo-200">
-            {address ? 'Your balance' : 'Total supply'}
-          </p>
-          <p className="mt-1 text-4xl font-bold tracking-tight">
-            {address
-              ? balance === null ? '—' : fromUnits(balance, decimals)
-              : meta ? fromUnits(meta.supply, decimals) : '—'}
-            <span className="ml-2 text-lg font-medium text-indigo-200">{sym}</span>
-          </p>
-          {address && meta && (
-            <p className="mt-2 text-xs text-indigo-200">Total supply · {fromUnits(meta.supply, decimals)} {sym}</p>
-          )}
-        </div>
-
+        <Header
+          name={meta?.name ?? 'Demo'}
+          address={address}
+          busy={busy === 'connect'}
+          onConnect={connect}
+          onDisconnect={disconnect}
+        />
+        <BalanceCard
+          address={address}
+          balance={balance}
+          meta={meta}
+          decimals={decimals}
+          sym={sym}
+        />
         {!address ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
             <p className="text-sm text-slate-600">Connect your Freighter wallet to claim test tokens and send them.</p>
@@ -713,83 +776,226 @@ export default function App() {
           </div>
         ) : (
           <>
-            {/* Faucet */}
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div>
-                <p className="text-sm font-medium">Need tokens?</p>
-                <p className="text-xs text-slate-500">Claim 1,000 {sym} free on testnet.</p>
-              </div>
-              <button onClick={claim} disabled={busy === 'claim'}
-                className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60">
-                {busy === 'claim' ? 'Claiming…' : 'Claim'}
-              </button>
-            </div>
-
-            {/* Send */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="mb-3 text-sm font-semibold">Send {sym}</p>
-              <label className="mb-1 block text-xs font-medium text-slate-500">Recipient</label>
-              <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="G…" className={field} />
-              <label className="mb-1 mt-3 block text-xs font-medium text-slate-500">Amount</label>
-              <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" className={field} />
-              <button onClick={send} disabled={!to || busy === 'send'}
-                className="mt-4 w-full rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50">
-                {busy === 'send' ? 'Signing…' : 'Sign & send'}
-              </button>
-            </div>
-
-            {/* Activity */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="mb-3 text-sm font-semibold">Activity</p>
-              {activity.length === 0 ? (
-                <p className="text-xs text-slate-400">No movements yet. Claim or send to see them here.</p>
-              ) : (
-                <ul className="space-y-1">
-                  {activity.slice(0, 8).map((m, i) => (
-                    <li key={i}>
-                      <a
-                        href={m.txHash ? 'https://stellar.expert/explorer/testnet/tx/' + m.txHash : undefined}
-                        target="_blank" rel="noreferrer"
-                        className={'-mx-2 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition ' + (m.txHash ? 'hover:bg-slate-50' : '')}>
-                        <div className="flex items-center gap-2.5">
-                          <span className={'flex h-7 w-7 items-center justify-center rounded-full text-xs ' +
-                            (m.kind === 'out' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600')}>
-                            {m.kind === 'out' ? '↑' : '↓'}
-                          </span>
-                          <div>
-                            <p className="font-medium leading-none">
-                              {m.kind === 'out' ? 'Sent' : m.kind === 'mint' ? 'Claimed' : 'Received'}
-                              {m.txHash && <span className="ml-1 text-[10px] text-slate-400">↗</span>}
-                            </p>
-                            <p className="mt-0.5 text-[11px] text-slate-400">
-                              {m.counterparty ? short(m.counterparty) + ' · ' : ''}{ago(m.time)}
-                            </p>
-                          </div>
-                        </div>
-                        <span className={'font-semibold ' + (m.kind === 'out' ? 'text-rose-600' : 'text-emerald-600')}>
-                          {m.kind === 'out' ? '-' : '+'}{m.amount} {sym}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <FaucetCard sym={sym} busy={busy === 'claim'} onClaim={claim} />
+            <SendForm
+              sym={sym}
+              to={to}
+              amount={amount}
+              busy={busy === 'send'}
+              onToChange={setTo}
+              onAmountChange={setAmount}
+              onSend={send}
+            />
+            <ActivityList activity={activity} sym={sym} />
           </>
         )}
-
         <a href={EXPLORER} target="_blank" rel="noreferrer"
           className="block text-center text-xs text-slate-400 transition hover:text-slate-600">
           Live on Stellar testnet · contract {short(TOKEN_ID)} ↗
         </a>
       </div>
+      <ToastBar toast={toast} />
+    </div>
+  )
+}
+`
 
-      {toast && (
-        <div className={'fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg ' +
-          (toast.kind === 'ok' ? 'bg-slate-900 text-white' : 'bg-red-600 text-white')}>
-          {toast.text}
+const DEMO_TOKEN_LIB = `export const TOKEN_ID = '${DEMO_TOKEN_ID}'
+export const VIEW_SOURCE = '${DEMO_TOKEN_VIEW_SOURCE}'
+export const EXPLORER = 'https://stellar.expert/explorer/testnet/contract/' + TOKEN_ID
+export const short = (a: string) => a.slice(0, 4) + '…' + a.slice(-4)
+export const fmt = (n: string | number) => Number(n).toLocaleString()
+export const ago = (iso: string) => {
+  if (!iso) return ''
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (s < 60) return s + 's ago'
+  if (s < 3600) return Math.floor(s / 60) + 'm ago'
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago'
+  return Math.floor(s / 86400) + 'd ago'
+}
+export type Toast = { kind: 'ok' | 'err'; text: string } | null
+`
+
+const DEMO_TOKEN_HEADER = `import { short } from '../lib'
+
+interface Props {
+  name: string
+  address: string | null
+  busy: boolean
+  onConnect: () => void
+  onDisconnect: () => void
+}
+
+export default function Header({ name, address, busy, onConnect, onDisconnect }: Props) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white shadow-sm">D</div>
+        <div>
+          <h1 className="text-[15px] font-semibold leading-none">{name} Wallet</h1>
+          <p className="mt-0.5 text-[11px] text-slate-500">Stellar testnet</p>
         </div>
+      </div>
+      {address ? (
+        <button onClick={onDisconnect} title="Disconnect"
+          className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:ring-red-300 hover:text-red-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 group-hover:bg-red-500" />
+          <span className="group-hover:hidden">{short(address)}</span>
+          <span className="hidden group-hover:inline">Disconnect</span>
+        </button>
+      ) : (
+        <button onClick={onConnect} disabled={busy}
+          className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60">
+          {busy ? 'Connecting…' : 'Connect wallet'}
+        </button>
       )}
+    </div>
+  )
+}
+`
+
+const DEMO_TOKEN_BALANCE = `import { fromUnits } from '../stellar'
+
+interface Props {
+  address: string | null
+  balance: string | null
+  meta: { name: string; symbol: string; supply: string } | null
+  decimals: number
+  sym: string
+}
+
+export default function BalanceCard({ address, balance, meta, decimals, sym }: Props) {
+  return (
+    <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-600 p-6 text-white shadow-lg shadow-indigo-200">
+      <p className="text-xs font-medium uppercase tracking-wide text-indigo-200">
+        {address ? 'Your balance' : 'Total supply'}
+      </p>
+      <p className="mt-1 text-4xl font-bold tracking-tight">
+        {address
+          ? balance === null ? '—' : fromUnits(balance, decimals)
+          : meta ? fromUnits(meta.supply, decimals) : '—'}
+        <span className="ml-2 text-lg font-medium text-indigo-200">{sym}</span>
+      </p>
+      {address && meta && (
+        <p className="mt-2 text-xs text-indigo-200">Total supply · {fromUnits(meta.supply, decimals)} {sym}</p>
+      )}
+    </div>
+  )
+}
+`
+
+const DEMO_TOKEN_FAUCET = `interface Props {
+  sym: string
+  busy: boolean
+  onClaim: () => void
+}
+
+export default function FaucetCard({ sym, busy, onClaim }: Props) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div>
+        <p className="text-sm font-medium">Need tokens?</p>
+        <p className="text-xs text-slate-500">Claim 1,000 {sym} free on testnet.</p>
+      </div>
+      <button onClick={onClaim} disabled={busy}
+        className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60">
+        {busy ? 'Claiming…' : 'Claim'}
+      </button>
+    </div>
+  )
+}
+`
+
+const DEMO_TOKEN_SEND = `interface Props {
+  sym: string
+  to: string
+  amount: string
+  busy: boolean
+  onToChange: (v: string) => void
+  onAmountChange: (v: string) => void
+  onSend: () => void
+}
+
+const field =
+  'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+
+export default function SendForm({ sym, to, amount, busy, onToChange, onAmountChange, onSend }: Props) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="mb-3 text-sm font-semibold">Send {sym}</p>
+      <label className="mb-1 block text-xs font-medium text-slate-500">Recipient</label>
+      <input value={to} onChange={(e) => onToChange(e.target.value)} placeholder="G…" className={field} />
+      <label className="mb-1 mt-3 block text-xs font-medium text-slate-500">Amount</label>
+      <input value={amount} onChange={(e) => onAmountChange(e.target.value)} inputMode="numeric" className={field} />
+      <button onClick={onSend} disabled={!to || busy}
+        className="mt-4 w-full rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50">
+        {busy ? 'Signing…' : 'Sign & send'}
+      </button>
+    </div>
+  )
+}
+`
+
+const DEMO_TOKEN_ACTIVITY = `import { short, ago } from '../lib'
+
+interface Movement {
+  kind: string
+  counterparty: string
+  amount: string
+  time: string
+  txHash: string
+}
+
+export default function ActivityList({ activity, sym }: { activity: Movement[]; sym: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <p className="mb-3 text-sm font-semibold">Activity</p>
+      {activity.length === 0 ? (
+        <p className="text-xs text-slate-400">No movements yet. Claim or send to see them here.</p>
+      ) : (
+        <ul className="space-y-1">
+          {activity.slice(0, 8).map((m, i) => (
+            <li key={i}>
+              <a
+                href={m.txHash ? 'https://stellar.expert/explorer/testnet/tx/' + m.txHash : undefined}
+                target="_blank" rel="noreferrer"
+                className={'-mx-2 flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition ' + (m.txHash ? 'hover:bg-slate-50' : '')}>
+                <div className="flex items-center gap-2.5">
+                  <span className={'flex h-7 w-7 items-center justify-center rounded-full text-xs ' +
+                    (m.kind === 'out' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600')}>
+                    {m.kind === 'out' ? '↑' : '↓'}
+                  </span>
+                  <div>
+                    <p className="font-medium leading-none">
+                      {m.kind === 'out' ? 'Sent' : m.kind === 'mint' ? 'Claimed' : 'Received'}
+                      {m.txHash && <span className="ml-1 text-[10px] text-slate-400">↗</span>}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-slate-400">
+                      {m.counterparty ? short(m.counterparty) + ' · ' : ''}{ago(m.time)}
+                    </p>
+                  </div>
+                </div>
+                <span className={'font-semibold ' + (m.kind === 'out' ? 'text-rose-600' : 'text-emerald-600')}>
+                  {m.kind === 'out' ? '-' : '+'}{m.amount} {sym}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+`
+
+const DEMO_TOKEN_TOAST = `import type { Toast } from '../lib'
+
+export default function ToastBar({ toast }: { toast: Toast }) {
+  if (!toast) return null
+  return (
+    <div className={'fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg ' +
+      (toast.kind === 'ok' ? 'bg-slate-900 text-white' : 'bg-red-600 text-white')}>
+      {toast.text}
     </div>
   )
 }
@@ -809,20 +1015,13 @@ import {
   getConnectedAddress,
   mintNft,
   getOwnedNftIds,
-  addr,
 } from './stellar'
-
-const NFT_ID = '${DEMO_NFT_ID}'
-const VIEW_SOURCE = '${DEMO_NFT_VIEW_SOURCE}'
-const EXPLORER = 'https://stellar.expert/explorer/testnet/contract/' + NFT_ID
-const short = (a: string) => a.slice(0, 4) + '…' + a.slice(-4)
-// Deterministic neon art per token id.
-const art = (id: number) => {
-  const h = (id * 53) % 360
-  return 'conic-gradient(from ' + (id * 40) + 'deg, hsl(' + h + ' 90% 60%), hsl(' + ((h + 90) % 360) + ' 90% 55%), hsl(' + ((h + 200) % 360) + ' 90% 60%), hsl(' + h + ' 90% 60%))'
-}
-
-type Toast = { kind: 'ok' | 'err'; text: string } | null
+import { NFT_ID, VIEW_SOURCE, EXPLORER, short } from './lib'
+import type { Toast } from './lib'
+import Header from './components/Header'
+import MintCard from './components/MintCard'
+import Gallery from './components/Gallery'
+import ToastBar from './components/Toast'
 
 export default function App() {
   const [meta, setMeta] = useState<{ name: string; symbol: string } | null>(null)
@@ -848,7 +1047,6 @@ export default function App() {
     setLoadingOwned(true)
     try {
       const ids = await getOwnedNftIds(NFT_ID, a, VIEW_SOURCE)
-      // Merge (don't replace): a just-minted id stays even if events lag indexing.
       setOwned((prev) => Array.from(new Set([...prev, ...ids])).sort((x, y) => x - y))
     } catch {} finally {
       setLoadingOwned(false)
@@ -885,91 +1083,654 @@ export default function App() {
     <div className="min-h-screen bg-zinc-950 px-4 py-10 font-sans text-zinc-100"
       style={{ backgroundImage: 'radial-gradient(60rem 40rem at 50% -10%, rgba(139,92,246,0.18), transparent), radial-gradient(40rem 30rem at 90% 10%, rgba(34,211,238,0.12), transparent)' }}>
       <div className="mx-auto w-full max-w-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
-              {meta?.name ?? 'Demo NFTs'}
-            </h1>
-            <p className="mt-0.5 text-[11px] uppercase tracking-widest text-zinc-500">
-              {meta?.symbol ?? 'DNFT'} · Stellar testnet
-            </p>
-          </div>
-          {address ? (
-            <button onClick={disconnect} title="Disconnect"
-              className="group inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-xs font-medium text-zinc-300 backdrop-blur transition hover:border-rose-500/50 hover:text-rose-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 group-hover:bg-rose-400" />
-              <span className="group-hover:hidden">{short(address)}</span>
-              <span className="hidden group-hover:inline">Disconnect</span>
-            </button>
-          ) : (
-            <button onClick={connect} disabled={busy === 'connect'}
-              className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:opacity-90 disabled:opacity-60">
-              {busy === 'connect' ? 'Connecting…' : 'Connect wallet'}
-            </button>
-          )}
-        </div>
-
-        {/* Mint bar */}
-        <div className="mt-6 flex flex-col items-center gap-3 rounded-3xl border border-zinc-800 bg-zinc-900/40 p-8 text-center backdrop-blur">
-          <div className="h-20 w-20 rounded-2xl shadow-lg shadow-violet-500/20" style={{ background: art(owned.length + 1) }} />
-          <p className="text-sm text-zinc-400">
-            {address ? 'Mint a unique collectible to your wallet.' : 'Connect your wallet to mint collectibles.'}
-          </p>
-          <button
-            onClick={address ? mint : connect}
-            disabled={busy !== ''}
-            className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-zinc-950 transition hover:opacity-90 disabled:opacity-60">
-            {busy === 'mint' ? 'Minting…' : busy === 'connect' ? 'Connecting…' : address ? 'Mint NFT' : 'Connect Freighter'}
-          </button>
-          {address && (
-            <>
-              <p className="text-xs text-zinc-500">You own <span className="font-semibold text-zinc-300">{owned.length}</span> in this collection</p>
-              <p className="text-[10px] text-zinc-600">Gasless — the collection mints it to your wallet (no signature needed)</p>
-            </>
-          )}
-        </div>
-
-        {/* Gallery */}
-        {address && (
-          <div className="mt-6">
-            <p className="mb-3 text-sm font-semibold text-zinc-300">Your collection</p>
-            {loadingOwned && owned.length === 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="aspect-square animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/50" />
-                ))}
-              </div>
-            ) : owned.length === 0 ? (
-              <p className="text-xs text-zinc-500">No NFTs yet — mint your first above.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {owned.map((id) => (
-                  <div key={id} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50">
-                    <div className="aspect-square" style={{ background: art(id) }} />
-                    <div className="flex items-center justify-between px-3 py-2">
-                      <span className="text-sm font-semibold">#{id}</span>
-                      <span className="text-[10px] uppercase tracking-wider text-zinc-500">{meta?.symbol ?? 'DNFT'}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
+        <Header
+          name={meta?.name ?? 'Demo NFTs'}
+          symbol={meta?.symbol ?? 'DNFT'}
+          address={address}
+          busy={busy === 'connect'}
+          onConnect={connect}
+          onDisconnect={disconnect}
+        />
+        <MintCard
+          address={address}
+          owned={owned}
+          busy={busy}
+          onMint={mint}
+          onConnect={connect}
+        />
+        <Gallery owned={owned} loading={loadingOwned} symbol={meta?.symbol ?? 'DNFT'} />
         <a href={EXPLORER} target="_blank" rel="noreferrer"
           className="mt-6 block text-center text-xs text-zinc-600 transition hover:text-zinc-400">
           Live on Stellar testnet · contract {short(NFT_ID)} ↗
         </a>
       </div>
+      <ToastBar toast={toast} />
+    </div>
+  )
+}
+`
 
-      {toast && (
-        <div className={'fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg ' +
-          (toast.kind === 'ok' ? 'bg-gradient-to-r from-violet-500 to-cyan-400 text-zinc-950' : 'bg-rose-600 text-white')}>
-          {toast.text}
+const DEMO_NFT_LIB = `export const NFT_ID = '${DEMO_NFT_ID}'
+export const VIEW_SOURCE = '${DEMO_NFT_VIEW_SOURCE}'
+export const EXPLORER = 'https://stellar.expert/explorer/testnet/contract/' + NFT_ID
+export const short = (a: string) => a.slice(0, 4) + '…' + a.slice(-4)
+export const art = (id: number) => {
+  const h = (id * 53) % 360
+  return 'conic-gradient(from ' + (id * 40) + 'deg, hsl(' + h + ' 90% 60%), hsl(' + ((h + 90) % 360) + ' 90% 55%), hsl(' + ((h + 200) % 360) + ' 90% 60%), hsl(' + h + ' 90% 60%))'
+}
+export type Toast = { kind: 'ok' | 'err'; text: string } | null
+`
+
+const DEMO_NFT_HEADER = `import { short } from '../lib'
+
+interface Props {
+  name: string
+  symbol: string
+  address: string | null
+  busy: boolean
+  onConnect: () => void
+  onDisconnect: () => void
+}
+
+export default function Header({ name, symbol, address, busy, onConnect, onDisconnect }: Props) {
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+          {name}
+        </h1>
+        <p className="mt-0.5 text-[11px] uppercase tracking-widest text-zinc-500">
+          {symbol} · Stellar testnet
+        </p>
+      </div>
+      {address ? (
+        <button onClick={onDisconnect} title="Disconnect"
+          className="group inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-xs font-medium text-zinc-300 backdrop-blur transition hover:border-rose-500/50 hover:text-rose-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 group-hover:bg-rose-400" />
+          <span className="group-hover:hidden">{short(address)}</span>
+          <span className="hidden group-hover:inline">Disconnect</span>
+        </button>
+      ) : (
+        <button onClick={onConnect} disabled={busy}
+          className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:opacity-90 disabled:opacity-60">
+          {busy ? 'Connecting…' : 'Connect wallet'}
+        </button>
+      )}
+    </div>
+  )
+}
+`
+
+const DEMO_NFT_MINT = `import { art } from '../lib'
+
+interface Props {
+  address: string | null
+  owned: number[]
+  busy: '' | 'connect' | 'mint'
+  onMint: () => void
+  onConnect: () => void
+}
+
+export default function MintCard({ address, owned, busy, onMint, onConnect }: Props) {
+  return (
+    <div className="mt-6 flex flex-col items-center gap-3 rounded-3xl border border-zinc-800 bg-zinc-900/40 p-8 text-center backdrop-blur">
+      <div className="h-20 w-20 rounded-2xl shadow-lg shadow-violet-500/20" style={{ background: art(owned.length + 1) }} />
+      <p className="text-sm text-zinc-400">
+        {address ? 'Mint a unique collectible to your wallet.' : 'Connect your wallet to mint collectibles.'}
+      </p>
+      <button
+        onClick={address ? onMint : onConnect}
+        disabled={busy !== ''}
+        className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-zinc-950 transition hover:opacity-90 disabled:opacity-60">
+        {busy === 'mint' ? 'Minting…' : busy === 'connect' ? 'Connecting…' : address ? 'Mint NFT' : 'Connect Freighter'}
+      </button>
+      {address && (
+        <>
+          <p className="text-xs text-zinc-500">You own <span className="font-semibold text-zinc-300">{owned.length}</span> in this collection</p>
+          <p className="text-[10px] text-zinc-600">Gasless — the collection mints it to your wallet (no signature needed)</p>
+        </>
+      )}
+    </div>
+  )
+}
+`
+
+const DEMO_NFT_GALLERY = `import { art } from '../lib'
+
+interface Props {
+  owned: number[]
+  loading: boolean
+  symbol: string
+}
+
+export default function Gallery({ owned, loading, symbol }: Props) {
+  return (
+    <div className="mt-6">
+      <p className="mb-3 text-sm font-semibold text-zinc-300">Your collection</p>
+      {loading && owned.length === 0 ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="aspect-square animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/50" />
+          ))}
+        </div>
+      ) : owned.length === 0 ? (
+        <p className="text-xs text-zinc-500">No NFTs yet — mint your first above.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {owned.map((id) => (
+            <div key={id} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50">
+              <div className="aspect-square" style={{ background: art(id) }} />
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm font-semibold">#{id}</span>
+                <span className="text-[10px] uppercase tracking-wider text-zinc-500">{symbol}</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+    </div>
+  )
+}
+`
+
+const DEMO_NFT_TOAST = `import type { Toast } from '../lib'
+
+export default function ToastBar({ toast }: { toast: Toast }) {
+  if (!toast) return null
+  return (
+    <div className={'fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg ' +
+      (toast.kind === 'ok' ? 'bg-gradient-to-r from-violet-500 to-cyan-400 text-zinc-950' : 'bg-rose-600 text-white')}>
+      {toast.text}
+    </div>
+  )
+}
+`
+
+// --- Soroswap swap demo. Soroswap is an AMM/DEX already deployed on testnet
+// (we do NOT deploy it — the user's wallet swaps against the live Router). XLM
+// is the native asset SAC; USDC is a Soroswap testnet token. Pool has liquidity. ---
+const SOROSWAP_ROUTER = 'CCJUD55AG6W5HAI5LRVNKAE5WDP5XGZBUDS5WNTIVDU7O264UZZE7BRD'
+const SWAP_XLM = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'
+const SWAP_USDC = 'CB3TLW74NBIOT3BUWOZ3TUM6RFDF6A4GVIRUQRQZABG5KPOUL4JJOV2F'
+
+const DEMO_SWAP_LIB = `export const ROUTER = '${SOROSWAP_ROUTER}'
+export const XLM = '${SWAP_XLM}'
+export const USDC = '${SWAP_USDC}'
+export const VIEW_SOURCE = '${DEMO_TOKEN_VIEW_SOURCE}'
+export const DEC = 7
+export const EXPLORER = 'https://stellar.expert/explorer/testnet/contract/' + ROUTER
+export const TOKENS = {
+  XLM: { id: XLM, sym: 'XLM', badge: '✦', badgeBg: 'bg-slate-900' },
+  USDC: { id: USDC, sym: 'USDC', badge: '$', badgeBg: 'bg-blue-500' },
+}
+export const short = (a: string) => a.slice(0, 4) + '…' + a.slice(-4)
+export const fmt = (n: string | number) => {
+  const x = Number(n)
+  return x.toLocaleString('en-US', { maximumFractionDigits: x < 1 ? 6 : 2 })
+}
+export const ago = (iso: string) => {
+  if (!iso) return ''
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (s < 60) return s + 's ago'
+  if (s < 3600) return Math.floor(s / 60) + 'm ago'
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago'
+  return Math.floor(s / 86400) + 'd ago'
+}
+export type Toast = { kind: 'ok' | 'err'; text: string } | null
+`
+
+const DEMO_SWAP_HEADER = `import { short } from '../lib'
+
+interface Props {
+  address: string | null
+  busy: boolean
+  onConnect: () => void
+  onDisconnect: () => void
+}
+
+export default function Header({ address, busy, onConnect, onDisconnect }: Props) {
+  return (
+    <div className="mb-5 flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-base font-bold text-white shadow-sm">⇄</div>
+        <div>
+          <h1 className="text-[15px] font-bold leading-none tracking-tight">Stellar Swap</h1>
+          <p className="mt-0.5 text-[11px] text-slate-500">Powered by Soroswap · testnet</p>
+        </div>
+      </div>
+      {address ? (
+        <button onClick={onDisconnect} title="Disconnect"
+          className="group inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:text-red-600 hover:ring-red-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 group-hover:bg-red-500" />
+          <span className="group-hover:hidden">{short(address)}</span>
+          <span className="hidden group-hover:inline">Disconnect</span>
+        </button>
+      ) : (
+        <button onClick={onConnect} disabled={busy}
+          className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60">
+          {busy ? 'Connecting…' : 'Connect wallet'}
+        </button>
+      )}
+    </div>
+  )
+}
+`
+
+const DEMO_SWAP_TABS = `interface Props {
+  tab: 'swap' | 'history'
+  onChange: (t: 'swap' | 'history') => void
+}
+
+export default function Tabs({ tab, onChange }: Props) {
+  return (
+    <div className="mb-3 flex gap-1 rounded-full bg-slate-100 p-1">
+      {(['swap', 'history'] as const).map((t) => (
+        <button key={t} onClick={() => onChange(t)}
+          className={'flex-1 rounded-full py-1.5 text-xs font-semibold transition ' + (tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700')}>
+          {t === 'swap' ? 'Swap' : 'History'}
+        </button>
+      ))}
+    </div>
+  )
+}
+`
+
+const DEMO_SWAP_TOKENPANEL = `import { fmt } from '../lib'
+
+interface Token { sym: string; badge: string; badgeBg: string }
+
+interface Props {
+  label: string
+  token: Token
+  balance: number | null
+  address: string | null
+  editable: boolean
+  value?: string
+  onChange?: (v: string) => void
+  onMax?: () => void
+  maxDisabled?: boolean
+  insufficient?: boolean
+  quote?: number | null
+  quoting?: boolean
+}
+
+export default function TokenPanel(p: Props) {
+  return (
+    <div className={'rounded-2xl p-4 ' + (p.editable ? 'bg-slate-50' : 'bg-emerald-50/70')}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-slate-500">{p.label}</span>
+        {p.address && (
+          <span className="flex items-center gap-1.5 text-[11px] text-slate-400">
+            Balance: {p.balance === null ? '—' : fmt(p.balance)} {p.token.sym}
+            {p.editable && p.onMax && (
+              <button onClick={p.onMax} disabled={p.maxDisabled}
+                className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 transition hover:bg-emerald-200 disabled:opacity-40">
+                Max
+              </button>
+            )}
+          </span>
+        )}
+      </div>
+      <div className="mt-1.5 flex items-center justify-between gap-3">
+        {p.editable ? (
+          <input value={p.value} onChange={(e) => p.onChange && p.onChange(e.target.value)} inputMode="decimal"
+            className={'w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-slate-300 ' + (p.insufficient ? 'text-red-500' : 'text-slate-900')}
+            placeholder="0.0" />
+        ) : (
+          <span className="w-full truncate text-3xl font-semibold tracking-tight text-slate-900">
+            {p.quoting ? <span className="text-slate-300">…</span> : p.quote != null ? fmt(p.quote) : <span className="text-slate-300">0.0</span>}
+          </span>
+        )}
+        <div className="flex shrink-0 items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm ring-1 ring-slate-200">
+          <span className={'flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ' + p.token.badgeBg}>{p.token.badge}</span>
+          <span className="text-sm font-semibold">{p.token.sym}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+`
+
+const DEMO_SWAP_CARD = `import TokenPanel from './TokenPanel'
+import { fmt } from '../lib'
+
+interface Token { sym: string; badge: string; badgeBg: string }
+
+interface Props {
+  pay: Token
+  recv: Token
+  payBal: number | null
+  recvBal: number | null
+  address: string | null
+  amount: string
+  onAmount: (v: string) => void
+  onMax: () => void
+  maxDisabled: boolean
+  insufficient: boolean
+  quote: number | null
+  quoting: boolean
+  rate: number | null
+  amt: number
+  busy: string
+  onConnect: () => void
+  onSwap: () => void
+  onFlip: () => void
+  onFund: () => void
+}
+
+export default function SwapCard(p: Props) {
+  return (
+    <>
+      <div className="rounded-3xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-200/50">
+        <TokenPanel label="You pay" token={p.pay} balance={p.payBal} address={p.address}
+          editable value={p.amount} onChange={p.onAmount} onMax={p.onMax} maxDisabled={p.maxDisabled} insufficient={p.insufficient} />
+
+        <div className="relative flex h-0 items-center justify-center">
+          <button onClick={p.onFlip} title="Flip direction"
+            className="absolute -top-3 flex h-9 w-9 items-center justify-center rounded-xl border-4 border-white bg-emerald-500 text-base text-white shadow-sm transition hover:rotate-180 hover:bg-emerald-600">
+            ↓
+          </button>
+        </div>
+
+        <div className="mt-1.5">
+          <TokenPanel label="You receive" token={p.recv} balance={p.recvBal} address={p.address}
+            editable={false} quote={p.quote} quoting={p.quoting} />
+        </div>
+
+        {p.rate && (
+          <p className="px-2 pt-2.5 text-center text-[11px] text-slate-400">
+            1 {p.pay.sym} ≈ {fmt(p.rate)} {p.recv.sym} · 5% max slippage
+          </p>
+        )}
+
+        {!p.address ? (
+          <button onClick={p.onConnect} disabled={p.busy === 'connect'}
+            className="mt-3 w-full rounded-2xl bg-slate-900 px-3 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60">
+            {p.busy === 'connect' ? 'Connecting…' : 'Connect Freighter to swap'}
+          </button>
+        ) : (
+          <button onClick={p.onSwap}
+            disabled={p.busy === 'swap' || p.insufficient || !p.quote || !(p.amt > 0)}
+            className="mt-3 w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-3 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300">
+            {p.busy === 'swap' ? 'Swapping…' : p.insufficient ? 'Insufficient ' + p.pay.sym + ' balance' : !(p.amt > 0) ? 'Enter an amount' : 'Swap'}
+          </button>
+        )}
+      </div>
+
+      {p.address && (
+        <button onClick={p.onFund} disabled={p.busy === 'fund'}
+          className="mx-auto mt-3 block text-xs font-medium text-slate-400 transition hover:text-emerald-600 disabled:opacity-60">
+          {p.busy === 'fund' ? 'Funding…' : 'Need XLM? Get 10,000 free from friendbot →'}
+        </button>
+      )}
+    </>
+  )
+}
+`
+
+const DEMO_SWAP_HISTORY = `import { ago } from '../lib'
+
+interface Swap {
+  paid: string
+  paidSym: string
+  received: string
+  recvSym: string
+  time: string
+  txHash: string
+}
+
+interface Props {
+  history: Swap[]
+  loading: boolean
+  address: string | null
+}
+
+export default function HistoryList({ history, loading, address }: Props) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50">
+      <p className="mb-3 text-sm font-semibold">Your swaps</p>
+      {!address ? (
+        <p className="text-xs text-slate-400">Connect your wallet to see your swap history.</p>
+      ) : loading && history.length === 0 ? (
+        <p className="text-xs text-slate-400">Loading…</p>
+      ) : history.length === 0 ? (
+        <p className="text-xs text-slate-400">No swaps yet. Make your first swap!</p>
+      ) : (
+        <ul className="space-y-1">
+          {history.map((s, i) => (
+            <li key={s.txHash || i}>
+              <a href={s.txHash ? 'https://stellar.expert/explorer/testnet/tx/' + s.txHash : undefined}
+                target="_blank" rel="noreferrer"
+                className={'-mx-2 flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm transition ' + (s.txHash ? 'hover:bg-slate-50' : '')}>
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-xs text-emerald-600">⇄</span>
+                  <div>
+                    <p className="font-medium leading-none">
+                      {s.paid} {s.paidSym} → {s.received} {s.recvSym}
+                      {s.txHash && <span className="ml-1 text-[10px] text-slate-400">↗</span>}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-slate-400">{ago(s.time)}</p>
+                  </div>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+`
+
+const DEMO_SWAP_TOAST = `import type { Toast } from '../lib'
+
+export default function ToastBar({ toast }: { toast: Toast }) {
+  if (!toast) return null
+  return (
+    <div className={'fixed bottom-5 left-1/2 -translate-x-1/2 max-w-[90vw] truncate rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg ' +
+      (toast.kind === 'ok' ? 'bg-slate-900 text-white' : 'bg-red-600 text-white')}>
+      {toast.text}
+    </div>
+  )
+}
+`
+
+const DEMO_SWAP_APP = `import './polyfills'
+import { useCallback, useEffect, useState } from 'react'
+import {
+  readContract,
+  connectWallet,
+  getConnectedAddress,
+  invokeContract,
+  getSwapHistory,
+  fundWithFriendbot,
+  addr,
+  i128,
+  u64,
+  pathVec,
+  toUnits,
+} from './stellar'
+import { ROUTER, XLM, USDC, VIEW_SOURCE, DEC, TOKENS, EXPLORER, short, fmt } from './lib'
+import type { Toast } from './lib'
+import Header from './components/Header'
+import Tabs from './components/Tabs'
+import SwapCard from './components/SwapCard'
+import HistoryList from './components/HistoryList'
+import ToastBar from './components/Toast'
+
+export default function App() {
+  const [address, setAddress] = useState<string | null>(null)
+  const [xlmBal, setXlmBal] = useState<number | null>(null)
+  const [usdcBal, setUsdcBal] = useState<number | null>(null)
+  const [amount, setAmount] = useState('100')
+  const [quote, setQuote] = useState<number | null>(null)
+  const [quoting, setQuoting] = useState(false)
+  const [busy, setBusy] = useState<'' | 'connect' | 'fund' | 'swap'>('')
+  const [toast, setToast] = useState<Toast>(null)
+  const [dir, setDir] = useState<'XLM_USDC' | 'USDC_XLM'>('XLM_USDC')
+  const [tab, setTab] = useState<'swap' | 'history'>('swap')
+  const [history, setHistory] = useState<any[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+
+  const pay = dir === 'XLM_USDC' ? TOKENS.XLM : TOKENS.USDC
+  const recv = dir === 'XLM_USDC' ? TOKENS.USDC : TOKENS.XLM
+  const payBal = dir === 'XLM_USDC' ? xlmBal : usdcBal
+  const recvBal = dir === 'XLM_USDC' ? usdcBal : xlmBal
+
+  const flash = (t: Toast) => { setToast(t); if (t) setTimeout(() => setToast(null), 4500) }
+
+  const loadBalances = useCallback(async (a: string) => {
+    try {
+      const [x, u] = await Promise.all([
+        readContract(XLM, 'balance', VIEW_SOURCE, [addr(a)]),
+        readContract(USDC, 'balance', VIEW_SOURCE, [addr(a)]),
+      ])
+      setXlmBal(Number(BigInt(x)) / 10 ** DEC)
+      setUsdcBal(Number(BigInt(u)) / 10 ** DEC)
+    } catch (e: any) { flash({ kind: 'err', text: e.message }) }
+  }, [])
+
+  const loadHistory = useCallback(async (a: string) => {
+    setLoadingHistory(true)
+    try {
+      // Anchor on USDC (the quiet token); XLM is too busy to anchor on.
+      const fetched = await getSwapHistory(a, TOKENS.XLM, TOKENS.USDC, DEC)
+      setHistory((prev) => {
+        const seen = new Set(fetched.map((s) => s.txHash).filter(Boolean))
+        const pending = prev.filter((s) => s.txHash && !seen.has(s.txHash))
+        return [...pending, ...fetched]
+      })
+    } catch {} finally { setLoadingHistory(false) }
+  }, [])
+
+  useEffect(() => {
+    getConnectedAddress().then((a) => { if (a) { setAddress(a); loadBalances(a); loadHistory(a) } })
+  }, [loadBalances, loadHistory])
+
+  // Live quote (debounced): how much of recv \`amount\` of pay buys.
+  useEffect(() => {
+    const n = Number(amount)
+    if (!n || n <= 0) { setQuote(null); return }
+    let cancelled = false
+    setQuoting(true)
+    const t = setTimeout(async () => {
+      try {
+        const amounts = await readContract(ROUTER, 'router_get_amounts_out', VIEW_SOURCE, [
+          i128(toUnits(amount, DEC)),
+          pathVec([pay.id, recv.id]),
+        ])
+        const out = BigInt(amounts[amounts.length - 1])
+        if (!cancelled) setQuote(Number(out) / 10 ** DEC)
+      } catch { if (!cancelled) setQuote(null) }
+      finally { if (!cancelled) setQuoting(false) }
+    }, 400)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [amount, dir])
+
+  const connect = async () => {
+    setBusy('connect')
+    try { const a = await connectWallet(); setAddress(a); await loadBalances(a); loadHistory(a) }
+    catch (e: any) { flash({ kind: 'err', text: e.message }) }
+    finally { setBusy('') }
+  }
+
+  const disconnect = () => { setAddress(null); setXlmBal(null); setUsdcBal(null); setHistory([]) }
+
+  const flip = () => {
+    setAmount(quote != null ? String(quote) : '')
+    setDir((d) => (d === 'XLM_USDC' ? 'USDC_XLM' : 'XLM_USDC'))
+  }
+
+  const fund = async () => {
+    if (!address) return
+    setBusy('fund')
+    try {
+      await fundWithFriendbot(address)
+      flash({ kind: 'ok', text: 'Requested 10,000 test XLM 🚀' })
+      setTimeout(() => loadBalances(address), 2500)
+    } catch (e: any) { flash({ kind: 'err', text: e.message }) }
+    finally { setBusy('') }
+  }
+
+  const swap = async () => {
+    if (!address) return
+    setBusy('swap')
+    try {
+      const amtIn = toUnits(amount, DEC)
+      const amounts = await readContract(ROUTER, 'router_get_amounts_out', VIEW_SOURCE, [
+        i128(amtIn),
+        pathVec([pay.id, recv.id]),
+      ])
+      const out = BigInt(amounts[amounts.length - 1])
+      const minOut = (out * 95n) / 100n // 5% slippage (shared testnet pool drifts)
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 300)
+      const hash = await invokeContract(ROUTER, 'swap_exact_tokens_for_tokens', address, [
+        i128(amtIn),
+        i128(minOut),
+        pathVec([pay.id, recv.id]),
+        addr(address),
+        u64(deadline),
+      ])
+      const recvAmt = fmt(Number(out) / 10 ** DEC)
+      setHistory((prev) => [
+        { paid: fmt(amount), paidSym: pay.sym, received: recvAmt, recvSym: recv.sym, time: new Date().toISOString(), txHash: hash },
+        ...prev,
+      ])
+      flash({ kind: 'ok', text: 'Swapped ' + fmt(amount) + ' ' + pay.sym + ' → ' + recvAmt + ' ' + recv.sym + ' · ' + short(hash) })
+      await loadBalances(address)
+      loadHistory(address)
+    } catch (e: any) { flash({ kind: 'err', text: e.message }) }
+    finally { setBusy('') }
+  }
+
+  const amt = Number(amount) || 0
+  const rate = quote != null && amt > 0 ? quote / amt : null
+  const insufficient = address != null && payBal != null && amt > payBal
+  // When paying XLM, leave ~1 for the base reserve + tx fees; USDC needs no buffer.
+  const maxSpend =
+    payBal == null ? 0
+      : pay.sym === 'XLM' ? Math.max(0, Math.floor((payBal - 1) * 1e7) / 1e7)
+      : payBal
+  const setMax = () => setAmount(String(maxSpend))
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-emerald-50/40 px-4 py-10 font-sans text-slate-900">
+      <div className="mx-auto w-full max-w-md">
+        <Header address={address} busy={busy === 'connect'} onConnect={connect} onDisconnect={disconnect} />
+        <Tabs tab={tab} onChange={setTab} />
+        {tab === 'swap' ? (
+          <SwapCard
+            pay={pay}
+            recv={recv}
+            payBal={payBal}
+            recvBal={recvBal}
+            address={address}
+            amount={amount}
+            onAmount={setAmount}
+            onMax={setMax}
+            maxDisabled={!maxSpend}
+            insufficient={insufficient}
+            quote={quote}
+            quoting={quoting}
+            rate={rate}
+            amt={amt}
+            busy={busy}
+            onConnect={connect}
+            onSwap={swap}
+            onFlip={flip}
+            onFund={fund}
+          />
+        ) : (
+          <HistoryList history={history} loading={loadingHistory} address={address} />
+        )}
+
+        <a href={EXPLORER} target="_blank" rel="noreferrer"
+          className="mt-4 block text-center text-xs text-slate-400 transition hover:text-slate-600">
+          Soroswap Router on Stellar testnet · {short(ROUTER)} ↗
+        </a>
+      </div>
+
+      <ToastBar toast={toast} />
     </div>
   )
 }
@@ -1010,6 +1771,20 @@ const DEMO_NFT_CONTRACT: DeployedContract = {
   createdAt: 0,
 }
 
+/** Soroswap Router (an existing AMM on testnet) shown in the swap demo's
+ *  Contracts tab. We don't deploy it — the user's wallet swaps against it. */
+const SOROSWAP_CONTRACT: DeployedContract = {
+  manifestId: 'soroswap-router',
+  name: 'Soroswap Router',
+  category: 'dex',
+  contractId: SOROSWAP_ROUTER,
+  network: 'testnet',
+  explorerUrl:
+    'https://stellar.expert/explorer/testnet/contract/' + SOROSWAP_ROUTER,
+  config: { pair: 'XLM/USDC', kind: 'existing' },
+  createdAt: 0,
+}
+
 export const EXAMPLE_APPS: ExampleApp[] = [
   {
     label: 'Fungible token dashboard',
@@ -1017,6 +1792,13 @@ export const EXAMPLE_APPS: ExampleApp[] = [
       '/package.json': STELLAR_PACKAGE_JSON,
       '/polyfills.ts': POLYFILLS,
       '/stellar.ts': STELLAR_LIB,
+      '/lib.ts': DEMO_TOKEN_LIB,
+      '/components/Header.tsx': DEMO_TOKEN_HEADER,
+      '/components/BalanceCard.tsx': DEMO_TOKEN_BALANCE,
+      '/components/FaucetCard.tsx': DEMO_TOKEN_FAUCET,
+      '/components/SendForm.tsx': DEMO_TOKEN_SEND,
+      '/components/ActivityList.tsx': DEMO_TOKEN_ACTIVITY,
+      '/components/Toast.tsx': DEMO_TOKEN_TOAST,
       '/App.tsx': DEMO_TOKEN_APP,
     }),
     contracts: [DEMO_TOKEN_CONTRACT],
@@ -1027,8 +1809,30 @@ export const EXAMPLE_APPS: ExampleApp[] = [
       '/package.json': STELLAR_PACKAGE_JSON,
       '/polyfills.ts': POLYFILLS,
       '/stellar.ts': STELLAR_LIB,
+      '/lib.ts': DEMO_NFT_LIB,
+      '/components/Header.tsx': DEMO_NFT_HEADER,
+      '/components/MintCard.tsx': DEMO_NFT_MINT,
+      '/components/Gallery.tsx': DEMO_NFT_GALLERY,
+      '/components/Toast.tsx': DEMO_NFT_TOAST,
       '/App.tsx': DEMO_NFT_APP,
     }),
     contracts: [DEMO_NFT_CONTRACT],
+  },
+  {
+    label: 'Token swap (Soroswap)',
+    files: withBaseFiles({
+      '/package.json': STELLAR_PACKAGE_JSON,
+      '/polyfills.ts': POLYFILLS,
+      '/stellar.ts': STELLAR_LIB,
+      '/lib.ts': DEMO_SWAP_LIB,
+      '/components/Header.tsx': DEMO_SWAP_HEADER,
+      '/components/Tabs.tsx': DEMO_SWAP_TABS,
+      '/components/TokenPanel.tsx': DEMO_SWAP_TOKENPANEL,
+      '/components/SwapCard.tsx': DEMO_SWAP_CARD,
+      '/components/HistoryList.tsx': DEMO_SWAP_HISTORY,
+      '/components/Toast.tsx': DEMO_SWAP_TOAST,
+      '/App.tsx': DEMO_SWAP_APP,
+    }),
+    contracts: [SOROSWAP_CONTRACT],
   },
 ]
