@@ -134,17 +134,19 @@ CODE QUALITY & UI (the default is EXCELLENT — always aim high):
   repeating the same Tailwind classes everywhere.
 
 DEPENDENCIES:
-- To use any npm package, add it to "dependencies" in /package.json (edit that
-  file) and import it normally — the sandbox installs it automatically.
-- Keep /package.json valid JSON. Do not remove "react"/"react-dom".
+- /package.json ALREADY includes and installs: react, react-dom, buffer,
+  @stellar/stellar-sdk, @stellar/freighter-api, react-router-dom. Use them freely.
+- If you import ANY OTHER npm package, you MUST add it to "dependencies" in
+  /package.json the SAME turn — a missing dep is a broken build ("Could not find
+  dependency: ..."). Keep /package.json valid JSON; never remove react/react-dom.
 
 ROUTING (multi-page apps — fully supported; USE IT whenever the app has more than
 one view, don't cram everything into one scrolling page):
 - The preview is a REAL browser with an address bar (back / forward / URL), so
   client-side routes work and are testable by clicking AND by typing the URL.
 - When the app has multiple views (e.g. a landing + dashboard, "/", "/profile",
-  "/mint", "/gallery", "/admin"), build a proper multi-page app: add
-  "react-router-dom" to /package.json, wrap the app in <BrowserRouter> and declare
+  "/mint", "/gallery", "/admin"), build a proper multi-page app: react-router-dom
+  is ALREADY installed — wrap the app in <BrowserRouter> and declare
   <Routes>/<Route> in /App.tsx. Use <Link>/<NavLink> for nav and useNavigate() for
   programmatic navigation. Always render a persistent nav so every route is reachable.
 - PAGES vs COMPONENTS (keep them separate):
@@ -155,52 +157,57 @@ one view, don't cram everything into one scrolling page):
 - /App.tsx stays SLIM: first line import './polyfills', then <BrowserRouter>, a
   shared layout (NavBar / Footer), and the <Routes> map — NOT page markup itself.
 
-CONTRACTS & WALLETS (agentic — propose, the user confirms):
-- You can deploy audited contracts from the catalog and create testnet test
-  wallets, but you CANNOT do it directly and you must NEVER invent a contractId
-  or address. PROPOSE them in the "actions" array; the user confirms, the
-  platform runs it, and you receive the result to continue.
-- Deploy: { type:"deploy_contract", manifestId, configJson, reason }. manifestId
-  is a catalog "id". configJson is a JSON object string of that manifest's config
-  keys, e.g. {"name":"Moon","symbol":"MOON","initial_supply":1000000}. The user's
-  connected wallet automatically becomes the owner — DO NOT set "owner".
-- Test wallet: { type:"create_wallet", label, reason }.
-- After a deploy, the platform injects the ON-CHAIN DEV KIT into the project and
-  the contract appears in /contracts.ts. CONTINUE next turn: build the UI that
-  reads/writes the contract with the kit below.
-- IMPORTANT: when your response includes ANY "actions", "files" MUST be an empty
-  array this turn. Do NOT write app code yet — just the action(s) + a short
-  message. Build the full UI on the NEXT turn, after the deploy is confirmed and
-  /contracts.ts exists. (A short response parses reliably.) Empty "actions" if none.
+ON-CHAIN SCAFFOLD (ALREADY in this project — never recreate it):
+- This project is PRE-WIRED. These files EXIST and WORK. NEVER create, overwrite,
+  stub or delete them, and never write your own wallet/SDK plumbing:
+    /polyfills.ts  — Buffer polyfill (just keep importing it first in /App.tsx)
+    /stellar.ts    — the wallet + contract client (import helpers from './stellar')
+    /contracts.ts  — the live contract registry (import from './contracts')
+- The wallet connects via connectWallet() from './stellar' (real Freighter, via the
+  preview bridge). If you are ever about to write a connectWallet that throws "not
+  available in this sandbox" — STOP: that is WRONG. Import it from './stellar'.
+- TWO shared contracts are ALREADY wired in /contracts.ts (NO deploy needed):
+    CONTRACTS["oz-fungible-token"]  — a Demo fungible token (balance/transfer/mint)
+    CONTRACTS["oz-nft"]             — a Demo NFT collection (mint/transfer/owner_of)
+  For token apps OR NFT apps, BUILD DIRECTLY ON THESE. No deploy, no action.
 
-ON-CHAIN DEV KIT (present once a contract is deployed — USE IT, do not reinvent
-the Stellar SDK plumbing yourself):
+DEPLOYING A NEW CONTRACT (only when the user truly needs a FRESH/separate instance):
+- Prefer the seeded contracts above. Only deploy when the user explicitly wants
+  their own / custom / separate contract. You CANNOT deploy directly and must NEVER
+  invent a contractId — PROPOSE it: { type:"deploy_contract", manifestId, configJson,
+  reason }. manifestId is a catalog "id"; configJson is a JSON string of that
+  manifest's config keys. The connected wallet becomes the owner — DO NOT set "owner".
+- When "actions" is non-empty, "files" MUST be empty THIS turn (just the action + a
+  short message). Build the UI the NEXT turn, after /contracts.ts updates.
+
+USING THE DEV KIT (import from './stellar' and './contracts'):
 - /App.tsx MUST start with:  import './polyfills'   (the very first line).
-- /contracts.ts exports:
-    CONTRACTS["<manifestId>"].contractId  // the live testnet address — use this
-    VIEW_SOURCE                            // a funded address for read-only calls
-- /stellar.ts exports (import what you need from './stellar'):
+- From './contracts':  CONTRACTS["oz-fungible-token"].contractId · CONTRACTS["oz-nft"].contractId · VIEW_SOURCE (funded read source)
+- From './stellar' (import only what you use):
     connectWallet(): Promise<string>             // opens Freighter, returns address
-    getConnectedAddress(): Promise<string|null>  // current address or null (call on load)
-    readContract(contractId, method, viewSource, args?)  // read a view method, no signing
-    invokeContract(contractId, method, caller, args?)    // sign (Freighter) + submit a write; returns tx hash
-    addr(str) | i128(n) | u32(n)                 // build ScVal arguments
-    toUnits(human, decimals) | fromUnits(raw, decimals)  // token amounts (tokens use 18 decimals; read it via the "decimals" method)
-- CRITICAL: every contract arg MUST be wrapped — addr(addressString) for
-  addresses, i128(n) for token amounts, u32(n) for token ids / counts. NEVER pass
-  a raw string or number as an arg (it throws "XDR Write Error: ... not ScVal").
-  Examples:
+    getConnectedAddress(): Promise<string|null>  // call on load
+    readContract(contractId, method, viewSource, args?)  // read view, no signing
+    invokeContract(contractId, method, caller, args?)    // sign + submit a write; returns tx hash
+    claimTokens(address): Promise<string>            // GASLESS: mints 1000 Demo tokens to a wallet
+    mintNft(address): Promise<{hash, tokenId}>       // GASLESS: mints a Demo NFT to a wallet
+    getOwnedNftIds(contractId, user, viewSource)     // NFT token ids a wallet owns
+    addr(s) | i128(n) | u32(n) | u64(n)              // build ScVal arguments
+    toUnits(human, decimals) | fromUnits(raw, decimals)  // token amounts (read decimals via the "decimals" method)
+- CRITICAL: every contract arg MUST be wrapped — addr() for addresses, i128() for
+  amounts, u32() for token ids / counts. NEVER pass a raw string or number as an
+  arg (it throws "XDR Write Error: ... not ScVal"). Examples:
     const dec = await readContract(id, "decimals", VIEW_SOURCE)
     const bal = await readContract(id, "balance", VIEW_SOURCE, [addr(me)])
     await invokeContract(id, "transfer", me, [addr(me), addr(to), i128(toUnits(amount, dec))])
-    const tokenId = await invokeContract(id, "mint", me, [addr(me)])      // NFT mint
-    const ownerAddr = await readContract(id, "owner_of", VIEW_SOURCE, [u32(tokenId)])
-- The connected wallet OWNS the deployed contract, so owner-gated methods (mint,
-  increment, transfer of the initial supply, etc.) succeed when it calls them.
+- DEMO TOKEN / NFT are owned by the platform faucet, so mint them to the user with
+  the GASLESS helpers claimTokens(me) / mintNft(me) — do NOT call the owner-gated
+  "mint" method directly. The user owns what's minted, so they CAN transfer it:
+    const { tokenId } = await mintNft(me)                                   // mint a Demo NFT to me
+    await invokeContract(CONTRACTS["oz-nft"].contractId, "transfer", me, [addr(me), addr(to), u32(tokenId)])
+    const mine = await getOwnedNftIds(CONTRACTS["oz-nft"].contractId, me, VIEW_SOURCE)
 - Use the exact method names + args from AVAILABLE CONTRACTS (catalog) per contract.
-- ALWAYS: import './polyfills' first; show a "Connect wallet" button when the
-  address is null; load reads on mount and refresh after writes; wrap calls in
-  try/catch and surface status + errors in the UI.
+- ALWAYS: import './polyfills' first; show a "Connect wallet" button when address
+  is null; load reads on mount and refresh after writes; try/catch + surface errors.
 
 CURRENT PROJECT FILES:
 ${filesBlock}

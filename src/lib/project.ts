@@ -1,5 +1,6 @@
 import type { SandpackTheme } from '@codesandbox/sandpack-react'
 import type { FileOp, FileTree, DeployedContract } from '../../shared/types'
+import { buildContractsFile } from './contracts'
 
 /**
  * The user's generated app lives as an in-memory FileTree. Sandpack (classic
@@ -177,16 +178,52 @@ export function withBaseFiles(files: FileTree): FileTree {
   return { ...BASE_FILES, ...files }
 }
 
-/** The blank canvas every new project starts from. */
+/**
+ * The canvas every new project starts from. Pre-scaffolded with the FULL on-chain
+ * dev kit (/stellar.ts, /polyfills.ts, /contracts.ts) + npm deps, and wired to the
+ * shared Demo token + Demo NFT. So whatever the LLM builds on the FIRST prompt,
+ * the wallet + contract plumbing already exists — it never has to invent or stub
+ * /stellar.ts, never hits "module not found", and the wallet connects out of the
+ * box. The visible App is the empty state until the first prompt replaces it.
+ */
 export function initialFileTree(): FileTree {
-  return withBaseFiles({ '/App.tsx': STARTER_APP })
+  const tree = injectDappPlumbing(withBaseFiles({ '/App.tsx': STARTER_APP }))
+  tree['/contracts.ts'] = scaffoldContractsFile()
+  return tree
 }
 
-/** npm deps the on-chain dev kit needs (merged into the app's package.json). */
+/** A /contracts.ts pre-wired to the shared Demo token + NFT (identical format to
+ *  what the deploy flow emits), so reads/writes work with no deploy needed. */
+function scaffoldContractsFile(): string {
+  const seed = (
+    manifestId: string,
+    name: string,
+    category: string,
+    id: string,
+  ): DeployedContract => ({
+    manifestId,
+    name,
+    category,
+    contractId: id,
+    network: 'testnet',
+    explorerUrl: 'https://stellar.expert/explorer/testnet/contract/' + id,
+    deployer: DEMO_TOKEN_VIEW_SOURCE,
+    config: {},
+    createdAt: 0,
+  })
+  return buildContractsFile([
+    seed('oz-fungible-token', 'Demo Token', 'token', DEMO_TOKEN_ID),
+    seed('oz-nft', 'Demo NFTs', 'nft', DEMO_NFT_ID),
+  ])
+}
+
+/** npm deps the on-chain dev kit needs (merged into the app's package.json).
+ *  react-router-dom is included so multi-page apps never hit a missing dep. */
 const STELLAR_DEPS: Record<string, string> = {
   buffer: '^6.0.3',
   '@stellar/stellar-sdk': '^13.1.0',
   '@stellar/freighter-api': '^4.1.0',
+  'react-router-dom': '^6.30.0',
 }
 
 /**
