@@ -25,9 +25,13 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 export const DEMO_TOKEN_ID =
   'CD3U7DUAURF7JWNBVVGSF2KRRVNAMDA3QAFI2FCW77XJGVKLKC56736D'
 
-/** Mint `amount` Demo tokens to `to`. Returns the tx hash. */
-export async function mintDemoTokens(to: string, amount = 1000): Promise<string> {
-  const secret = process.env.FAUCET_SECRET
+/** Mint `amount` Demo tokens to `to`. Returns the tx hash. `secret` defaults to
+ *  process.env (Vercel); the dev middleware passes it from loadEnv explicitly. */
+export async function mintDemoTokens(
+  to: string,
+  amount = 1000,
+  secret = process.env.FAUCET_SECRET,
+): Promise<string> {
   if (!secret) throw new Error('FAUCET_SECRET not set')
   const server = new rpc.Server(RPC_URL)
   const owner = Keypair.fromSecret(secret)

@@ -75,7 +75,9 @@ function devApi(env: Record<string, string>): Plugin {
             const { mintDemoTokens } = await server.ssrLoadModule(
               '/api/_lib/faucet.ts',
             )
-            return send(200, { hash: await mintDemoTokens(address, amount ?? 1000) })
+            return send(200, {
+              hash: await mintDemoTokens(address, amount ?? 1000, env.FAUCET_SECRET),
+            })
           }
 
           if (req.url.startsWith('/api/deploy')) {
