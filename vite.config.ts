@@ -64,6 +64,20 @@ function devApi(env: Record<string, string>): Plugin {
             return send(404, { error: 'Not found' })
           }
 
+          if (req.url.startsWith('/api/faucet')) {
+            if (req.method !== 'POST') return send(405, { error: 'POST only' })
+            const fchunks: Buffer[] = []
+            for await (const c of req) fchunks.push(c as Buffer)
+            const { address, amount } = JSON.parse(
+              Buffer.concat(fchunks).toString('utf8'),
+            )
+            if (!address) return send(400, { error: 'address required' })
+            const { mintDemoTokens } = await server.ssrLoadModule(
+              '/api/_lib/faucet.ts',
+            )
+            return send(200, { hash: await mintDemoTokens(address, amount ?? 1000) })
+          }
+
           if (req.url.startsWith('/api/deploy')) {
             if (req.method !== 'POST') return send(405, { error: 'POST only' })
             const dchunks: Buffer[] = []

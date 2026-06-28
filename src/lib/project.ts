@@ -150,10 +150,11 @@ const g = globalThis as unknown as { Buffer?: unknown }
 if (!g.Buffer) g.Buffer = Buffer
 `
 
-/** Shared, pre-deployed Demo fungible token on testnet (1,000,000 supply). */
-const DEMO_TOKEN_ID = 'CCIIOMBLKX43M3D7NSSVZLJHOWXDA2F5WGVK6PDFB6V6BMOIN2NY6JWU'
+/** Shared, pre-deployed Demo fungible token on testnet. Its owner secret lives
+ *  in FAUCET_SECRET so /api/faucet can mint test tokens to connected wallets. */
+const DEMO_TOKEN_ID = 'CD3U7DUAURF7JWNBVVGSF2KRRVNAMDA3QAFI2FCW77XJGVKLKC56736D'
 const DEMO_TOKEN_VIEW_SOURCE =
-  'GBPEKQEYLWDZFY5KVIPZUPXRJPXLMX6CYSPRI6Z4WCDTOQQNELXZC7RO'
+  'GBDFURES5STGVPMBLLPK4DAL5H2LKRETUSWC7T2YSVJO7PGFKN57DIQS'
 
 const STELLAR_PACKAGE_JSON = `{
   "name": "stellar-dapp",
@@ -253,6 +254,19 @@ export async function getConnectedAddress(): Promise<string | null> {
   return a.address || null
 }
 
+/** Claim test tokens from the demo faucet (owner-minted by the host backend). */
+export async function claimTokens(address: string): Promise<string> {
+  if (inIframe) return bridge('faucet', { address })
+  const r = await fetch('/api/faucet', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ address }),
+  })
+  const data = await r.json()
+  if (!r.ok) throw new Error(data.error || 'Faucet failed')
+  return data.hash
+}
+
 async function signXDR(xdr: string, address: string): Promise<string> {
   if (inIframe) return bridge('signXDR', { xdr, address, networkPassphrase: NETWORK_PASSPHRASE })
   const s = await freighterApi.signTransaction(xdr, {
@@ -295,19 +309,24 @@ export async function invokeContract(
 `
 
 const DEMO_TOKEN_APP = `import './polyfills'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   readContract,
   connectWallet,
   getConnectedAddress,
   invokeContract,
+  claimTokens,
   addr,
   i128,
 } from './stellar'
 
 const TOKEN_ID = '${DEMO_TOKEN_ID}'
 const VIEW_SOURCE = '${DEMO_TOKEN_VIEW_SOURCE}'
-const short = (a: string) => a.slice(0, 6) + '…' + a.slice(-4)
+const EXPLORER = 'https://stellar.expert/explorer/testnet/contract/' + TOKEN_ID
+const short = (a: string) => a.slice(0, 4) + '…' + a.slice(-4)
+const fmt = (n: string | number) => Number(n).toLocaleString()
+
+type Toast = { kind: 'ok' | 'err'; text: string } | null
 
 export default function App() {
   const [meta, setMeta] = useState<{ name: string; symbol: string; supply: string } | null>(null)
@@ -315,10 +334,13 @@ export default function App() {
   const [balance, setBalance] = useState<string | null>(null)
   const [to, setTo] = useState('')
   const [amount, setAmount] = useState('100')
-  const [status, setStatus] = useState('')
-  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState<'' | 'connect' | 'claim' | 'send'>('')
+  const [toast, setToast] = useState<Toast>(null)
 
-  const loadMeta = async () => {
+  const sym = meta?.symbol ?? 'DEMO'
+  const flash = (t: Toast) => { setToast(t); if (t) setTimeout(() => setToast(null), 4000) }
+
+  const loadMeta = useCallback(async () => {
     try {
       const [name, symbol, supply] = await Promise.all([
         readContract(TOKEN_ID, 'name', VIEW_SOURCE),
@@ -326,92 +348,141 @@ export default function App() {
         readContract(TOKEN_ID, 'total_supply', VIEW_SOURCE),
       ])
       setMeta({ name, symbol, supply: String(supply) })
-    } catch (e: any) { setErr(e.message) }
-  }
+    } catch (e: any) { flash({ kind: 'err', text: e.message }) }
+  }, [])
 
-  const loadBalance = async (a: string) => {
-    try {
-      const b = await readContract(TOKEN_ID, 'balance', VIEW_SOURCE, [addr(a)])
-      setBalance(String(b))
-    } catch (e: any) { setErr(e.message) }
-  }
+  const loadBalance = useCallback(async (a: string) => {
+    try { setBalance(String(await readContract(TOKEN_ID, 'balance', VIEW_SOURCE, [addr(a)]))) }
+    catch (e: any) { flash({ kind: 'err', text: e.message }) }
+  }, [])
 
   useEffect(() => {
     loadMeta()
     getConnectedAddress().then((a) => { if (a) { setAddress(a); loadBalance(a) } })
-  }, [])
+  }, [loadMeta, loadBalance])
 
   const connect = async () => {
-    setErr('')
-    try {
-      const a = await connectWallet()
-      setAddress(a)
-      loadBalance(a)
-    } catch (e: any) { setErr(e.message) }
+    setBusy('connect')
+    try { const a = await connectWallet(); setAddress(a); await loadBalance(a) }
+    catch (e: any) { flash({ kind: 'err', text: e.message }) }
+    finally { setBusy('') }
   }
 
-  const transfer = async () => {
+  const claim = async () => {
     if (!address) return
-    setStatus('Signing…'); setErr('')
+    setBusy('claim')
     try {
-      const hash = await invokeContract(TOKEN_ID, 'transfer', address, [
-        addr(address), addr(to), i128(amount),
-      ])
-      setStatus('Sent: ' + hash.slice(0, 8) + '…')
-      loadBalance(address)
-    } catch (e: any) { setStatus(''); setErr(e.message) }
+      await claimTokens(address)
+      await Promise.all([loadBalance(address), loadMeta()])
+      flash({ kind: 'ok', text: 'Claimed 1,000 ' + sym + ' 🎉' })
+    } catch (e: any) { flash({ kind: 'err', text: e.message }) }
+    finally { setBusy('') }
   }
+
+  const send = async () => {
+    if (!address || !to) return
+    setBusy('send')
+    try {
+      const hash = await invokeContract(TOKEN_ID, 'transfer', address, [addr(address), addr(to), i128(amount)])
+      await loadBalance(address)
+      setTo('')
+      flash({ kind: 'ok', text: 'Sent ' + fmt(amount) + ' ' + sym + ' · ' + short(hash) })
+    } catch (e: any) { flash({ kind: 'err', text: e.message }) }
+    finally { setBusy('') }
+  }
+
+  const field =
+    'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100">
-      <div className="mx-auto max-w-md space-y-5">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-slate-50 to-slate-100 px-4 py-10 font-sans text-slate-900">
+      <div className="mx-auto w-full max-w-md space-y-4">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Token Dashboard</h1>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white shadow-sm">D</div>
+            <div>
+              <h1 className="text-[15px] font-semibold leading-none">{meta?.name ?? 'Demo'} Wallet</h1>
+              <p className="mt-0.5 text-[11px] text-slate-500">Stellar testnet</p>
+            </div>
+          </div>
           {address ? (
-            <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-300">
-              {short(address)}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{short(address)}
             </span>
           ) : (
-            <button onClick={connect} className="rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-black hover:bg-slate-200">
-              Connect Freighter
+            <button onClick={connect} disabled={busy === 'connect'}
+              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60">
+              {busy === 'connect' ? 'Connecting…' : 'Connect wallet'}
             </button>
           )}
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-          {meta ? (
-            <>
-              <p className="text-2xl font-bold">{meta.name} <span className="text-slate-500">{meta.symbol}</span></p>
-              <p className="mt-1 text-sm text-slate-400">Total supply</p>
-              <p className="text-lg font-semibold">{Number(meta.supply).toLocaleString()}</p>
-            </>
-          ) : <p className="text-sm text-slate-400">Reading contract…</p>}
-          {address && (
-            <div className="mt-4 border-t border-slate-800 pt-4">
-              <p className="text-sm text-slate-400">Your balance</p>
-              <p className="text-lg font-semibold">{balance === null ? '…' : Number(balance).toLocaleString()} {meta?.symbol}</p>
-            </div>
+        {/* Balance hero */}
+        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-600 p-6 text-white shadow-lg shadow-indigo-200">
+          <p className="text-xs font-medium uppercase tracking-wide text-indigo-200">
+            {address ? 'Your balance' : 'Total supply'}
+          </p>
+          <p className="mt-1 text-4xl font-bold tracking-tight">
+            {address
+              ? balance === null ? '—' : fmt(balance)
+              : meta ? fmt(meta.supply) : '—'}
+            <span className="ml-2 text-lg font-medium text-indigo-200">{sym}</span>
+          </p>
+          {address && meta && (
+            <p className="mt-2 text-xs text-indigo-200">Total supply · {fmt(meta.supply)} {sym}</p>
           )}
         </div>
 
-        {address && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <p className="mb-3 text-sm font-medium">Transfer tokens</p>
-            <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="Recipient G…"
-              className="mb-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-slate-500" />
-            <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" inputMode="numeric"
-              className="mb-3 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-slate-500" />
-            <button onClick={transfer} disabled={!to}
-              className="w-full rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-black hover:bg-emerald-400 disabled:opacity-50">
-              Sign & transfer
+        {!address ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
+            <p className="text-sm text-slate-600">Connect your Freighter wallet to claim test tokens and send them.</p>
+            <button onClick={connect} disabled={busy === 'connect'}
+              className="mt-3 w-full rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60">
+              {busy === 'connect' ? 'Connecting…' : 'Connect Freighter'}
             </button>
-            {status && <p className="mt-2 text-xs text-emerald-400">{status}</p>}
           </div>
+        ) : (
+          <>
+            {/* Faucet */}
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div>
+                <p className="text-sm font-medium">Need tokens?</p>
+                <p className="text-xs text-slate-500">Claim 1,000 {sym} free on testnet.</p>
+              </div>
+              <button onClick={claim} disabled={busy === 'claim'}
+                className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-60">
+                {busy === 'claim' ? 'Claiming…' : 'Claim'}
+              </button>
+            </div>
+
+            {/* Send */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="mb-3 text-sm font-semibold">Send {sym}</p>
+              <label className="mb-1 block text-xs font-medium text-slate-500">Recipient</label>
+              <input value={to} onChange={(e) => setTo(e.target.value)} placeholder="G…" className={field} />
+              <label className="mb-1 mt-3 block text-xs font-medium text-slate-500">Amount</label>
+              <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" className={field} />
+              <button onClick={send} disabled={!to || busy === 'send'}
+                className="mt-4 w-full rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50">
+                {busy === 'send' ? 'Signing…' : 'Sign & send'}
+              </button>
+            </div>
+          </>
         )}
 
-        {err && <p className="rounded-lg border border-red-900 bg-red-950/50 px-3 py-2 text-xs text-red-300">{err}</p>}
-        <p className="text-center text-xs text-slate-600">Live on Stellar testnet · contract {short(TOKEN_ID)}</p>
+        <a href={EXPLORER} target="_blank" rel="noreferrer"
+          className="block text-center text-xs text-slate-400 transition hover:text-slate-600">
+          Live on Stellar testnet · contract {short(TOKEN_ID)} ↗
+        </a>
       </div>
+
+      {toast && (
+        <div className={'fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg ' +
+          (toast.kind === 'ok' ? 'bg-slate-900 text-white' : 'bg-red-600 text-white')}>
+          {toast.text}
+        </div>
+      )}
     </div>
   )
 }
