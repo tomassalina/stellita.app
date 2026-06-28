@@ -14,6 +14,7 @@ import {
   BASE_FEE,
   Address,
   nativeToScVal,
+  scValToNative,
   rpc,
 } from '@stellar/stellar-sdk'
 
@@ -40,6 +41,24 @@ export async function mintDemoTokens(
   const owner = Keypair.fromSecret(secret)
   const contract = new Contract(DEMO_TOKEN_ID)
 
+  // Faucet rule: one claim per wallet — only mint when the balance is back to 0.
+  const balTx = new TransactionBuilder(await server.getAccount(owner.publicKey()), {
+    fee: BASE_FEE,
+    networkPassphrase: PASSPHRASE,
+  })
+    .addOperation(contract.call('balance', new Address(to).toScVal()))
+    .setTimeout(30)
+    .build()
+  const sim = await server.simulateTransaction(balTx)
+  if (!rpc.Api.isSimulationError(sim) && sim.result) {
+    const current = scValToNative(sim.result.retval) as bigint
+    if (current > 0n) {
+      throw new Error(
+        'Faucet limit: this wallet already holds DEMO. Send your balance to 0 to claim again.',
+      )
+    }
+  }
+
   for (let i = 0; ; i++) {
     const source = await server.getAccount(owner.publicKey())
     const tx = new TransactionBuilder(source, {
@@ -62,7 +81,7 @@ export async function mintDemoTokens(
       const sent = await server.sendTransaction(prepared)
       if (sent.status === 'ERROR') throw new Error(JSON.stringify(sent.errorResult))
       let got = await server.getTransaction(sent.hash)
-      for (let j = 0; got.status === 'NOT_FOUND' && j < 20; j++) {
+      for (let j = 0; got.status === 'NOT_FOUND' && j < 30; j++) {
         await sleep(1000)
         got = await server.getTransaction(sent.hash)
       }
