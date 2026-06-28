@@ -295,16 +295,31 @@ export async function invokeContract(
     .build()
   const prepared = await server.prepareTransaction(tx)
   const signedXdr = await signXDR(prepared.toXDR(), caller)
-  const txObj = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE)
-  const sent = await server.sendTransaction(txObj as any)
-  if (sent.status === 'ERROR') throw new Error(JSON.stringify(sent.errorResult))
-  let got = await server.getTransaction(sent.hash)
-  for (let i = 0; got.status === 'NOT_FOUND' && i < 20; i++) {
-    await new Promise((r) => setTimeout(r, 1000))
-    got = await server.getTransaction(sent.hash)
+  // Submit the signed XDR via the raw Soroban JSON-RPC. We deliberately do NOT
+  // re-parse the signed envelope client-side (TransactionBuilder.fromXDR), which
+  // can throw "Bad union switch" when the signer emits a newer XDR than this
+  // SDK build understands. The RPC parses it server-side.
+  const rpcCall = async (m: string, params: any) => {
+    const res = await fetch(RPC_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: m, params }),
+    })
+    const j = await res.json()
+    if (j.error) throw new Error(j.error.message || JSON.stringify(j.error))
+    return j.result
   }
-  if (got.status !== 'SUCCESS') throw new Error('Transaction ' + got.status)
-  return sent.hash
+  const sent = await rpcCall('sendTransaction', { transaction: signedXdr })
+  if (sent.status === 'ERROR') {
+    throw new Error('Submit failed: ' + (sent.errorResultXdr || JSON.stringify(sent)))
+  }
+  for (let i = 0; i < 25; i++) {
+    const got = await rpcCall('getTransaction', { hash: sent.hash })
+    if (got.status === 'SUCCESS') return sent.hash
+    if (got.status === 'FAILED') throw new Error('Transaction failed on-chain')
+    await new Promise((r) => setTimeout(r, 1000))
+  }
+  throw new Error('Transaction timed out')
 }
 `
 
