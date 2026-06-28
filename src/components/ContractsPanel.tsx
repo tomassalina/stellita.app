@@ -34,7 +34,6 @@ import {
 } from 'lucide-react'
 import type { Manifest, DeployedContract } from '../../shared/types'
 import { fetchCatalog, deployContract } from '../lib/contracts'
-import { useWallet } from '../wallet/store'
 
 const CATEGORY_ICON: Record<string, typeof Coins> = {
   token: Coins,
@@ -53,9 +52,11 @@ function CategoryIcon({ category, className }: { category: string; className?: s
  *   modal: a catalog with 3 modes — Configurable (live), Existing, Custom.
  */
 export function ContractsPanel({
+  projectId,
   contracts,
   onDeployed,
 }: {
+  projectId: string
   contracts: DeployedContract[]
   onDeployed: (c: DeployedContract) => void
 }) {
@@ -120,6 +121,7 @@ export function ContractsPanel({
 
       {catalogOpen && (
         <AddContractModal
+          projectId={projectId}
           onClose={() => setCatalogOpen(false)}
           onDeployed={(c) => {
             onDeployed(c)
@@ -389,9 +391,11 @@ function ProtocolLogo({
 }
 
 function AddContractModal({
+  projectId,
   onClose,
   onDeployed,
 }: {
+  projectId: string
   onClose: () => void
   onDeployed: (c: DeployedContract) => void
 }) {
@@ -421,6 +425,7 @@ function AddContractModal({
       >
         {picked ? (
           <ConfigForm
+            projectId={projectId}
             manifest={picked}
             onBack={() => setPicked(null)}
             onDeployed={onDeployed}
@@ -532,15 +537,16 @@ function AddContractModal({
 }
 
 function ConfigForm({
+  projectId,
   manifest,
   onBack,
   onDeployed,
 }: {
+  projectId: string
   manifest: Manifest
   onBack: () => void
   onDeployed: (c: DeployedContract) => void
 }) {
-  const { ensureWallet } = useWallet()
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       manifest.config.map((f) => [f.key, f.default != null ? String(f.default) : '']),
@@ -559,8 +565,7 @@ function ConfigForm({
         const raw = values[f.key]
         config[f.key] = f.type === 'number' ? Number(raw) : raw
       }
-      const w = await ensureWallet()
-      const res = await deployContract(manifest.id, config, w.secret)
+      const res = await deployContract(projectId, manifest.id, config)
       onDeployed({
         manifestId: manifest.id,
         name: manifest.name,

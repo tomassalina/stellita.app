@@ -589,13 +589,7 @@ export async function getConnectedAddress(): Promise<string | null> {
 /** Claim test tokens from the demo faucet (owner-minted by the host backend). */
 export async function claimTokens(address: string): Promise<string> {
   if (inIframe) return bridge('faucet', { address })
-  const r = await fetch('/api/faucet', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ address }),
-  })
-  const data = await r.json()
-  if (!r.ok) throw new Error(data.error || 'Faucet failed')
+  const data = await claimFaucet(address)
   return data.hash
 }
 
@@ -604,14 +598,8 @@ export async function mintNft(
   address: string,
 ): Promise<{ hash: string; tokenId: number | null }> {
   if (inIframe) return JSON.parse(await bridge('mintNft', { address }))
-  const r = await fetch('/api/mint-nft', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ address }),
-  })
-  const data = await r.json()
-  if (!r.ok) throw new Error(data.error || 'Mint failed')
-  return data
+  const data = await mintDemoNft(address)
+  return { hash: data.hash, tokenId: data.tokenId != null ? Number(data.tokenId) : null }
 }
 
 async function signXDR(xdr: string, address: string): Promise<string> {

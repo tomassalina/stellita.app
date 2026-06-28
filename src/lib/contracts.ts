@@ -1,35 +1,26 @@
-import type {
-  Manifest,
-  DeployResult,
-  DeployedContract,
-} from '../../shared/types'
+import type { DeployedContract } from '../../shared/types'
+import {
+  fetchCatalog as _fetchCatalog,
+  deployContract as _deployContract,
+} from './backend'
+
+export type { Manifest, DeployResult } from '../../shared/types'
 
 /** Fetch the deployable + connectable contract catalog. */
-export async function fetchCatalog(): Promise<Manifest[]> {
-  const res = await fetch('/api/contracts')
-  if (!res.ok) throw new Error(`Catalog failed: ${res.status}`)
-  const data = (await res.json()) as { contracts: Manifest[] }
-  return data.contracts
+export function fetchCatalog() {
+  return _fetchCatalog()
 }
 
 /** Deploy a configurable contract to testnet with the given config.
  *  When deployerSecret is provided the user's wallet signs the deploy and
  *  becomes the contract owner — the {{deployer}} sentinel resolves to it. */
-export async function deployContract(
+export function deployContract(
+  projectId: string,
   manifestId: string,
   config: Record<string, unknown>,
   deployerSecret?: string,
-): Promise<DeployResult> {
-  const body: Record<string, unknown> = { manifestId, config }
-  if (deployerSecret) body.deployerSecret = deployerSecret
-  const res = await fetch('/api/deploy', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error ?? `Deploy failed: ${res.status}`)
-  return data as DeployResult
+) {
+  return _deployContract(projectId, manifestId, config, deployerSecret)
 }
 
 /**

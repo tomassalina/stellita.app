@@ -10,12 +10,8 @@ import {
   type ReactNode,
 } from 'react'
 import type { ChatMessage, FileTree, DeployedContract } from '../../shared/types'
-import {
-  sendChat,
-  parseActivity,
-  parseStreamingMessage,
-  type Activity,
-} from '../lib/api'
+import type { Activity } from '../lib/api'
+import { parseActivity, parseStreamingMessage } from '../lib/api'
 import { applyFileOps, initialFileTree, injectDappPlumbing } from '../lib/project'
 import { buildContractsFile, CONTRACTS_FILE } from '../lib/contracts'
 import { api, streamChat, RateLimitError } from '../lib/backend'
@@ -174,7 +170,6 @@ type BackendProject = {
 }
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
-  const sessionId = useRef(uid()).current
   const ref = useRef<Record<string, ProjectState>>({})
   // `ref` holds the latest map for synchronous async reads; `snapshot` mirrors
   // it for rendering so we never read a ref during render.
@@ -362,66 +357,12 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
             : {}),
         })
       } else {
-        // Fallback: use local vite dev API (old path)
-        const res = await sendChat(
-          { sessionId, fileTree: p.fileTree, history, userMessage: text },
-          (acc) => {
-            accumulated = acc
-            patch(slug, {
-              activity: parseActivity(acc),
-              streamingMessage: parseStreamingMessage(acc),
-            })
-          },
-        )
-        const latest = ref.current[slug]
-        const nextTree = applyFileOps(latest.fileTree, res.files)
-        const ops = res.files.map((f) => ({ op: f.op, path: f.path }))
-        const name = res.versionName?.trim() || 'Update'
-        let added = 0
-        let removed = 0
-        for (const f of res.files) {
-          if (f.op === 'delete') {
-            removed += (latest.fileTree[f.path]?.split('\n').length ?? 0)
-            continue
-          }
-          const oldLines = new Set((latest.fileTree[f.path] ?? '').split('\n'))
-          const newLines = new Set(f.content.split('\n'))
-          for (const l of f.content.split('\n')) if (!oldLines.has(l)) added++
-          for (const l of (latest.fileTree[f.path] ?? '').split('\n'))
-            if (!newLines.has(l)) removed++
-        }
-        const changedFiles = res.files.length > 0
-        const assistantMsg: ChatMessage = {
-          role: 'assistant',
-          content: res.message,
-          files: ops,
-          versionName: changedFiles ? name : undefined,
-          createdAt: now(),
-          stats: {
-            durationMs: now() - startedAt,
-            filesModified: res.files.length,
-            added,
-            removed,
-          },
-          ...(res.actions?.length ? { actions: res.actions } : {}),
-        }
+        // No backend id yet — nothing to stream; surface a clear error.
         patch(slug, {
           busy: false,
           activity: [],
           streamingMessage: '',
-          messages: [...latest.messages, assistantMsg],
-          ...(changedFiles
-            ? {
-                fileTree: nextTree,
-                savedFileTree: nextTree,
-                dirty: false,
-                generation: latest.generation + 1,
-                versions: [
-                  ...latest.versions,
-                  newVersion(name, res.message, nextTree),
-                ],
-              }
-            : {}),
+          error: 'Project is not yet saved to the backend. Please wait a moment and try again.',
         })
       }
     } catch (err) {

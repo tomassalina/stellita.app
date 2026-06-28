@@ -431,6 +431,7 @@ function PreviewBar({
  */
 export function WorkspacePanel({
   fileTree,
+  projectId = '',
   projectName = 'stellar-app',
   versions = [],
   onOpenVersion,
@@ -448,6 +449,7 @@ export function WorkspacePanel({
   onDeployed,
 }: {
   fileTree: FileTree
+  projectId?: string
   projectName?: string
   versions?: Version[]
   onOpenVersion?: (id: string) => void
@@ -574,7 +576,7 @@ export function WorkspacePanel({
         </div>
 
         {tab === 'contracts' && (
-          <ContractsPanel contracts={contracts} onDeployed={onDeployed ?? (() => {})} />
+          <ContractsPanel projectId={projectId} contracts={contracts} onDeployed={onDeployed ?? (() => {})} />
         )}
 
 

@@ -1,3 +1,5 @@
+import type { Manifest, DeployResult } from '../../shared/types'
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8787'
 
 export class ApiError extends Error {
@@ -36,6 +38,36 @@ export async function api<T = unknown>(path: string, init?: RequestInit): Promis
     throw new ApiError(res.status, message)
   }
   return res.json() as Promise<T>
+}
+
+export function fetchCatalog(): Promise<Manifest[]> {
+  return api<Manifest[]>('/api/contracts')
+}
+
+export function deployContract(
+  projectId: string,
+  manifestId: string,
+  config: Record<string, unknown>,
+  deployerSecret?: string,
+): Promise<DeployResult> {
+  return api<DeployResult>(`/api/projects/${projectId}/deploy`, {
+    method: 'POST',
+    body: JSON.stringify({ manifestId, config, deployerSecret }),
+  })
+}
+
+export function claimFaucet(address: string, amount?: number): Promise<{ hash: string }> {
+  return api<{ hash: string }>('/api/faucet', {
+    method: 'POST',
+    body: JSON.stringify({ address, amount }),
+  })
+}
+
+export function mintDemoNft(address: string): Promise<{ hash: string; tokenId: string }> {
+  return api<{ hash: string; tokenId: string }>('/api/mint-nft', {
+    method: 'POST',
+    body: JSON.stringify({ address }),
+  })
 }
 
 export async function streamChat(

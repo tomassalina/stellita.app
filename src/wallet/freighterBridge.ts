@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import freighterApi from '@stellar/freighter-api'
+import { claimFaucet, mintDemoNft } from '../lib/backend'
 
 /** Prompt Freighter (top-level, where it's injected) and return the address.
  *  Used at deploy time so the deployed contract is owned by the user's wallet —
@@ -51,23 +52,10 @@ export function useFreighterBridge() {
           if (signed.error) throw new Error(String(signed.error))
           reply({ result: signed.signedTxXdr })
         } else if (msg.method === 'faucet') {
-          // Same-origin call to our backend (the preview can't reach /api itself).
-          const r = await fetch('/api/faucet', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ address: msg.address }),
-          })
-          const data = await r.json()
-          if (!r.ok) throw new Error(data.error ?? 'Faucet failed')
+          const data = await claimFaucet(msg.address as string)
           reply({ result: data.hash })
         } else if (msg.method === 'mintNft') {
-          const r = await fetch('/api/mint-nft', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ address: msg.address }),
-          })
-          const data = await r.json()
-          if (!r.ok) throw new Error(data.error ?? 'Mint failed')
+          const data = await mintDemoNft(msg.address as string)
           reply({ result: JSON.stringify(data) })
         } else {
           reply({ error: `Unknown wallet method: ${msg.method}` })
