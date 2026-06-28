@@ -128,6 +128,35 @@ export function initialFileTree(): FileTree {
   return withBaseFiles({ '/App.tsx': STARTER_APP })
 }
 
+/** npm deps the on-chain dev kit needs (merged into the app's package.json). */
+const STELLAR_DEPS: Record<string, string> = {
+  buffer: '^6.0.3',
+  '@stellar/stellar-sdk': '^13.1.0',
+  '@stellar/freighter-api': '^4.1.0',
+}
+
+/**
+ * Inject the on-chain dev kit into a project so the GENERATED app (not just the
+ * pre-built demos) can read/write contracts with a wallet: the reusable Stellar
+ * client (/stellar.ts), the Buffer polyfill (/polyfills.ts), and the npm deps.
+ * Called when a contract is deployed/connected. Idempotent.
+ */
+export function injectDappPlumbing(tree: FileTree): FileTree {
+  const next: FileTree = {
+    ...tree,
+    '/stellar.ts': STELLAR_LIB,
+    '/polyfills.ts': POLYFILLS,
+  }
+  try {
+    const pkg = JSON.parse(tree['/package.json'] ?? PACKAGE_JSON)
+    pkg.dependencies = { ...(pkg.dependencies ?? {}), ...STELLAR_DEPS }
+    next['/package.json'] = JSON.stringify(pkg, null, 2) + '\n'
+  } catch {
+    next['/package.json'] = STELLAR_PACKAGE_JSON
+  }
+  return next
+}
+
 /** Apply the LLM's file operations to the tree (PLAN.md §5.4). Pure. */
 export function applyFileOps(tree: FileTree, ops: FileOp[]): FileTree {
   const next = { ...tree }

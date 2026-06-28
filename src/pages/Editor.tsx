@@ -5,6 +5,7 @@ import { ChatPanel } from '../components/ChatPanel'
 import { WorkspacePanel } from '../components/WorkspacePanel'
 import { useProjects } from '../projects/store'
 import { useWallet } from '../wallet/store'
+import { getFreighterAddress } from '../wallet/freighterBridge'
 import { fetchCatalog, deployContract } from '../lib/contracts'
 import type { AgentAction } from '../../shared/types'
 
@@ -50,6 +51,14 @@ export function Editor() {
           config = JSON.parse(action.configJson) as Record<string, unknown>
         } catch {
           // malformed configJson — treat as empty config
+        }
+        // Own the contract with the user's Freighter wallet (the one the
+        // generated app connects), so its owner-gated writes succeed. The
+        // managed wallet still pays + signs the deploy. Fall back silently.
+        try {
+          config.owner = await getFreighterAddress()
+        } catch {
+          // no Freighter → owner stays the managed deployer ({{deployer}})
         }
         const r = await deployContract(action.manifestId, config, w.secret)
         const m = catalog.find((x) => x.id === action.manifestId)

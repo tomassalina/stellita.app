@@ -15,7 +15,7 @@ import {
   parseStreamingMessage,
   type Activity,
 } from '../lib/api'
-import { applyFileOps, initialFileTree } from '../lib/project'
+import { applyFileOps, initialFileTree, injectDappPlumbing } from '../lib/project'
 import { buildContractsFile, CONTRACTS_FILE } from '../lib/contracts'
 
 /**
@@ -391,8 +391,10 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     const p = ref.current[slug]
     if (!p) return
     const contracts = [...p.contracts, contract]
+    // Inject the on-chain dev kit (Stellar client + polyfill + deps) so the
+    // generated app can actually read/write this contract with a wallet.
     const next = {
-      ...p.fileTree,
+      ...injectDappPlumbing(p.fileTree),
       [CONTRACTS_FILE]: buildContractsFile(contracts),
     }
     patch(slug, {

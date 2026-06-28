@@ -1,6 +1,17 @@
 import { useEffect } from 'react'
 import freighterApi from '@stellar/freighter-api'
 
+/** Prompt Freighter (top-level, where it's injected) and return the address.
+ *  Used at deploy time so the deployed contract is owned by the user's wallet —
+ *  the same wallet the generated app connects — so its writes/admin succeed. */
+export async function getFreighterAddress(): Promise<string> {
+  const c = await freighterApi.isConnected()
+  if (!c.isConnected) throw new Error('Freighter is not installed')
+  const a = await freighterApi.requestAccess()
+  if (a.error) throw new Error(String(a.error))
+  return a.address
+}
+
 /**
  * Freighter wallet bridge (host side).
  *

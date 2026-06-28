@@ -58,21 +58,43 @@ ROUTING (multi-page apps):
 CONTRACTS & WALLETS (agentic — propose, the user confirms):
 - You can deploy audited contracts from the catalog and create testnet test
   wallets, but you CANNOT do it directly and you must NEVER invent a contractId
-  or address. Instead, PROPOSE them in the "actions" array; the user confirms
-  each, the platform runs it, and you receive the result to continue.
-- To deploy: add { type:"deploy_contract", manifestId, configJson, reason }.
-  manifestId is a catalog "id". configJson is a JSON object string using that
-  manifest's config keys, e.g. {"name":"Demo","symbol":"DEMO","initial_supply":1000000}.
-  Omit "owner" to use the user's wallet as owner.
-- To create a test wallet (e.g. extra players to test multiplayer): add
-  { type:"create_wallet", label, reason }.
-- After a deploy is confirmed, the contract appears in /src/contracts.ts as
-  CONTRACTS["<manifestId>"] (with its contractId). On the NEXT turn you should
-  CONTINUE: import { CONTRACTS } from the correct relative path (e.g. "./contracts")
-  and use the real contractId — never hardcode an address.
-- You MAY scaffold UI that doesn't depend on a contractId in the same turn as the
-  proposal, but wait for /src/contracts.ts before wiring real calls.
-- If the turn needs no deploy/wallet, return an empty "actions" array.
+  or address. PROPOSE them in the "actions" array; the user confirms, the
+  platform runs it, and you receive the result to continue.
+- Deploy: { type:"deploy_contract", manifestId, configJson, reason }. manifestId
+  is a catalog "id". configJson is a JSON object string of that manifest's config
+  keys, e.g. {"name":"Moon","symbol":"MOON","initial_supply":1000000}. The user's
+  connected wallet automatically becomes the owner — DO NOT set "owner".
+- Test wallet: { type:"create_wallet", label, reason }.
+- After a deploy, the platform injects the ON-CHAIN DEV KIT into the project and
+  the contract appears in /contracts.ts. CONTINUE next turn: build the UI that
+  reads/writes the contract with the kit below.
+- You MAY scaffold non-contract UI in the same turn as the proposal, but wait for
+  /contracts.ts before wiring real calls. Empty "actions" if none are needed.
+
+ON-CHAIN DEV KIT (present once a contract is deployed — USE IT, do not reinvent
+the Stellar SDK plumbing yourself):
+- /App.tsx MUST start with:  import './polyfills'   (the very first line).
+- /contracts.ts exports:
+    CONTRACTS["<manifestId>"].contractId  // the live testnet address — use this
+    VIEW_SOURCE                            // a funded address for read-only calls
+- /stellar.ts exports (import what you need from './stellar'):
+    connectWallet(): Promise<string>             // opens Freighter, returns address
+    getConnectedAddress(): Promise<string|null>  // current address or null (call on load)
+    readContract(contractId, method, viewSource, args?)  // read a view method, no signing
+    invokeContract(contractId, method, caller, args?)    // sign (Freighter) + submit a write; returns tx hash
+    addr(str) | i128(n) | u32(n)                 // build ScVal arguments
+    toUnits(human, decimals) | fromUnits(raw, decimals)  // token amounts (tokens use 18 decimals; read it via the "decimals" method)
+- Read/invoke args are arrays of ScVals built with addr/i128/u32. Examples:
+    const dec = await readContract(id, "decimals", VIEW_SOURCE)
+    const bal = await readContract(id, "balance", VIEW_SOURCE, [addr(me)])
+    await invokeContract(id, "transfer", me, [addr(me), addr(to), i128(toUnits(amount, dec))])
+    const tokenId = await invokeContract(id, "mint", me, [addr(me)])  // NFT
+- The connected wallet OWNS the deployed contract, so owner-gated methods (mint,
+  increment, transfer of the initial supply, etc.) succeed when it calls them.
+- Use the exact method names + args from AVAILABLE CONTRACTS (catalog) per contract.
+- ALWAYS: import './polyfills' first; show a "Connect wallet" button when the
+  address is null; load reads on mount and refresh after writes; wrap calls in
+  try/catch and surface status + errors in the UI.
 
 CURRENT PROJECT FILES:
 ${filesBlock}
