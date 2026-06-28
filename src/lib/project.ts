@@ -745,6 +745,7 @@ export default function App() {
   const [meta, setMeta] = useState<{ name: string; symbol: string } | null>(null)
   const [address, setAddress] = useState<string | null>(null)
   const [owned, setOwned] = useState<number[]>([])
+  const [loadingOwned, setLoadingOwned] = useState(false)
   const [busy, setBusy] = useState<'' | 'connect' | 'mint'>('')
   const [toast, setToast] = useState<Toast>(null)
 
@@ -761,11 +762,14 @@ export default function App() {
   }, [])
 
   const loadOwned = useCallback(async (a: string) => {
+    setLoadingOwned(true)
     try {
       const ids = await getOwnedNftIds(NFT_ID, a, VIEW_SOURCE)
       // Merge (don't replace): a just-minted id stays even if events lag indexing.
       setOwned((prev) => Array.from(new Set([...prev, ...ids])).sort((x, y) => x - y))
-    } catch {}
+    } catch {} finally {
+      setLoadingOwned(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -847,7 +851,13 @@ export default function App() {
         {address && (
           <div className="mt-6">
             <p className="mb-3 text-sm font-semibold text-zinc-300">Your collection</p>
-            {owned.length === 0 ? (
+            {loadingOwned && owned.length === 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="aspect-square animate-pulse rounded-2xl border border-zinc-800 bg-zinc-900/50" />
+                ))}
+              </div>
+            ) : owned.length === 0 ? (
               <p className="text-xs text-zinc-500">No NFTs yet — mint your first above.</p>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
