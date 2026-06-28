@@ -21,19 +21,25 @@ export function PromptInput({
   const [mention, setMention] = useState<{ query: string; start: number } | null>(
     null,
   )
+  const [activeIndex, setActiveIndex] = useState(0)
+  // When the user navigates away (←/→), keep the menu closed until a fresh '@'.
+  const dismissedRef = useRef(false)
 
   const matches =
     mention && filePaths.length
       ? filePaths
           .filter((p) => p.toLowerCase().includes(mention.query.toLowerCase()))
-          .slice(0, 6)
+          .slice(0, 8)
       : []
 
   const refreshMention = (text: string, caret: number) => {
+    if (text[caret - 1] === '@') dismissedRef.current = false // fresh '@'
+    if (dismissedRef.current) return setMention(null)
     const before = text.slice(0, caret)
     const at = before.lastIndexOf('@')
     if (at === -1 || /\s/.test(before.slice(at + 1))) return setMention(null)
     setMention({ query: before.slice(at + 1), start: at })
+    setActiveIndex(0)
   }
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -58,14 +64,28 @@ export function PromptInput({
     onSend(text)
   }
 
+  const menuOpen = mention !== null && matches.length > 0
+
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (mention && matches.length) {
-      if (e.key === 'Enter' || e.key === 'Tab') {
+    if (menuOpen) {
+      if (e.key === 'ArrowDown') {
         e.preventDefault()
-        insertMention(matches[0])
+        setActiveIndex((i) => Math.min(i + 1, matches.length - 1))
         return
       }
-      if (e.key === 'Escape') {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setActiveIndex((i) => Math.max(i - 1, 0))
+        return
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        insertMention(matches[Math.min(activeIndex, matches.length - 1)])
+        return
+      }
+      if (e.key === 'Escape' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        // Navigating away closes the menu until the user types '@' again.
+        dismissedRef.current = true
         setMention(null)
         return
       }
@@ -78,14 +98,15 @@ export function PromptInput({
 
   return (
     <div className="relative rounded-xl border border-zinc-800 bg-zinc-950 p-2 transition-colors focus-within:border-zinc-700">
-      {mention && matches.length > 0 && (
+      {menuOpen && (
         <div className="absolute bottom-full left-0 z-50 mb-1 w-72 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-1 shadow-xl">
           {matches.map((p, i) => (
             <button
               key={p}
               onClick={() => insertMention(p)}
+              onMouseEnter={() => setActiveIndex(i)}
               className={`block w-full truncate rounded-md px-2.5 py-1.5 text-left text-[12.5px] ${
-                i === 0
+                i === activeIndex
                   ? 'bg-zinc-900 text-zinc-100'
                   : 'text-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-200'
               }`}

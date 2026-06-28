@@ -163,31 +163,39 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         for (const l of (latest.fileTree[f.path] ?? '').split('\n'))
           if (!newLines.has(l)) removed++
       }
+      const changedFiles = res.files.length > 0
+      const assistantMsg = {
+        role: 'assistant' as const,
+        content: res.message,
+        files: ops,
+        versionName: changedFiles ? name : undefined,
+        createdAt: Date.now(),
+        stats: {
+          durationMs: Date.now() - startedAt,
+          filesModified: res.files.length,
+          added,
+          removed,
+        },
+      }
       patch(slug, {
-        fileTree: nextTree,
-        savedFileTree: nextTree,
-        dirty: false,
-        generation: latest.generation + 1,
-        messages: [
-          ...latest.messages,
-          {
-            role: 'assistant',
-            content: res.message,
-            files: ops,
-            versionName: name,
-            createdAt: Date.now(),
-            stats: {
-              durationMs: Date.now() - startedAt,
-              filesModified: res.files.length,
-              added,
-              removed,
-            },
-          },
-        ],
         busy: false,
         activity: [],
         streamingMessage: '',
-        versions: [...latest.versions, newVersion(name, res.message, nextTree)],
+        messages: [...latest.messages, assistantMsg],
+        // Only touch files / bump generation / snapshot a version when the turn
+        // actually changed files. A plain Q&A leaves the preview untouched.
+        ...(changedFiles
+          ? {
+              fileTree: nextTree,
+              savedFileTree: nextTree,
+              dirty: false,
+              generation: latest.generation + 1,
+              versions: [
+                ...latest.versions,
+                newVersion(name, res.message, nextTree),
+              ],
+            }
+          : {}),
       })
     } catch (err) {
       patch(slug, {
