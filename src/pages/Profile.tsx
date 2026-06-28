@@ -21,7 +21,7 @@ export function Profile() {
     <main className="flex flex-1 justify-center overflow-y-auto px-6 py-12">
       <div className="w-full max-w-xl">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/15 text-lg font-semibold text-violet-300">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FDDA24]/12 text-lg font-semibold text-[#FDDA24]">
             {initials(user.name)}
           </div>
           <div>

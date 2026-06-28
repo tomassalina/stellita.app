@@ -1,13 +1,12 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/geist';
-@import '@fontsource-variable/geist-mono';
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* v0 / Vercel aesthetic: near-black, hairline borders, lots of air, no chrome.
-   Geist is the default typeface. The user's generated app styles itself inside
-   Sandpack and is unaffected by anything here. */
+/* XLM Code aesthetic: near-black, hairline borders, #FDDA24 accent. Space Grotesk
+   is the default typeface, JetBrains Mono for code. The user's generated app
+   styles itself inside Sandpack and is unaffected by anything here. */
 @theme {
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 :root {

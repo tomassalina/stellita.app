@@ -122,7 +122,7 @@ function CodeBar({
           title={editable ? 'Switch to read-only' : 'Edit file'}
           className={`rounded-md border p-1.5 transition-colors ${
             editable
-              ? 'border-violet-500/50 text-violet-300'
+              ? 'border-[#FDDA24]/50 text-[#FDDA24]'
               : 'border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'
           }`}
         >

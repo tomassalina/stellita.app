@@ -143,7 +143,7 @@ export function SharedProject() {
         </Panel>
         <PanelResizeHandle
           onDragging={setResizing}
-          className="w-1 bg-zinc-800 transition-colors hover:bg-violet-500/60 data-[resize-handle-state=drag]:bg-violet-500"
+          className="w-1 bg-zinc-800 transition-colors hover:bg-[#FDDA24]/60 data-[resize-handle-state=drag]:bg-[#FDDA24]"
         />
         <Panel defaultSize={66} minSize={30}>
           <div className={`h-full ${resizing ? 'pointer-events-none' : ''}`}>

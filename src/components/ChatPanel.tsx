@@ -152,7 +152,7 @@ function CloneCta({
       <button
         onClick={() => void handle()}
         disabled={cloning}
-        className="flex items-center justify-center gap-2 rounded-lg bg-violet-600 py-2.5 text-[14px] font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
+        className="flex items-center justify-center gap-2 rounded-lg bg-[#FDDA24] py-2.5 text-[14px] font-medium text-black transition-colors hover:bg-[#ffe23f] disabled:opacity-50"
       >
         {cloning ? (
           <>

@@ -548,7 +548,7 @@ function AddContractModal({
                           </span>
                           <span
                             className={`absolute right-2.5 top-2.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                              live ? 'bg-violet-500/15 text-violet-300' : 'bg-zinc-800 text-zinc-400'
+                              live ? 'bg-[#FDDA24]/12 text-[#FDDA24]' : 'bg-zinc-800 text-zinc-400'
                             }`}
                           >
                             {live ? 'Connect' : 'Soon'}

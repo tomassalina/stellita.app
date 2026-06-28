@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate, useParams } from 'react-router-dom'
 import {
   Plus,
   MessageSquare,
-  Sparkles,
+  LayoutGrid,
   User,
   LogOut,
   PanelLeft,
@@ -12,6 +12,7 @@ import {
 import { useProjects } from '../projects/store'
 import { useAuth } from '../auth/store'
 import { DeleteProjectModal } from './DeleteProjectModal'
+import { Logo, Wordmark } from '../marketing/shared'
 
 function initials(name: string): string {
   return (name ?? '')
@@ -63,12 +64,10 @@ export function Sidebar({
           <Link
             to="/app"
             className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-zinc-900/50"
-            title="xlmcode — home"
+            title="XLM Code — home"
           >
-            <Sparkles className="h-5 w-5 shrink-0 text-violet-400" />
-            <span className="text-[15px] font-medium tracking-tight">
-              xlmcode
-            </span>
+            <Logo size={20} />
+            <Wordmark size={15} />
           </Link>
         )}
         <button
@@ -95,6 +94,24 @@ export function Sidebar({
           <Plus className="h-4 w-4 shrink-0" />
           {!collapsed && <span>New project</span>}
         </Link>
+      </div>
+
+      {/* Templates */}
+      <div className="px-2 pb-1">
+        <NavLink
+          to="/templates"
+          className={({ isActive }) =>
+            `flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
+              isActive
+                ? 'bg-zinc-900 text-zinc-50'
+                : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
+            } ${collapsed ? 'justify-center' : ''}`
+          }
+          title="Templates"
+        >
+          <LayoutGrid className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Templates</span>}
+        </NavLink>
       </div>
 
       {/* History */}
@@ -198,7 +215,7 @@ export function Sidebar({
               collapsed ? 'justify-center' : ''
             }`}
           >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-[11px] font-semibold text-violet-300">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FDDA24]/12 text-[11px] font-semibold text-[#FDDA24]">
               {initials(user.name)}
             </div>
             {!collapsed && (
