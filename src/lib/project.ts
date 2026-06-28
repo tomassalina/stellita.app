@@ -210,6 +210,43 @@ export async function readContract(
 
 export const addr = (a: string) => new Address(a).toScVal()
 export const i128 = (n: bigint | number) => nativeToScVal(BigInt(n), { type: 'i128' })
+export const u32 = (n: number) => nativeToScVal(n, { type: 'u32' })
+
+/** Token ids of an NFT collection currently owned by \`user\` (verified via
+ *  owner_of). Candidate ids are gathered from recent contract events. */
+export async function getOwnedNftIds(
+  contractId: string,
+  user: string,
+  viewSource: string,
+): Promise<number[]> {
+  const latest = await server.getLatestLedger()
+  const res = await server.getEvents({
+    startLedger: Math.max(latest.sequence - 8000, 1),
+    filters: [{ type: 'contract', contractIds: [contractId] }],
+    limit: 100,
+  })
+  const candidates = new Set<number>()
+  for (const ev of res.events ?? []) {
+    try {
+      const parts = [
+        ...(ev.topic as any[]).map((t) => scValToNative(t)),
+        scValToNative(ev.value as any),
+      ]
+      for (const p of parts) {
+        const n = Number(p)
+        if (Number.isInteger(n) && n >= 0 && n < 100000) candidates.add(n)
+      }
+    } catch {}
+  }
+  const owned: number[] = []
+  for (const id of [...candidates].slice(0, 50)) {
+    try {
+      const owner = await readContract(contractId, 'owner_of', viewSource, [u32(id)])
+      if (String(owner) === user) owned.push(id)
+    } catch {}
+  }
+  return owned.sort((a, b) => a - b)
+}
 
 export type Movement = {
   kind: 'in' | 'out' | 'mint'
@@ -325,6 +362,21 @@ export async function claimTokens(address: string): Promise<string> {
   const data = await r.json()
   if (!r.ok) throw new Error(data.error || 'Faucet failed')
   return data.hash
+}
+
+/** Mint a Demo NFT to \`address\` (owner-minted by the host backend). */
+export async function mintNft(
+  address: string,
+): Promise<{ hash: string; tokenId: number | null }> {
+  if (inIframe) return JSON.parse(await bridge('mintNft', { address }))
+  const r = await fetch('/api/mint-nft', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ address }),
+  })
+  const data = await r.json()
+  if (!r.ok) throw new Error(data.error || 'Mint failed')
+  return data
 }
 
 async function signXDR(xdr: string, address: string): Promise<string> {
@@ -625,6 +677,169 @@ export default function App() {
 }
 `
 
+/** Shared, pre-deployed Demo NFT collection on testnet (same owner as the token,
+ *  so /api/mint-nft signs mints with FAUCET_SECRET). */
+const DEMO_NFT_ID = 'CD4HFX54Y3WIUYZUYRYK5LMNIYSX27CNDFYSZLEVE66MJCVVPSCYA3CU'
+const DEMO_NFT_VIEW_SOURCE =
+  'GBDFURES5STGVPMBLLPK4DAL5H2LKRETUSWC7T2YSVJO7PGFKN57DIQS'
+
+const DEMO_NFT_APP = `import './polyfills'
+import { useCallback, useEffect, useState } from 'react'
+import {
+  readContract,
+  connectWallet,
+  getConnectedAddress,
+  mintNft,
+  getOwnedNftIds,
+  addr,
+} from './stellar'
+
+const NFT_ID = '${DEMO_NFT_ID}'
+const VIEW_SOURCE = '${DEMO_NFT_VIEW_SOURCE}'
+const EXPLORER = 'https://stellar.expert/explorer/testnet/contract/' + NFT_ID
+const short = (a: string) => a.slice(0, 4) + '…' + a.slice(-4)
+// Deterministic neon art per token id.
+const art = (id: number) => {
+  const h = (id * 53) % 360
+  return 'conic-gradient(from ' + (id * 40) + 'deg, hsl(' + h + ' 90% 60%), hsl(' + ((h + 90) % 360) + ' 90% 55%), hsl(' + ((h + 200) % 360) + ' 90% 60%), hsl(' + h + ' 90% 60%))'
+}
+
+type Toast = { kind: 'ok' | 'err'; text: string } | null
+
+export default function App() {
+  const [meta, setMeta] = useState<{ name: string; symbol: string } | null>(null)
+  const [address, setAddress] = useState<string | null>(null)
+  const [owned, setOwned] = useState<number[]>([])
+  const [busy, setBusy] = useState<'' | 'connect' | 'mint'>('')
+  const [toast, setToast] = useState<Toast>(null)
+
+  const flash = (t: Toast) => { setToast(t); if (t) setTimeout(() => setToast(null), 4000) }
+
+  const loadMeta = useCallback(async () => {
+    try {
+      const [name, symbol] = await Promise.all([
+        readContract(NFT_ID, 'name', VIEW_SOURCE),
+        readContract(NFT_ID, 'symbol', VIEW_SOURCE),
+      ])
+      setMeta({ name: String(name), symbol: String(symbol) })
+    } catch (e: any) { flash({ kind: 'err', text: e.message }) }
+  }, [])
+
+  const loadOwned = useCallback(async (a: string) => {
+    try { setOwned(await getOwnedNftIds(NFT_ID, a, VIEW_SOURCE)) } catch {}
+  }, [])
+
+  useEffect(() => {
+    loadMeta()
+    getConnectedAddress().then((a) => { if (a) { setAddress(a); loadOwned(a) } })
+  }, [loadMeta, loadOwned])
+
+  const connect = async () => {
+    setBusy('connect')
+    try { const a = await connectWallet(); setAddress(a); await loadOwned(a) }
+    catch (e: any) { flash({ kind: 'err', text: e.message }) }
+    finally { setBusy('') }
+  }
+
+  const disconnect = () => { setAddress(null); setOwned([]) }
+
+  const mint = async () => {
+    if (!address) return
+    setBusy('mint')
+    try {
+      const { tokenId } = await mintNft(address)
+      if (tokenId != null) setOwned((o) => [...new Set([...o, tokenId])].sort((x, y) => x - y))
+      await loadOwned(address)
+      flash({ kind: 'ok', text: tokenId != null ? 'Minted NFT #' + tokenId + ' 🎨' : 'Minted! 🎨' })
+    } catch (e: any) { flash({ kind: 'err', text: e.message }) }
+    finally { setBusy('') }
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-950 px-4 py-10 font-sans text-zinc-100"
+      style={{ backgroundImage: 'radial-gradient(60rem 40rem at 50% -10%, rgba(139,92,246,0.18), transparent), radial-gradient(40rem 30rem at 90% 10%, rgba(34,211,238,0.12), transparent)' }}>
+      <div className="mx-auto w-full max-w-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+              {meta?.name ?? 'Demo NFTs'}
+            </h1>
+            <p className="mt-0.5 text-[11px] uppercase tracking-widest text-zinc-500">
+              {meta?.symbol ?? 'DNFT'} · Stellar testnet
+            </p>
+          </div>
+          {address ? (
+            <button onClick={disconnect} title="Disconnect"
+              className="group inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/70 px-3 py-1.5 text-xs font-medium text-zinc-300 backdrop-blur transition hover:border-rose-500/50 hover:text-rose-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 group-hover:bg-rose-400" />
+              <span className="group-hover:hidden">{short(address)}</span>
+              <span className="hidden group-hover:inline">Disconnect</span>
+            </button>
+          ) : (
+            <button onClick={connect} disabled={busy === 'connect'}
+              className="rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-zinc-950 transition hover:opacity-90 disabled:opacity-60">
+              {busy === 'connect' ? 'Connecting…' : 'Connect wallet'}
+            </button>
+          )}
+        </div>
+
+        {/* Mint bar */}
+        <div className="mt-6 flex flex-col items-center gap-3 rounded-3xl border border-zinc-800 bg-zinc-900/40 p-8 text-center backdrop-blur">
+          <div className="h-20 w-20 rounded-2xl shadow-lg shadow-violet-500/20" style={{ background: art(owned.length + 1) }} />
+          <p className="text-sm text-zinc-400">
+            {address ? 'Mint a unique collectible to your wallet.' : 'Connect your wallet to mint collectibles.'}
+          </p>
+          <button
+            onClick={address ? mint : connect}
+            disabled={busy !== ''}
+            className="rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-zinc-950 transition hover:opacity-90 disabled:opacity-60">
+            {busy === 'mint' ? 'Minting…' : busy === 'connect' ? 'Connecting…' : address ? 'Mint NFT' : 'Connect Freighter'}
+          </button>
+          {address && (
+            <p className="text-xs text-zinc-500">You own <span className="font-semibold text-zinc-300">{owned.length}</span> in this collection</p>
+          )}
+        </div>
+
+        {/* Gallery */}
+        {address && (
+          <div className="mt-6">
+            <p className="mb-3 text-sm font-semibold text-zinc-300">Your collection</p>
+            {owned.length === 0 ? (
+              <p className="text-xs text-zinc-500">No NFTs yet — mint your first above.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {owned.map((id) => (
+                  <div key={id} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50">
+                    <div className="aspect-square" style={{ background: art(id) }} />
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="text-sm font-semibold">#{id}</span>
+                      <span className="text-[10px] uppercase tracking-wider text-zinc-500">{meta?.symbol ?? 'DNFT'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <a href={EXPLORER} target="_blank" rel="noreferrer"
+          className="mt-6 block text-center text-xs text-zinc-600 transition hover:text-zinc-400">
+          Live on Stellar testnet · contract {short(NFT_ID)} ↗
+        </a>
+      </div>
+
+      {toast && (
+        <div className={'fixed bottom-5 left-1/2 -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm font-medium shadow-lg ' +
+          (toast.kind === 'ok' ? 'bg-gradient-to-r from-violet-500 to-cyan-400 text-zinc-950' : 'bg-rose-600 text-white')}>
+          {toast.text}
+        </div>
+      )}
+    </div>
+  )
+}
+`
+
 export interface ExampleApp {
   label: string
   /** Pre-built dApp files (no LLM) — a working demo on a shared contract. */
@@ -648,6 +863,18 @@ const DEMO_TOKEN_CONTRACT: DeployedContract = {
   createdAt: 0,
 }
 
+/** The shared Demo NFT collection shown in the Contracts tab for the NFT demo. */
+const DEMO_NFT_CONTRACT: DeployedContract = {
+  manifestId: 'oz-nft',
+  name: 'Demo NFTs',
+  category: 'nft',
+  contractId: DEMO_NFT_ID,
+  network: 'testnet',
+  explorerUrl: 'https://stellar.expert/explorer/testnet/contract/' + DEMO_NFT_ID,
+  config: { name: 'Demo NFTs', symbol: 'DNFT', uri: 'https://stellar.org/nft/' },
+  createdAt: 0,
+}
+
 export const EXAMPLE_APPS: ExampleApp[] = [
   {
     label: 'Fungible token dashboard',
@@ -661,7 +888,12 @@ export const EXAMPLE_APPS: ExampleApp[] = [
   },
   {
     label: 'NFT minting app',
-    prompt:
-      'Build an NFT minting app. Deploy an NFT collection named "Demo NFTs" with symbol DNFT, then add a button to mint a token to a chosen address and a list showing the owner of each minted token id.',
+    files: withBaseFiles({
+      '/package.json': STELLAR_PACKAGE_JSON,
+      '/polyfills.ts': POLYFILLS,
+      '/stellar.ts': STELLAR_LIB,
+      '/App.tsx': DEMO_NFT_APP,
+    }),
+    contracts: [DEMO_NFT_CONTRACT],
   },
 ]

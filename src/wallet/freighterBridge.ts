@@ -49,6 +49,15 @@ export function useFreighterBridge() {
           const data = await r.json()
           if (!r.ok) throw new Error(data.error ?? 'Faucet failed')
           reply({ result: data.hash })
+        } else if (msg.method === 'mintNft') {
+          const r = await fetch('/api/mint-nft', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ address: msg.address }),
+          })
+          const data = await r.json()
+          if (!r.ok) throw new Error(data.error ?? 'Mint failed')
+          reply({ result: JSON.stringify(data) })
         } else {
           reply({ error: `Unknown wallet method: ${msg.method}` })
         }

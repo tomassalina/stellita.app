@@ -80,6 +80,16 @@ function devApi(env: Record<string, string>): Plugin {
             })
           }
 
+          if (req.url.startsWith('/api/mint-nft')) {
+            if (req.method !== 'POST') return send(405, { error: 'POST only' })
+            const nchunks: Buffer[] = []
+            for await (const c of req) nchunks.push(c as Buffer)
+            const { address } = JSON.parse(Buffer.concat(nchunks).toString('utf8'))
+            if (!address) return send(400, { error: 'address required' })
+            const { mintNft } = await server.ssrLoadModule('/api/_lib/nft.ts')
+            return send(200, await mintNft(address, env.FAUCET_SECRET))
+          }
+
           if (req.url.startsWith('/api/deploy')) {
             if (req.method !== 'POST') return send(405, { error: 'POST only' })
             const dchunks: Buffer[] = []

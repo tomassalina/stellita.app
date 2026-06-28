@@ -10,9 +10,27 @@ import {
   Check,
   Copy,
   ArrowLeft,
-  Plug,
   Hammer,
   AlertTriangle,
+  BadgePercent,
+  KeyRound,
+  ShieldCheck,
+  Vault,
+  CirclePause,
+  UserCog,
+  Landmark,
+  Vote,
+  Clock,
+  Building2,
+  Fuel,
+  ListTree,
+  ArrowLeftRight,
+  Layers,
+  Radio,
+  TrendingUp,
+  Handshake,
+  CircleDollarSign,
+  Zap,
 } from 'lucide-react'
 import type { Manifest, DeployedContract } from '../../shared/types'
 import { fetchCatalog, deployContract } from '../lib/contracts'
@@ -32,7 +50,7 @@ function CategoryIcon({ category, className }: { category: string; className?: s
  * The Contracts tab — a deploy/connect console (not a document editor).
  *   left: the project's deployed contracts + "Add contract"
  *   right: the selected contract's detail
- *   modal: a catalog with 3 modes — Configurable (live), Connect, Custom.
+ *   modal: a catalog with 3 modes — Configurable (live), Existing, Custom.
  */
 export function ContractsPanel({
   contracts,
@@ -197,11 +215,146 @@ function DeployedDetail({ contract: c }: { contract: DeployedContract }) {
   )
 }
 
-type Mode = 'configurable' | 'connect' | 'custom'
+type Mode = 'configurable' | 'existing' | 'custom'
 const MODES: { id: Mode; label: string }[] = [
   { id: 'configurable', label: 'Configurable' },
-  { id: 'connect', label: 'Connect' },
+  { id: 'existing', label: 'Existing' },
   { id: 'custom', label: 'Custom' },
+]
+
+// ---------------------------------------------------------------------------
+// Reference catalog — static data for the Configurable tab
+// ---------------------------------------------------------------------------
+
+type RefEntry = {
+  name: string
+  blurb: string
+  icon: typeof Coins
+  manifestId?: string // set only when a real manifest exists
+}
+
+const CONFIGURABLE_REF: RefEntry[] = [
+  {
+    name: 'Fungible Token',
+    blurb: 'Token with name, symbol and supply. The MVP hello-world.',
+    icon: Coins,
+    manifestId: 'oz-fungible-token',
+  },
+  {
+    name: 'Non-Fungible Token (NFT)',
+    blurb: 'Unique collectibles: galleries, art, items.',
+    icon: ImageIcon,
+    manifestId: 'oz-nft',
+  },
+  {
+    name: 'NFT with Royalties',
+    blurb: 'NFTs where the creator earns on resales.',
+    icon: BadgePercent,
+  },
+  {
+    name: 'Ownable',
+    blurb: 'Simple access control: a single owner account.',
+    icon: KeyRound,
+    manifestId: 'oz-ownable',
+  },
+  {
+    name: 'Role-Based Access Control',
+    blurb: 'Distinct roles per privileged action.',
+    icon: ShieldCheck,
+  },
+  {
+    name: 'Vault (SEP-56)',
+    blurb: 'Tokenized shares of an asset pool; yield products.',
+    icon: Vault,
+  },
+  {
+    name: 'Pausable',
+    blurb: 'Pause/unpause functions for emergencies.',
+    icon: CirclePause,
+  },
+  {
+    name: 'Smart Account',
+    blurb: 'Programmable auth (signers + policies).',
+    icon: UserCog,
+  },
+  {
+    name: 'Governor',
+    blurb: 'On-chain governance: proposals, voting, execution.',
+    icon: Landmark,
+  },
+  {
+    name: 'Votes',
+    blurb: 'Delegated voting power with history.',
+    icon: Vote,
+  },
+  {
+    name: 'Timelock Controller',
+    blurb: 'Enforce delays before executing transactions.',
+    icon: Clock,
+  },
+  {
+    name: 'Real World Assets (RWA)',
+    blurb: 'Tokens with regulatory features (ERC-3643).',
+    icon: Building2,
+  },
+  {
+    name: 'Fee Abstraction',
+    blurb: 'Pay fees in USDC; a relayer covers XLM.',
+    icon: Fuel,
+  },
+  {
+    name: 'Merkle Distributor',
+    blurb: 'Airdrops/whitelists via Merkle proofs.',
+    icon: ListTree,
+  },
+]
+
+// ---------------------------------------------------------------------------
+// Reference catalog — static data for the Existing tab
+// ---------------------------------------------------------------------------
+
+type ProtocolEntry = {
+  name: string
+  blurb: string
+  icon: typeof Coins
+}
+
+const EXISTING_PROTOCOLS: ProtocolEntry[] = [
+  {
+    name: 'Soroswap',
+    blurb: 'DEX + liquidity aggregator. Best-price swaps.',
+    icon: ArrowLeftRight,
+  },
+  {
+    name: 'Blend',
+    blurb: 'Lending/borrowing pools with backstop.',
+    icon: Layers,
+  },
+  {
+    name: 'Reflector',
+    blurb: 'Price oracle (SEP-40). Read-only, low risk.',
+    icon: Radio,
+  },
+  {
+    name: 'DeFindex',
+    blurb: 'Yield infrastructure: automated vault strategies.',
+    icon: TrendingUp,
+  },
+  {
+    name: 'Trustless Work',
+    blurb: 'Non-custodial milestone escrow in USDC.',
+    icon: Handshake,
+  },
+  {
+    name: 'USDC (Stellar Asset Contract)',
+    blurb: 'The asset most flows touch. First-class citizen.',
+    icon: CircleDollarSign,
+  },
+  {
+    name: 'x402',
+    blurb: 'HTTP-request payments / micropayments / agent payments.',
+    icon: Zap,
+  },
 ]
 
 function AddContractModal({
@@ -220,8 +373,11 @@ function AddContractModal({
     fetchCatalog().then(setCatalog).catch((e) => setError(String(e)))
   }, [])
 
-  const deployable = catalog?.filter((m) => m.type === 'deployable') ?? []
-  const connectable = catalog?.filter((m) => m.type === 'deployed') ?? []
+  // Build a set of available manifest IDs for O(1) lookup
+  const availableIds = new Set((catalog ?? []).map((m) => m.id))
+
+  // Map a manifestId to the live Manifest object
+  const manifestById = new Map((catalog ?? []).map((m) => [m.id, m]))
 
   return (
     <div
@@ -264,32 +420,72 @@ function AddContractModal({
               {mode === 'configurable' && (
                 <div className="grid grid-cols-2 gap-2.5">
                   {!catalog && <Skeletons />}
-                  {deployable.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setPicked(m)}
-                      className="flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 p-3.5 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
-                    >
-                      <CategoryIcon category={m.category} className="h-5 w-5 text-zinc-300" />
-                      <span className="text-[13px] font-medium text-zinc-100">{m.name}</span>
-                      <span className="line-clamp-3 text-[11.5px] leading-relaxed text-zinc-500">
-                        {m.description}
-                      </span>
-                    </button>
-                  ))}
+                  {CONFIGURABLE_REF.map((entry) => {
+                    const Icon = entry.icon
+                    const isAvailable = entry.manifestId != null && availableIds.has(entry.manifestId)
+                    const manifest = entry.manifestId ? manifestById.get(entry.manifestId) : undefined
+
+                    if (isAvailable && manifest) {
+                      return (
+                        <button
+                          key={entry.name}
+                          onClick={() => setPicked(manifest)}
+                          className="flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 p-3.5 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
+                        >
+                          <Icon className="h-5 w-5 text-zinc-300" />
+                          <span className="text-[13px] font-medium text-zinc-100">{entry.name}</span>
+                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-zinc-500">
+                            {entry.blurb}
+                          </span>
+                        </button>
+                      )
+                    }
+
+                    return (
+                      <div
+                        key={entry.name}
+                        className="relative flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 p-3.5 opacity-60"
+                      >
+                        <Icon className="h-5 w-5 text-zinc-300" />
+                        <span className="text-[13px] font-medium text-zinc-100">{entry.name}</span>
+                        <span className="line-clamp-3 text-[11.5px] leading-relaxed text-zinc-500">
+                          {entry.blurb}
+                        </span>
+                        <span className="absolute right-2.5 top-2.5 rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+                          Soon
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
 
-              {mode === 'connect' && (
-                <ComingSoon
-                  icon={Plug}
-                  title="Connect a deployed protocol"
-                  body={
-                    connectable.length
-                      ? 'Pick a protocol to wire its address into your app.'
-                      : 'Blend, Reflector and Soroswap land here — connect an existing testnet contract by address, with typed bindings injected into your app. (Etapa 4)'
-                  }
-                />
+              {mode === 'existing' && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-[12px] leading-relaxed text-zinc-500">
+                    Connect to a live protocol by its contract ID — coming soon.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {EXISTING_PROTOCOLS.map((entry) => {
+                      const Icon = entry.icon
+                      return (
+                        <div
+                          key={entry.name}
+                          className="relative flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 p-3.5 opacity-60"
+                        >
+                          <Icon className="h-5 w-5 text-zinc-300" />
+                          <span className="text-[13px] font-medium text-zinc-100">{entry.name}</span>
+                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-zinc-500">
+                            {entry.blurb}
+                          </span>
+                          <span className="absolute right-2.5 top-2.5 rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+                            Soon
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               )}
 
               {mode === 'custom' && (
@@ -424,7 +620,7 @@ function ComingSoon({
   title,
   body,
 }: {
-  icon: typeof Plug
+  icon: typeof Coins
   title: string
   body: string
 }) {
