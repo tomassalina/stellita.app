@@ -125,6 +125,32 @@ function devApi(env: Record<string, string>): Plugin {
 
             const apiKey = env.OPENAI_API_KEY
             if (!apiKey) return send(401, { error: 'OPENAI_API_KEY not set in .env.local' })
+            const model = env.OPENAI_MODEL || 'gpt-5.4-mini'
+
+            res.statusCode = 200
+            res.setHeader('content-type', 'text/plain; charset=utf-8')
+
+            // Guardrail (defense-in-depth): block off-topic / injection / unsafe.
+            const { checkGuardrail, refusalMessage } = await server.ssrLoadModule(
+              '/api/_lib/guardrail.ts',
+            )
+            const gate = await checkGuardrail({
+              apiKey,
+              model,
+              userMessage: body.userMessage ?? '',
+            })
+            if (!gate.allowed) {
+              res.write(
+                JSON.stringify({
+                  message: refusalMessage(gate.category),
+                  versionName: 'Blocked',
+                  files: [],
+                  actions: [],
+                }),
+              )
+              res.end()
+              return
+            }
 
             // Stream the generated JSON to the client as it's produced.
             const { streamChat } = await server.ssrLoadModule('/api/_lib/llm.ts')
