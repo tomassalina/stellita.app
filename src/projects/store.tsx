@@ -127,8 +127,9 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     const p = ref.current[slug]
     if (!p || p.busy) return
     const history = p.messages
+    const startedAt = Date.now()
     patch(slug, {
-      messages: [...history, { role: 'user', content: text }],
+      messages: [...history, { role: 'user', content: text, createdAt: startedAt }],
       busy: true,
       error: null,
       activity: [],
@@ -148,6 +149,20 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       const nextTree = applyFileOps(latest.fileTree, res.files)
       const ops = res.files.map((f) => ({ op: f.op, path: f.path }))
       const name = res.versionName?.trim() || 'Update'
+      // Rough +/- line diff for the "Worked for" summary.
+      let added = 0
+      let removed = 0
+      for (const f of res.files) {
+        if (f.op === 'delete') {
+          removed += (latest.fileTree[f.path]?.split('\n').length ?? 0)
+          continue
+        }
+        const oldLines = new Set((latest.fileTree[f.path] ?? '').split('\n'))
+        const newLines = new Set(f.content.split('\n'))
+        for (const l of f.content.split('\n')) if (!oldLines.has(l)) added++
+        for (const l of (latest.fileTree[f.path] ?? '').split('\n'))
+          if (!newLines.has(l)) removed++
+      }
       patch(slug, {
         fileTree: nextTree,
         savedFileTree: nextTree,
@@ -160,6 +175,13 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
             content: res.message,
             files: ops,
             versionName: name,
+            createdAt: Date.now(),
+            stats: {
+              durationMs: Date.now() - startedAt,
+              filesModified: res.files.length,
+              added,
+              removed,
+            },
           },
         ],
         busy: false,

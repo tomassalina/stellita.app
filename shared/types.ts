@@ -67,6 +67,15 @@ export interface ChatMessage {
   files?: { op: 'create' | 'edit' | 'delete'; path: string }[]
   /** For assistant messages: the version label this turn produced. */
   versionName?: string
+  /** Epoch ms when the message was created (for "x ago"). */
+  createdAt?: number
+  /** For assistant messages: the v0-style "worked for" summary. */
+  stats?: {
+    durationMs: number
+    filesModified: number
+    added: number
+    removed: number
+  }
 }
 
 /** Request payload for the chat endpoint. */

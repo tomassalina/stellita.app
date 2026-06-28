@@ -340,12 +340,13 @@ function RestoreConfirm({
   )
 }
 
-type Tab = 'preview' | 'code' | 'console' | 'contract'
+type Tab = 'preview' | 'code' | 'contracts' | 'wallets' | 'console'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'preview', label: 'Preview' },
   { id: 'code', label: 'Code' },
+  { id: 'contracts', label: 'Contracts' },
+  { id: 'wallets', label: 'Wallets' },
   { id: 'console', label: 'Console' },
-  { id: 'contract', label: 'Contract' },
 ]
 
 /**
@@ -553,9 +554,15 @@ export function WorkspacePanel({
           </SandpackProvider>
         </div>
 
-        {tab === 'contract' && (
+        {tab === 'contracts' && (
           <div className="absolute inset-0 flex items-center justify-center bg-black text-[13px] text-zinc-600">
             Deployed contracts appear here (Milestone 2).
+          </div>
+        )}
+
+        {tab === 'wallets' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black text-[13px] text-zinc-600">
+            Connected wallets appear here (Milestone 5).
           </div>
         )}
 

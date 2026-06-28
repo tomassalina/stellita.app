@@ -29,8 +29,13 @@ export function Editor() {
   if (!project) return <Navigate to="/" replace />
 
   return (
-    <PanelGroup direction="horizontal" className="min-h-0 flex-1">
-      <Panel defaultSize={34} minSize={22} maxSize={70}>
+    <PanelGroup direction="horizontal" className="relative min-h-0 flex-1">
+      {/* While dragging, this overlay sits above the Sandpack iframe so it can't
+          swallow the mouse and freeze the resize. */}
+      {resizing && (
+        <div className="fixed inset-0 z-50 cursor-col-resize select-none" />
+      )}
+      <Panel defaultSize={34} minSize={22} maxSize={50}>
         <ChatPanel
           projectName={project.name}
           onRename={(name) => renameProject(project.slug, name)}
