@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Copy, Loader2 } from 'lucide-react'
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useAuth } from '../auth/store'
 import { useProjects } from '../projects/store'
 import { LoginModal } from '../auth/LoginModal'
+import { ChatPanel } from '../components/ChatPanel'
 import { WorkspacePanel } from '../components/WorkspacePanel'
 import type { Version } from '../projects/store'
 import { fetchShared } from '../lib/backend'
 import { Logo, Wordmark } from '../marketing/shared'
-import type { DeployedContract, FileTree } from '../../shared/types'
+import type { ChatMessage, DeployedContract, FileTree } from '../../shared/types'
 
-type Loaded = { name: string; files: FileTree; contracts: DeployedContract[]; versions: Version[] }
+type Loaded = {
+  name: string
+  files: FileTree
+  contracts: DeployedContract[]
+  versions: Version[]
+  messages: ChatMessage[]
+}
 
-/** Public read-only view of a shared project at /p/:token. View code, contracts
- *  and preview; clone (login required) to get an editable copy. */
+/** Public read-only view of a shared project at /p/:token. Looks like the app —
+ *  chat on the left (locked: "Sign in to code") + workspace on the right. Anyone
+ *  can view code/contracts/console/versions; sign in + clone to edit. */
 export function SharedProject() {
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
@@ -21,11 +29,10 @@ export function SharedProject() {
   const { cloneSharedProject } = useProjects()
   const [data, setData] = useState<Loaded | null>(null)
   const [error, setError] = useState('')
-  const [cloning, setCloning] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
-  // Which tree is shown + a remount key, so viewing a version works read-only.
   const [view, setView] = useState<FileTree | null>(null)
   const [gen, setGen] = useState(1)
+  const [resizing, setResizing] = useState(false)
 
   useEffect(() => {
     if (!token) return
@@ -39,26 +46,22 @@ export function SharedProject() {
           fileTree: v.files ?? {},
           createdAt: new Date(v.created_at).getTime(),
         }))
-        setData({ name: d.project.name, files, contracts: (d.contracts ?? []) as DeployedContract[], versions })
+        const messages: ChatMessage[] = (d.messages ?? []).map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          createdAt: new Date(m.created_at).getTime(),
+        }))
+        setData({ name: d.project.name, files, contracts: (d.contracts ?? []) as DeployedContract[], versions, messages })
         setView(files)
       })
       .catch(() => setError('This shared project could not be found.'))
   }, [token])
 
-  const openVersion = (id: string) => {
-    const v = data?.versions.find((x) => x.id === id)
-    if (!v) return
-    setView(v.fileTree)
-    setGen((g) => g + 1)
-  }
-
   const doClone = async () => {
     if (!token) return
-    setCloning(true)
     try {
       navigate(`/projects/${await cloneSharedProject(token)}`)
     } catch {
-      setCloning(false)
       setError('Could not clone this project.')
     }
   }
@@ -69,6 +72,13 @@ export function SharedProject() {
       return
     }
     void doClone()
+  }
+
+  const openVersion = (id: string) => {
+    const v = data?.versions.find((x) => x.id === id)
+    if (!v) return
+    setView(v.fileTree)
+    setGen((g) => g + 1)
   }
 
   if (error) {
@@ -88,7 +98,7 @@ export function SharedProject() {
 
   return (
     <div className="flex h-full flex-col bg-black text-zinc-50">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 px-4">
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-zinc-800 px-4">
         <div onClick={() => navigate('/')} className="flex cursor-pointer items-center gap-2.5">
           <Logo size={20} />
           <Wordmark size={16} />
@@ -96,29 +106,48 @@ export function SharedProject() {
             Shared · read-only
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden truncate text-[13px] text-zinc-400 sm:block">{data.name}</span>
-          <button
-            onClick={clone}
-            disabled={cloning}
-            className="flex items-center gap-2 rounded-full bg-[#FDDA24] px-4 py-2 text-[13px] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {cloning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
-            {cloning ? 'Cloning…' : user ? 'Clone to build' : 'Sign in to clone'}
-          </button>
-        </div>
+        <span className="truncate text-[13px] text-zinc-400">{data.name}</span>
       </header>
-      <div className="min-h-0 flex-1">
-        <WorkspacePanel
-          fileTree={view ?? data.files}
-          projectName={data.name}
-          contracts={data.contracts}
-          versions={data.versions}
-          onOpenVersion={openVersion}
-          readOnly
-          generation={gen}
+
+      <PanelGroup direction="horizontal" className="relative min-h-0 flex-1">
+        {resizing && <div className="fixed inset-0 z-50 cursor-col-resize select-none" />}
+        <Panel defaultSize={34} minSize={22} maxSize={50}>
+          <ChatPanel
+            projectName={data.name}
+            onRename={() => {}}
+            messages={data.messages}
+            busy={false}
+            error={null}
+            activity={[]}
+            streamingMessage=""
+            filePaths={Object.keys(view ?? data.files)}
+            onSend={() => {}}
+            onRunActions={async () => {}}
+            onSkipActions={() => {}}
+            readOnly
+            signedIn={!!user}
+            onClone={clone}
+          />
+        </Panel>
+        <PanelResizeHandle
+          onDragging={setResizing}
+          className="w-1 bg-zinc-800 transition-colors hover:bg-violet-500/60 data-[resize-handle-state=drag]:bg-violet-500"
         />
-      </div>
+        <Panel defaultSize={66} minSize={30}>
+          <div className={`h-full ${resizing ? 'pointer-events-none' : ''}`}>
+            <WorkspacePanel
+              fileTree={view ?? data.files}
+              projectName={data.name}
+              contracts={data.contracts}
+              versions={data.versions}
+              onOpenVersion={openVersion}
+              readOnly
+              generation={gen}
+            />
+          </div>
+        </Panel>
+      </PanelGroup>
+
       {showLogin && (
         <LoginModal onClose={() => setShowLogin(false)} onAuthed={() => void doClone()} />
       )}

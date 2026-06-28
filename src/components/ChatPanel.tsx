@@ -11,6 +11,7 @@ import {
   Coins,
   Wallet,
   Loader2,
+  Lock,
 } from 'lucide-react'
 import type { AgentAction, ChatMessage } from '../../shared/types'
 import type { Activity } from '../lib/api'
@@ -31,6 +32,7 @@ export function ChatPanel({
   onSkipActions,
   readOnly = false,
   onClone,
+  signedIn = true,
 }: {
   projectName: string
   onRename: (name: string) => void
@@ -43,9 +45,11 @@ export function ChatPanel({
   onSend: (text: string) => void
   onRunActions: (messageIndex: number, actions: AgentAction[]) => Promise<void>
   onSkipActions: (messageIndex: number) => void
-  /** Read-only view (template/shared): no chat, show a "Clone to build" CTA. */
+  /** Read-only view (template/shared): no chat, show a clone/sign-in CTA. */
   readOnly?: boolean
   onClone?: () => void | Promise<void>
+  /** Whether the viewer is logged in — drives the CTA label (Sign in vs Clone). */
+  signedIn?: boolean
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const [renaming, setRenaming] = useState(false)
@@ -110,7 +114,7 @@ export function ChatPanel({
       </div>
       <div className="border-t border-zinc-800 p-4">
         {readOnly ? (
-          <CloneCta onClone={onClone} />
+          <CloneCta onClone={onClone} signedIn={signedIn} />
         ) : (
           <PromptInput onSend={onSend} busy={busy} filePaths={filePaths} />
         )}
@@ -119,8 +123,15 @@ export function ChatPanel({
   )
 }
 
-/** Read-only footer: explains the view + a primary "Clone to build" action. */
-function CloneCta({ onClone }: { onClone?: () => void | Promise<void> }) {
+/** Read-only composer: a locked input + a clone / sign-in CTA. Looks like the
+ *  real chat box, but you must sign in and clone before you can edit. */
+function CloneCta({
+  onClone,
+  signedIn = true,
+}: {
+  onClone?: () => void | Promise<void>
+  signedIn?: boolean
+}) {
   const [cloning, setCloning] = useState(false)
   const handle = async () => {
     if (!onClone) return
@@ -133,10 +144,11 @@ function CloneCta({ onClone }: { onClone?: () => void | Promise<void> }) {
   }
   return (
     <div className="flex flex-col gap-2.5">
-      <p className="text-[12.5px] leading-relaxed text-zinc-500">
-        This is a read-only view. Clone it to get your own editable copy and start
-        building.
-      </p>
+      {/* Locked composer — mirrors the real prompt box but disabled */}
+      <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/40 px-3.5 py-3 text-[13px] text-zinc-600">
+        <Lock className="h-4 w-4 shrink-0" />
+        {signedIn ? 'Clone this project to edit it with the AI' : 'Sign in to edit this project with the AI'}
+      </div>
       <button
         onClick={() => void handle()}
         disabled={cloning}
@@ -147,11 +159,13 @@ function CloneCta({ onClone }: { onClone?: () => void | Promise<void> }) {
             <Loader2 className="h-4 w-4 animate-spin" />
             Cloning…
           </>
-        ) : (
+        ) : signedIn ? (
           <>
             <Copy className="h-4 w-4" />
             Clone to build
           </>
+        ) : (
+          'Sign in to code'
         )}
       </button>
     </div>
