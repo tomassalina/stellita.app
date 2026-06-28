@@ -6,6 +6,8 @@ import {
   Navigator,
   useSandpack,
   useActiveCode,
+  useSandpackConsole,
+  useErrorMessage,
 } from '@codesandbox/sandpack-react'
 import { FileExplorer } from './FileTree'
 import {
@@ -18,6 +20,8 @@ import {
   SquarePen,
   Eye,
   X,
+  Wand2,
+  AlertTriangle,
 } from 'lucide-react'
 import type { FileTree } from '../../shared/types'
 import type { Version } from '../projects/store'
@@ -106,6 +110,84 @@ function CodeBar({
       >
         {editable ? <Eye className="h-3.5 w-3.5" /> : <SquarePen className="h-3.5 w-3.5" />}
       </button>
+    </div>
+  )
+}
+
+const logLine = (d: unknown[] | undefined) =>
+  (d ?? []).map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join(' ')
+
+/**
+ * Surfaces errors: compile errors via useErrorMessage, runtime errors via the
+ * console (a thrown render error lands there, not in useErrorMessage).
+ */
+function ErrorWatcher({ onError }: { onError: (msg: string) => void }) {
+  const compileError = useErrorMessage()
+  const { logs } = useSandpackConsole({ resetOnPreviewRestart: true })
+  useEffect(() => {
+    if (compileError) return onError(compileError)
+    const errLog = [...logs].reverse().find((l) => l.method === 'error')
+    onError(errLog ? logLine(errLog.data) : '')
+  }, [compileError, logs, onError])
+  return null
+}
+
+/** Console output (logs + errors) with copy + clear. Inside SandpackProvider. */
+function ConsolePanel() {
+  const { logs, reset } = useSandpackConsole({ resetOnPreviewRestart: true })
+  const [copied, setCopied] = useState(false)
+  const lineOf = logLine
+  const copy = () => {
+    void navigator.clipboard?.writeText(
+      logs.map((l) => `[${l.method}] ${lineOf(l.data)}`).join('\n'),
+    )
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1200)
+  }
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-zinc-950">
+      <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 px-3 py-1.5 text-[12px] text-zinc-500">
+        <span>Console · {logs.length}</span>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={copy}
+            className="flex items-center gap-1 rounded-md border border-zinc-800 px-2 py-1 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            Copy
+          </button>
+          <button
+            onClick={reset}
+            className="rounded-md border border-zinc-800 px-2 py-1 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 select-text overflow-y-auto p-2 font-mono text-[12px]">
+        {logs.length === 0 ? (
+          <p className="px-1 text-zinc-600">No console output.</p>
+        ) : (
+          logs.map((l, i) => (
+            <div
+              key={i}
+              className={`whitespace-pre-wrap px-1 py-0.5 ${
+                l.method === 'error'
+                  ? 'text-red-400'
+                  : l.method === 'warn'
+                    ? 'text-amber-400'
+                    : 'text-zinc-300'
+              }`}
+            >
+              {lineOf(l.data)}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   )
 }
@@ -258,10 +340,11 @@ function RestoreConfirm({
   )
 }
 
-type Tab = 'preview' | 'code' | 'contract'
+type Tab = 'preview' | 'code' | 'console' | 'contract'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'preview', label: 'Preview' },
   { id: 'code', label: 'Code' },
+  { id: 'console', label: 'Console' },
   { id: 'contract', label: 'Contract' },
 ]
 
@@ -346,6 +429,7 @@ export function WorkspacePanel({
   onCreateFile,
   onCreateFolder,
   onDeleteEntry,
+  onFixError,
 }: {
   fileTree: FileTree
   projectName?: string
@@ -360,11 +444,13 @@ export function WorkspacePanel({
   onCreateFile?: (path: string) => void
   onCreateFolder?: (folderPath: string) => void
   onDeleteEntry?: (path: string) => void
+  onFixError?: (text: string) => void
 }) {
   const [tab, setTab] = useState<Tab>('preview')
   const [device, setDevice] = useState<Device>('desktop')
   const [downloadOpen, setDownloadOpen] = useState(false)
   const [editable, setEditable] = useState(false)
+  const [previewError, setPreviewError] = useState('')
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col">
@@ -374,13 +460,16 @@ export function WorkspacePanel({
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors ${
                 tab === t.id
-                  ? 'rounded-md bg-zinc-900 px-3 py-1.5 text-zinc-50'
-                  : 'rounded-md px-3 py-1.5 text-zinc-500 transition-colors hover:text-zinc-300'
-              }
+                  ? 'bg-zinc-900 text-zinc-50'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
             >
               {t.label}
+              {t.id === 'console' && previewError && (
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+              )}
             </button>
           ))}
         </div>
@@ -407,6 +496,7 @@ export function WorkspacePanel({
             {onSyncFiles && (
               <SandpackSync fileTree={fileTree} onSync={onSyncFiles} />
             )}
+            <ErrorWatcher onError={setPreviewError} />
             <div className="flex h-full flex-col">
               <div
                 className={
@@ -456,6 +546,9 @@ export function WorkspacePanel({
                   />
                 </div>
               </div>
+              <div className={tab === 'console' ? 'min-h-0 flex-1' : 'hidden'}>
+                <ConsolePanel />
+              </div>
             </div>
           </SandpackProvider>
         </div>
@@ -466,7 +559,35 @@ export function WorkspacePanel({
           </div>
         )}
 
-        {dirty && (onDiscard || onSave) && (
+        {previewError && (
+          <div className="absolute bottom-4 left-1/2 z-30 flex w-[min(92%,560px)] -translate-x-1/2 items-start gap-3 rounded-xl border border-red-900/70 bg-red-950/90 px-3 py-2.5 shadow-2xl">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[12.5px] font-medium text-red-200">App error</p>
+              <p className="mt-0.5 max-h-16 select-text overflow-y-auto whitespace-pre-wrap font-mono text-[11.5px] text-red-300/90">
+                {previewError}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col gap-1.5">
+              {onFixError && (
+                <button
+                  onClick={() => onFixError(previewError)}
+                  className="flex items-center gap-1 rounded-md bg-zinc-50 px-2.5 py-1 text-[12px] font-medium text-black transition-colors hover:bg-white"
+                >
+                  <Wand2 className="h-3.5 w-3.5" /> Fix with AI
+                </button>
+              )}
+              <button
+                onClick={() => void navigator.clipboard?.writeText(previewError)}
+                className="rounded-md border border-red-900/60 px-2.5 py-1 text-[12px] text-red-200 transition-colors hover:text-red-100"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!previewError && dirty && (onDiscard || onSave) && (
           <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 shadow-2xl">
             <span className="text-[13px] text-zinc-200">
               You have unsaved edits

@@ -65,6 +65,12 @@ export function Editor() {
               createEntry(project.slug, `${folder}/.keep`)
             }
             onDeleteEntry={(path) => deleteEntry(project.slug, path)}
+            onFixError={(err) =>
+              send(
+                project.slug,
+                `The app has an error. Please fix it:\n\n${err}`,
+              )
+            }
           />
         </div>
       </Panel>
