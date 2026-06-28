@@ -4,10 +4,13 @@ import { useAuth } from './store'
 export function LoginModal({
   onClose,
   onAuthed,
+  googleNext,
 }: {
   onClose?: () => void
   /** Fired after a successful OTP login (the user is now set). */
   onAuthed?: () => void
+  /** Relative path Google OAuth should return to (defaults to current URL). */
+  googleNext?: string
 }) {
   const { startOtp, verifyOtp, loginWithGoogle } = useAuth()
   const [step, setStep] = useState<'email' | 'code'>('email')
@@ -125,7 +128,7 @@ export function LoginModal({
         </div>
 
         <button
-          onClick={loginWithGoogle}
+          onClick={() => loginWithGoogle(googleNext)}
           className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-800 py-2.5 text-[14px] text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700"
         >
           <svg width="16" height="16" viewBox="0 0 18 18" fill="none">

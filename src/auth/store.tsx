@@ -25,7 +25,9 @@ interface AuthContextValue {
   loading: boolean
   startOtp: (email: string) => Promise<void>
   verifyOtp: (email: string, token: string) => Promise<void>
-  loginWithGoogle: () => void
+  /** next = relative path to return to after the OAuth round-trip (defaults to
+   *  the current URL). Lets the shared page return to itself instead of /app. */
+  loginWithGoogle: (next?: string) => void
   logout: () => Promise<void>
 }
 
@@ -64,8 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u)
   }
 
-  const loginWithGoogle = () => {
-    window.location.href = `${API_BASE}/auth/google`
+  const loginWithGoogle = (next?: string) => {
+    const dest = next ?? window.location.pathname + window.location.search
+    window.location.href = `${API_BASE}/auth/google?next=${encodeURIComponent(dest)}`
   }
 
   const logout = async () => {

@@ -77,11 +77,17 @@ router.post('/otp/verify', async (req, res) => {
  * GET /auth/google
  * Initiates Google OAuth flow — redirects to provider.
  */
+/** Only allow relative paths as the post-login return target (no open redirect). */
+function safeNext(raw: unknown): string {
+  return typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/'
+}
+
 router.get('/google', async (req, res) => {
+  const next = safeNext(req.query['next'])
   const supabase = serverClient(req, res)
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${API_BASE}/auth/callback` },
+    options: { redirectTo: `${API_BASE}/auth/callback?next=${encodeURIComponent(next)}` },
   })
   if (error || !data.url) {
     res.status(500).json({ error: error?.message ?? 'OAuth error' })
@@ -91,11 +97,13 @@ router.get('/google', async (req, res) => {
 })
 
 /**
- * GET /auth/callback?code=...
- * Exchanges the OAuth code for a session, sets cookies, and redirects to the app.
+ * GET /auth/callback?code=...&next=/p/abc
+ * Exchanges the OAuth code for a session, sets cookies, and redirects back to
+ * where the user started (next), defaulting to the app root.
  */
 router.get('/callback', async (req, res) => {
   const code = req.query['code'] as string | undefined
+  const next = safeNext(req.query['next'])
   if (!code) {
     res.status(400).json({ error: 'missing code' })
     return
@@ -106,7 +114,7 @@ router.get('/callback', async (req, res) => {
     res.status(400).json({ error: error.message })
     return
   }
-  res.redirect(FRONTEND_ORIGIN)
+  res.redirect(`${FRONTEND_ORIGIN}${next}`)
 })
 
 /**

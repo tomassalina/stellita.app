@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useAuth } from '../auth/store'
 import { useProjects } from '../projects/store'
@@ -33,6 +33,8 @@ export function SharedProject() {
   const [view, setView] = useState<FileTree | null>(null)
   const [gen, setGen] = useState(1)
   const [resizing, setResizing] = useState(false)
+  const [params] = useSearchParams()
+  const autoCloned = useRef(false)
 
   useEffect(() => {
     if (!token) return
@@ -73,6 +75,16 @@ export function SharedProject() {
     }
     void doClone()
   }
+
+  // Returning from Google OAuth lands here with ?clone=1 + a session → finish the
+  // clone the user started before the redirect. Fires once.
+  useEffect(() => {
+    if (user && params.get('clone') === '1' && token && !autoCloned.current) {
+      autoCloned.current = true
+      void doClone()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, params, token])
 
   const openVersion = (id: string) => {
     const v = data?.versions.find((x) => x.id === id)
@@ -149,7 +161,11 @@ export function SharedProject() {
       </PanelGroup>
 
       {showLogin && (
-        <LoginModal onClose={() => setShowLogin(false)} onAuthed={() => void doClone()} />
+        <LoginModal
+          onClose={() => setShowLogin(false)}
+          onAuthed={() => void doClone()}
+          googleNext={`/p/${token}?clone=1`}
+        />
       )}
     </div>
   )
