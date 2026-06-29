@@ -33,6 +33,7 @@ export function ChatPanel({
   readOnly = false,
   onClone,
   signedIn = true,
+  cloning = false,
 }: {
   projectName: string
   onRename: (name: string) => void
@@ -50,6 +51,8 @@ export function ChatPanel({
   onClone?: () => void | Promise<void>
   /** Whether the viewer is logged in — drives the CTA label (Sign in vs Clone). */
   signedIn?: boolean
+  /** External clone-in-progress flag (parent owns it, e.g. after login). */
+  cloning?: boolean
 }) {
   const endRef = useRef<HTMLDivElement>(null)
   const [renaming, setRenaming] = useState(false)
@@ -114,7 +117,7 @@ export function ChatPanel({
       </div>
       <div className="border-t border-zinc-800 p-4">
         {readOnly ? (
-          <CloneCta onClone={onClone} signedIn={signedIn} />
+          <CloneCta onClone={onClone} signedIn={signedIn} cloning={cloning} />
         ) : (
           <PromptInput onSend={onSend} busy={busy} filePaths={filePaths} />
         )}
@@ -128,18 +131,21 @@ export function ChatPanel({
 function CloneCta({
   onClone,
   signedIn = true,
+  cloning: externalCloning = false,
 }: {
   onClone?: () => void | Promise<void>
   signedIn?: boolean
+  cloning?: boolean
 }) {
-  const [cloning, setCloning] = useState(false)
+  const [internalCloning, setInternalCloning] = useState(false)
+  const cloning = externalCloning || internalCloning
   const handle = async () => {
-    if (!onClone) return
-    setCloning(true)
+    if (!onClone || cloning) return
+    setInternalCloning(true)
     try {
       await onClone()
     } finally {
-      setCloning(false)
+      setInternalCloning(false)
     }
   }
   return (
@@ -152,7 +158,7 @@ function CloneCta({
       <button
         onClick={() => void handle()}
         disabled={cloning}
-        className="flex items-center justify-center gap-2 rounded-lg bg-[#FDDA24] py-2.5 text-[14px] font-medium text-black transition-colors hover:bg-[#ffe23f] disabled:opacity-50"
+        className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-[#FDDA24] py-2.5 text-[14px] font-medium text-black transition-colors hover:bg-[#ffe23f] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {cloning ? (
           <>

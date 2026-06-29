@@ -26,8 +26,8 @@ const CONFIGURABLE: Card[] = [
   { name: 'Smart Account', blurb: 'Programmable auth (signers + policies).', soon: true, icon: <S color="#cfcfcf"><circle cx="9" cy="8" r="3.5" /><path d="M3 20c0-3.3 2.7-6 6-6" /><circle cx="17.5" cy="16.5" r="3" /></S> },
 ]
 
-const EXISTING: { name: string; blurb: string; color: string; icon: ReactNode; wide?: boolean }[] = [
-  { name: 'Soroswap', blurb: 'DEX + liquidity aggregator. Best-price swaps.', color: '#cbb6f5', icon: <S color="#cbb6f5" w={18}><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></S> },
+const EXISTING: { name: string; blurb: string; color: string; icon: ReactNode; wide?: boolean; live?: boolean }[] = [
+  { name: 'Soroswap', blurb: 'DEX + liquidity aggregator. Best-price swaps (XLM/USDC).', color: '#cbb6f5', live: true, icon: <S color="#cbb6f5" w={18}><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></S> },
   { name: 'Blend', blurb: 'Lending / borrowing pools with backstop.', color: '#7dd6a8', icon: <S color="#7dd6a8" w={18}><path d="M12 2s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z" /></S> },
   { name: 'Reflector', blurb: 'Price oracle (SEP-40). Read-only, low risk.', color: '#cfcfcf', icon: <S color="#cfcfcf" w={18}><path d="M2 12h3l2-7 4 14 3-9 2 4h6" /></S> },
   { name: 'DeFindex', blurb: 'Yield infrastructure: automated vault strategies.', color: '#9ec5ff', icon: <S color="#9ec5ff" w={18}><polygon points="12 2 22 8.5 12 15 2 8.5" /><polyline points="2 15.5 12 22 22 15.5" /></S> },
@@ -94,20 +94,24 @@ export function ContractLibrary({ onCustom }: { onCustom: () => void }) {
       {tab === 'ext' && (
         <div style={{ padding: 26 }}>
           <div style={{ fontSize: 14.5, color: '#8a8a8a', marginBottom: 22 }}>
-            Connect to a live, audited protocol by its contract ID — coming soon.
+            Connect to a live, audited protocol by its contract ID. Soroswap is live; more soon.
           </div>
           <div className="xlm-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
             {EXISTING.map((c) => (
               <div
                 key={c.name}
                 className="xlm-cardext"
-                style={{ border: '1px solid #232323', borderRadius: 16, padding: 24, gridColumn: c.wide ? '1 / -1' : undefined }}
+                style={{ border: '1px solid #232323', borderRadius: 16, padding: 24, gridColumn: c.wide ? '1 / -1' : undefined, opacity: c.live ? 1 : 0.72 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                   <div style={{ width: 34, height: 34, borderRadius: 9, background: '#161616', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {c.icon}
                   </div>
-                  {SOON}
+                  {c.live ? (
+                    <span style={{ fontSize: 11, color: '#0a0a0a', background: YELLOW, borderRadius: 999, padding: '4px 11px', fontWeight: 600 }}>Live</span>
+                  ) : (
+                    SOON
+                  )}
                 </div>
                 <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 9 }}>{c.name}</div>
                 <div style={{ fontSize: 14.5, color: '#8a8a8a', lineHeight: 1.5 }}>{c.blurb}</div>

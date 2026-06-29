@@ -1,28 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProjects } from '../projects/store'
-import { PromptInput } from '../components/PromptInput'
-import { fetchTemplates, type TemplateSummary } from '../lib/backend'
+import { PromptComposer } from '../marketing/PromptComposer'
+import { TEMPLATES } from '../lib/templates'
 
-/** Route "/app" — the build home inside the authed shell. */
+/** Route "/app" — the build home inside the authed shell. Uses the SAME prompt
+ *  composer as the landing hero, with static template badges. */
 export function BuildHome() {
   const navigate = useNavigate()
   const { createProject } = useProjects()
-  const [templates, setTemplates] = useState<TemplateSummary[]>([])
+  const [prompt, setPrompt] = useState('')
 
-  useEffect(() => {
-    fetchTemplates()
-      .then(setTemplates)
-      .catch((err) => console.warn('[templates] failed to load:', err))
-  }, [])
-
-  const startWithPrompt = (text: string) => {
+  const submitPrompt = () => {
+    const text = prompt.trim()
+    if (!text) return
     navigate(`/projects/${createProject(text)}`)
-  }
-
-  // Open the template's shared read-only preview (/p/:token) → Clone from there.
-  const openTpl = (t: TemplateSummary) => {
-    if (t.token) navigate(`/p/${t.token}`)
   }
 
   return (
@@ -31,18 +23,13 @@ export function BuildHome() {
         <h1 className="mb-8 text-center text-3xl font-medium tracking-tight sm:text-4xl">
           What do you want to build?
         </h1>
-        <PromptInput
-          onSend={startWithPrompt}
-          busy={false}
-          autoFocus
-          placeholder="Describe a Stellar app in plain language…"
-        />
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
-          {templates.map((t) => (
+        <PromptComposer value={prompt} onChange={setPrompt} onSubmit={submitPrompt} />
+        <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+          {TEMPLATES.map((t) => (
             <button
-              key={t.id}
-              onClick={() => openTpl(t)}
-              className="rounded-full border border-zinc-800 px-3 py-1.5 text-[12.5px] text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-200"
+              key={t.token}
+              onClick={() => navigate(`/p/${t.token}`)}
+              className="rounded-full border border-zinc-800 px-4 py-2 text-[13px] text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"
             >
               {t.name}
             </button>

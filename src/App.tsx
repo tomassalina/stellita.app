@@ -6,6 +6,7 @@ import { PricingPage } from './marketing/PricingPage'
 import { TemplatesPage } from './marketing/TemplatesPage'
 import { FaqPage } from './marketing/FaqPage'
 import { BuildHome } from './pages/BuildHome'
+import { AppTemplates } from './pages/AppTemplates'
 import { Editor } from './pages/Editor'
 import { Profile } from './pages/Profile'
 import { SharedProject } from './pages/SharedProject'
@@ -23,6 +24,7 @@ function App() {
       <Route path="/p/:token" element={<SharedProject />} />
       <Route element={<AppShell />}>
         <Route path="/app" element={<BuildHome />} />
+        <Route path="/app/templates" element={<AppTemplates />} />
         <Route path="/projects/:slug" element={<Editor />} />
         <Route path="/profile" element={<Profile />} />
       </Route>

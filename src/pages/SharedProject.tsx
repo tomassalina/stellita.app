@@ -8,6 +8,7 @@ import { ChatPanel } from '../components/ChatPanel'
 import { WorkspacePanel } from '../components/WorkspacePanel'
 import type { Version } from '../projects/store'
 import { fetchShared } from '../lib/backend'
+import { useFreighterBridge } from '../wallet/freighterBridge'
 import { Logo, Wordmark } from '../marketing/shared'
 import type { ChatMessage, DeployedContract, FileTree } from '../../shared/types'
 
@@ -30,11 +31,15 @@ export function SharedProject() {
   const [data, setData] = useState<Loaded | null>(null)
   const [error, setError] = useState('')
   const [showLogin, setShowLogin] = useState(false)
+  const [cloning, setCloning] = useState(false)
   const [view, setView] = useState<FileTree | null>(null)
   const [gen, setGen] = useState(1)
   const [resizing, setResizing] = useState(false)
   const [params] = useSearchParams()
   const autoCloned = useRef(false)
+  // Answer Freighter requests forwarded from the preview iframe — same bridge the
+  // authed shell uses, so wallet connect works on the shared page too.
+  useFreighterBridge()
 
   useEffect(() => {
     if (!token) return
@@ -61,9 +66,11 @@ export function SharedProject() {
 
   const doClone = async () => {
     if (!token) return
+    setCloning(true)
     try {
       navigate(`/projects/${await cloneSharedProject(token)}`)
     } catch {
+      setCloning(false)
       setError('Could not clone this project.')
     }
   }
@@ -139,6 +146,7 @@ export function SharedProject() {
             readOnly
             signedIn={!!user}
             onClone={clone}
+            cloning={cloning}
           />
         </Panel>
         <PanelResizeHandle

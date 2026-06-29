@@ -99,7 +99,7 @@ export function Sidebar({
       {/* Templates */}
       <div className="px-2 pb-1">
         <NavLink
-          to="/templates"
+          to="/app/templates"
           className={({ isActive }) =>
             `flex items-center gap-2 rounded-md px-2.5 py-2 text-[13px] transition-colors ${
               isActive

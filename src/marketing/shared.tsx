@@ -25,8 +25,8 @@ export function Wordmark({ size = 19 }: { size?: number }) {
 type NavKey = 'home' | 'templates' | 'contracts' | 'pricing' | 'faq'
 
 const NAV_LINKS: { key: NavKey; label: string; to: string }[] = [
-  { key: 'templates', label: 'Templates', to: '/templates' },
   { key: 'contracts', label: 'Contracts', to: '/contracts' },
+  { key: 'templates', label: 'Templates', to: '/templates' },
   { key: 'pricing', label: 'Pricing', to: '/pricing' },
   { key: 'faq', label: 'FAQ', to: '/faq' },
 ]
@@ -175,8 +175,19 @@ export function Footer() {
           </div>
         ))}
       </div>
-      <div style={{ maxWidth: 1280, margin: '40px auto 0', fontSize: 13, color: '#5a5a5a' }}>
-        © {2026} XLM Code · Runs on Stellar testnet.
+      <div style={{ maxWidth: 1280, margin: '40px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', fontSize: 13, color: '#5a5a5a' }}>
+        <span>© {2026} XLM Code · Runs on Stellar testnet.</span>
+        <span>
+          Created by{' '}
+          <a
+            href="https://www.instagram.com/lasoftwarefactory/"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: '#7a7a7a', textDecoration: 'none' }}
+          >
+            lasoftwarefactory
+          </a>
+        </span>
       </div>
     </footer>
   )
