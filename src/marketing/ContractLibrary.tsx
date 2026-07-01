@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { YELLOW } from './shared'
+import { ProtocolLogo } from '../components/ProtocolLogo'
 
 /* The tabbed contract catalog from the design (Configurable / Existing / Custom).
    Reused by the home teaser and the /contracts page. Presentational + a single
@@ -36,23 +37,6 @@ const EXISTING: { name: string; blurb: string; logo?: string; icon: ReactNode; w
   { name: 'x402', blurb: 'HTTP-request payments / micropayments / agent payments.', logo: '/logos/x402.svg', wide: true, icon: <S color="#8a6a00" w={18}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></S> },
 ]
 
-/** Real protocol logo with graceful fallback to the line-icon. */
-function ProtoLogo({ logo, name, icon }: { logo?: string; name: string; icon: ReactNode }) {
-  const [failed, setFailed] = useState(false)
-  if (logo && !failed) {
-    return (
-      <img
-        src={logo}
-        alt={name}
-        width={26}
-        height={26}
-        style={{ objectFit: 'contain' }}
-        onError={() => setFailed(true)}
-      />
-    )
-  }
-  return <>{icon}</>
-}
 
 const SOON = (
   <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--soon-ink)', background: 'var(--gold-soft)', border: '1.5px solid var(--soon-line)', borderRadius: 999, padding: '3px 10px' }}>SOON</span>
@@ -128,7 +112,7 @@ export function ContractLibrary({ onCustom }: { onCustom: () => void }) {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 10, border: '2px solid var(--ink)', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <ProtoLogo logo={c.logo} name={c.name} icon={c.icon} />
+                      <ProtocolLogo logo={c.logo} name={c.name} size={26} fallback={c.icon} />
                     </div>
                     {LIVE}
                   </div>
@@ -142,7 +126,7 @@ export function ContractLibrary({ onCustom }: { onCustom: () => void }) {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 10, border: '2px solid var(--line-soft)', background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.85 }}>
-                      <ProtoLogo logo={c.logo} name={c.name} icon={c.icon} />
+                      <ProtocolLogo logo={c.logo} name={c.name} size={26} fallback={c.icon} />
                     </div>
                     {SOON}
                   </div>

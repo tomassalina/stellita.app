@@ -34,6 +34,7 @@ import {
 } from 'lucide-react'
 import type { Manifest, DeployedContract } from '../../shared/types'
 import { fetchCatalog, deployContract } from '../lib/contracts'
+import { ProtocolLogo } from './ProtocolLogo'
 
 const CATEGORY_ICON: Record<string, typeof Coins> = {
   token: Coins,
@@ -402,29 +403,6 @@ function ConnectPill() {
   )
 }
 
-function ProtocolLogo({
-  logo,
-  name,
-  icon: Icon,
-}: {
-  logo?: string
-  name: string
-  icon: typeof Coins
-}) {
-  const [imgFailed, setImgFailed] = useState(false)
-  if (logo && !imgFailed) {
-    return (
-      <img
-        src={logo}
-        alt={name}
-        className="h-6 w-6 rounded object-contain"
-        onError={() => setImgFailed(true)}
-      />
-    )
-  }
-  return <Icon className="h-5 w-5 text-[var(--ink)]" />
-}
-
 function AddContractModal({
   projectId,
   onClose,
@@ -548,6 +526,7 @@ function AddContractModal({
                   <div className="grid grid-cols-2 gap-3.5">
                     {EXISTING_PROTOCOLS.map((entry) => {
                       const live = entry.connect
+                      const Icon = entry.icon
                       return (
                         <div
                           key={entry.name}
@@ -579,7 +558,12 @@ function AddContractModal({
                                 live ? 'border-[var(--ink)] bg-[var(--surface)]' : 'border-[var(--line-soft)] bg-[var(--surface2)] opacity-85'
                               }`}
                             >
-                              <ProtocolLogo logo={entry.logo} name={entry.name} icon={entry.icon} />
+                              <ProtocolLogo
+                                logo={entry.logo}
+                                name={entry.name}
+                                size={26}
+                                fallback={<Icon className="h-5 w-5 text-[var(--ink)]" />}
+                              />
                             </div>
                             {live ? <ConnectPill /> : <SoonPill />}
                           </div>
