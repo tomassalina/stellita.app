@@ -122,9 +122,9 @@ export function LoginModal({
         )}
 
         <div className="my-5 flex items-center gap-3">
-          <div className="h-px flex-1 bg-[#e8e0c0]" />
+          <div className="h-px flex-1 bg-[var(--line-soft)]" />
           <span className="text-[11.5px] text-[var(--muted3)]">or</span>
-          <div className="h-px flex-1 bg-[#e8e0c0]" />
+          <div className="h-px flex-1 bg-[var(--line-soft)]" />
         </div>
 
         <button

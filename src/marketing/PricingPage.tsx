@@ -121,7 +121,7 @@ export function PricingPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
                 {t.features.map((f) => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14.5, color: '#4a4536', fontWeight: 500 }}>
+                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14.5, color: 'var(--muted)', fontWeight: 500 }}>
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={'var(--gold-dk)'} strokeWidth="2.8" style={{ marginTop: 1, flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
                     {f}
                   </div>

@@ -39,6 +39,7 @@
   --soon-line: #e8d98a;
   --shadow: #222222; /* hard offset shadow color */
   --nav-bg: rgba(255, 253, 245, 0.85);
+  --danger: #dc2626; /* error text / borders / icons (adapts for dark) */
 }
 
 .stx-dark {
@@ -61,6 +62,7 @@
   --soon-line: #5c5029;
   --shadow: #000000;
   --nav-bg: rgba(15, 13, 9, 0.86);
+  --danger: #f87171; /* lighter red so it stays legible on the dark surface */
 }
 
 html,

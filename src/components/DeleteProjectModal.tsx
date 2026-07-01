@@ -68,7 +68,7 @@ export function DeleteProjectModal({
         style={{ boxShadow: '6px 6px 0 var(--shadow)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2 text-[#B3261E]">
+        <div className="flex items-center gap-2 text-[var(--danger)]">
           <AlertTriangle className="h-5 w-5" />
           <h2 className="text-[15px] font-medium">Delete project</h2>
         </div>
@@ -106,7 +106,7 @@ export function DeleteProjectModal({
             placeholder={projectName}
             className={`w-full select-text rounded-lg border-2 bg-[var(--surface)] px-3 py-2 text-[14px] text-[var(--ink)] outline-none ${
               nameInput && !nameOk
-                ? 'border-[#B3261E] focus:border-[#B3261E]'
+                ? 'border-[var(--danger)] focus:border-[var(--danger)]'
                 : 'border-[var(--ink)] focus:border-[var(--gold-dk)]'
             }`}
           />
@@ -126,14 +126,14 @@ export function DeleteProjectModal({
             placeholder="delete"
             className={`w-full select-text rounded-lg border-2 bg-[var(--surface)] px-3 py-2 text-[14px] text-[var(--ink)] outline-none ${
               wordInput && !wordOk
-                ? 'border-[#B3261E] focus:border-[#B3261E]'
+                ? 'border-[var(--danger)] focus:border-[var(--danger)]'
                 : 'border-[var(--ink)] focus:border-[var(--gold-dk)]'
             }`}
           />
         </label>
 
         {error && (
-          <p className="mt-3 text-[12.5px] text-[#B3261E]">{error}</p>
+          <p className="mt-3 text-[12.5px] text-[var(--danger)]">{error}</p>
         )}
 
         <div className="mt-5 flex justify-end gap-2 text-[13px]">
@@ -147,7 +147,7 @@ export function DeleteProjectModal({
             onClick={() => void confirm()}
             disabled={!ready}
             style={{ boxShadow: ready ? '3px 3px 0 var(--shadow)' : undefined }}
-            className="flex items-center gap-1.5 rounded-lg border-2 border-[var(--ink)] bg-[#FF6B6B] px-3.5 py-1.5 font-medium text-[var(--ink)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg border-2 border-[var(--ink)] bg-red-600 px-3.5 py-1.5 font-medium text-white transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
             {deleting ? 'Deleting…' : 'Delete project'}

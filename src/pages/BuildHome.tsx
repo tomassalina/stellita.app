@@ -29,7 +29,7 @@ export function BuildHome() {
   const count = prompt.length
   const countColor =
     count >= PROMPT_MAX
-      ? 'text-[#dc2626]'
+      ? 'text-[var(--danger)]'
       : count >= PROMPT_MAX - 200
         ? 'text-[var(--gold-dk)]'
         : 'text-[var(--muted2)]'
