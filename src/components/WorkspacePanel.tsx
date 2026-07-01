@@ -801,7 +801,7 @@ export function WorkspacePanel({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-[15px] font-medium text-[#222222]">Share "{projectName}"</h2>
+              <h2 className="text-[15px] font-medium text-[#222222]">Share “{projectName}”</h2>
               <button
                 onClick={() => setShareOpen(false)}
                 className="rounded p-1 text-[#8a8266] hover:text-[#222222]"
@@ -827,33 +827,33 @@ export function WorkspacePanel({
                     onKeyDown={(e) => { if (e.key === 'Enter') void sendShareEmail() }}
                     type="email"
                     placeholder="name@email.com"
-                    className="min-w-0 flex-1 rounded-lg border border-[#222] bg-white/60 px-3 py-2 text-[13px] text-[#222222] outline-none placeholder:text-[#a89f80] focus:border-[#D9A400]"
+                    className="min-w-0 flex-1 rounded-lg border-2 border-[#222222] bg-white px-3 py-2 text-[13px] text-[#222222] outline-none placeholder:text-[#a89f80] focus:border-[#D9A400]"
                   />
                   <button
                     onClick={() => void sendShareEmail()}
                     disabled={emailState === 'sending' || !emailTo.trim()}
-                    className="shrink-0 rounded-lg bg-[#FFD700] border-2 border-[#222] px-3.5 py-2 text-[13px] font-medium text-[#222222] transition-colors hover:bg-[#ffe23f] disabled:opacity-50"
+                    className="shrink-0 rounded-lg border-2 border-[#222222] bg-[#FFD700] px-3.5 py-2 text-[13px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
                   >
                     {emailState === 'sending' ? 'Sending…' : 'Send'}
                   </button>
                 </div>
                 {emailState === 'sent' && (
-                  <p className="mt-1.5 text-[12px] text-emerald-400">
+                  <p className="mt-1.5 text-[12px] text-emerald-700">
                     Invite sent — they can now open and clone this project.
                   </p>
                 )}
                 {emailState === 'error' && (
-                  <p className="mt-1.5 text-[12px] text-red-400">
+                  <p className="mt-1.5 text-[12px] text-red-700">
                     Could not send — check the email is configured.
                   </p>
                 )}
               </div>
             )}
 
-            <div className="mt-4 border-t border-[#222] pt-4">
+            <div className="mt-4 border-t-2 border-[#222222] pt-4">
               <p className="mb-2 text-[12px] font-medium text-[#6b6659]">General access</p>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF9E0] text-[#6b6659]">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-[#222222] bg-[#FFF9E0] text-[#222222]">
                   {vis === 'link' ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -862,14 +862,14 @@ export function WorkspacePanel({
                       value={vis}
                       disabled={visBusy || !onSetVisibility}
                       onChange={(e) => void changeVisibility(e.target.value as 'private' | 'link')}
-                      className="cursor-pointer rounded-md bg-transparent py-0.5 text-[13.5px] font-medium text-[#222222] outline-none hover:text-white disabled:opacity-60"
+                      className="cursor-pointer rounded-md bg-transparent py-0.5 text-[13.5px] font-medium text-[#222222] outline-none disabled:opacity-60"
                     >
                       <option value="private" className="bg-white">Restricted</option>
                       <option value="link" className="bg-white">Anyone with the link</option>
                     </select>
-                    {visBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#222222]0" />}
+                    {visBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#8a8266]" />}
                   </div>
-                  <p className="mt-0.5 text-[12px] text-[#222222]0">
+                  <p className="mt-0.5 text-[12px] text-[#8a8266]">
                     {vis === 'link'
                       ? 'Anyone with the link can view and clone it.'
                       : 'Only you can open this project.'}
@@ -878,13 +878,13 @@ export function WorkspacePanel({
               </div>
 
               {vis === 'link' && url && (
-                <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-[#222] bg-white/40 px-3 py-2">
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border-2 border-[#222222] bg-[#FFFDF5] px-3 py-2">
                   <code className="min-w-0 truncate font-mono text-[12px] text-[#6b6659]">{url}</code>
                   <button
                     onClick={copyLink}
-                    className="flex shrink-0 items-center gap-1 rounded-md bg-[#FFD700] border-2 border-[#222] px-2.5 py-1.5 text-[12px] font-medium text-[#222222] hover:bg-[#ffe23f]"
+                    className="flex shrink-0 items-center gap-1 rounded-md border-2 border-[#222222] bg-[#FFD700] px-2.5 py-1.5 text-[12px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
                   >
-                    {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-700" /> : <Copy className="h-3.5 w-3.5" />}
                     {linkCopied ? 'Copied' : 'Copy link'}
                   </button>
                 </div>
@@ -894,7 +894,7 @@ export function WorkspacePanel({
             <div className="mt-5 flex justify-end">
               <button
                 onClick={() => setShareOpen(false)}
-                className="rounded-full bg-[#FFD700] border-2 border-[#222] px-4 py-1.5 text-[13px] font-medium text-[#222222] transition-colors hover:bg-[#ffe23f]"
+                className="rounded-full border-2 border-[#222222] bg-[#FFD700] px-4 py-1.5 text-[13px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
               >
                 Done
               </button>
