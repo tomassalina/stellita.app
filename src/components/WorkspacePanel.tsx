@@ -24,6 +24,8 @@ import {
   Wand2,
   AlertTriangle,
   Loader2,
+  Globe,
+  Lock,
 } from 'lucide-react'
 import type { FileTree, DeployedContract } from '../../shared/types'
 import type { Version } from '../projects/store'
@@ -456,7 +458,9 @@ export function WorkspacePanel({
   contracts = [],
   onDeployed,
   readOnly = false,
-  onShare,
+  visibility = 'private',
+  shareUrl: shareUrlProp = '',
+  onSetVisibility,
   onEmailShare,
 }: {
   fileTree: FileTree
@@ -478,10 +482,17 @@ export function WorkspacePanel({
   onDeployed?: (c: DeployedContract) => void
   /** Read-only view (template/shared): no editing, no deploy, no share. */
   readOnly?: boolean
-  /** Create (or fetch) a public read-only share link; returns the URL. */
-  onShare?: () => Promise<string>
+  /** Current sharing state — drives the header badge and the share modal. */
+  visibility?: 'private' | 'link'
+  /** The project's existing public link (empty when none). */
+  shareUrl?: string
+  /** Switch the project private / link-shareable. Returns the public URL when
+   *  link-shared, or null when private. */
+  onSetVisibility?: (
+    visibility: 'private' | 'link',
+  ) => Promise<{ visibility: 'private' | 'link'; url: string | null }>
   /** Email a share link to a recipient (via Resend). */
-  onEmailShare?: (to: string) => Promise<unknown>
+  onEmailShare?: (to: string) => Promise<{ url?: string } | unknown>
 }) {
   const [tab, setTab] = useState<Tab>('preview')
   const [device, setDevice] = useState<Device>('desktop')
@@ -489,19 +500,49 @@ export function WorkspacePanel({
   const [editable, setEditable] = useState(false)
   const [previewError, setPreviewError] = useState('')
   const [shareOpen, setShareOpen] = useState(false)
-  const [shareUrl, setShareUrl] = useState('')
-  const [sharing, setSharing] = useState(false)
-  const [shareErr, setShareErr] = useState('')
+  const [vis, setVis] = useState<'private' | 'link'>(visibility)
+  const [url, setUrl] = useState(shareUrlProp)
+  const [visBusy, setVisBusy] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [emailTo, setEmailTo] = useState('')
   const [emailState, setEmailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+
+  // Keep local (optimistic) share state in sync when the project's share info
+  // changes — e.g. it finishes loading from the backend. Adjusting state during
+  // render on a prop change is React's recommended alternative to a prop→state
+  // effect (https://react.dev/learn/you-might-not-need-an-effect).
+  const [shareSync, setShareSync] = useState({ visibility, shareUrlProp })
+  if (shareSync.visibility !== visibility || shareSync.shareUrlProp !== shareUrlProp) {
+    setShareSync({ visibility, shareUrlProp })
+    setVis(visibility)
+    setUrl(shareUrlProp)
+  }
+
+  const changeVisibility = async (next: 'private' | 'link') => {
+    if (!onSetVisibility || next === vis) return
+    const prev = vis
+    setVis(next)
+    setVisBusy(true)
+    try {
+      const res = await onSetVisibility(next)
+      setVis(res.visibility)
+      setUrl(res.url ?? '')
+    } catch {
+      setVis(prev) // revert on failure
+    } finally {
+      setVisBusy(false)
+    }
+  }
 
   const sendShareEmail = async () => {
     const to = emailTo.trim()
     if (!to || !onEmailShare) return
     setEmailState('sending')
     try {
-      await onEmailShare(to)
+      const res = (await onEmailShare(to)) as { url?: string } | undefined
+      // Emailing the link enables it server-side — reflect that here.
+      setVis('link')
+      if (res?.url) setUrl(res.url)
       setEmailState('sent')
       setEmailTo('')
     } catch {
@@ -509,18 +550,11 @@ export function WorkspacePanel({
     }
   }
 
-  const openShare = async () => {
-    setShareOpen(true)
-    if (shareUrl || !onShare) return
-    setSharing(true)
-    setShareErr('')
-    try {
-      setShareUrl(await onShare())
-    } catch {
-      setShareErr('Could not create a share link.')
-    } finally {
-      setSharing(false)
-    }
+  const copyLink = () => {
+    if (!url) return
+    void navigator.clipboard?.writeText(url)
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 1200)
   }
 
   return (
@@ -545,12 +579,25 @@ export function WorkspacePanel({
           ))}
         </div>
         {!readOnly && (
-          <button
-            onClick={() => void openShare()}
-            className="rounded-full bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
-          >
-            Share
-          </button>
+          <div className="flex items-center gap-3">
+            <span
+              className="flex items-center gap-1 text-[11.5px] font-normal text-zinc-500"
+              title={vis === 'link' ? 'Anyone with the link can view and clone' : 'Only you can access this project'}
+            >
+              {vis === 'link' ? (
+                <Globe className="h-3 w-3" />
+              ) : (
+                <Lock className="h-3 w-3" />
+              )}
+              {vis === 'link' ? 'Public' : 'Private'}
+            </span>
+            <button
+              onClick={() => setShareOpen(true)}
+              className="rounded-full bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
+            >
+              Share
+            </button>
+          </div>
         )}
       </nav>
 
@@ -747,41 +794,21 @@ export function WorkspacePanel({
               </button>
             </div>
             <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
-              Anyone with this link can view the project — code, contracts and live
-              preview — <span className="text-zinc-200">read-only</span>. To edit, they
-              clone it into their own account.
+              Anyone you share this with can{' '}
+              <span className="text-zinc-200">clone it</span> into their own
+              account — not just view.
             </p>
 
-            {sharing ? (
-              <div className="mt-5 flex items-center gap-2 text-[13px] text-zinc-400">
-                <Loader2 className="h-4 w-4 animate-spin" /> Creating link…
-              </div>
-            ) : shareErr ? (
-              <p className="mt-5 text-[13px] text-red-400">{shareErr}</p>
-            ) : (
-              <div className="mt-5 flex items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
-                <code className="min-w-0 truncate font-mono text-[12px] text-zinc-300">{shareUrl}</code>
-                <button
-                  onClick={() => {
-                    void navigator.clipboard?.writeText(shareUrl)
-                    setLinkCopied(true)
-                    setTimeout(() => setLinkCopied(false), 1200)
-                  }}
-                  className="flex shrink-0 items-center gap-1 rounded-md bg-zinc-50 px-2.5 py-1.5 text-[12px] font-medium text-black hover:bg-white"
-                >
-                  {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                  {linkCopied ? 'Copied' : 'Copy link'}
-                </button>
-              </div>
-            )}
-
             {onEmailShare && (
-              <div className="mt-4 border-t border-zinc-800 pt-4">
-                <p className="mb-2 text-[12px] text-zinc-500">Or send it by email</p>
+              <div className="mt-4">
+                <label className="mb-1.5 block text-[12px] font-medium text-zinc-400">
+                  Add people
+                </label>
                 <div className="flex gap-2">
                   <input
                     value={emailTo}
                     onChange={(e) => { setEmailTo(e.target.value); setEmailState('idle') }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') void sendShareEmail() }}
                     type="email"
                     placeholder="name@email.com"
                     className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-zinc-600"
@@ -794,10 +821,68 @@ export function WorkspacePanel({
                     {emailState === 'sending' ? 'Sending…' : 'Send'}
                   </button>
                 </div>
-                {emailState === 'sent' && <p className="mt-2 text-[12px] text-emerald-400">Sent ✓</p>}
-                {emailState === 'error' && <p className="mt-2 text-[12px] text-red-400">Could not send — check the email is configured.</p>}
+                {emailState === 'sent' && (
+                  <p className="mt-1.5 text-[12px] text-emerald-400">
+                    Invite sent — they can now open and clone this project.
+                  </p>
+                )}
+                {emailState === 'error' && (
+                  <p className="mt-1.5 text-[12px] text-red-400">
+                    Could not send — check the email is configured.
+                  </p>
+                )}
               </div>
             )}
+
+            <div className="mt-4 border-t border-zinc-800 pt-4">
+              <p className="mb-2 text-[12px] font-medium text-zinc-400">General access</p>
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-300">
+                  {vis === 'link' ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={vis}
+                      disabled={visBusy || !onSetVisibility}
+                      onChange={(e) => void changeVisibility(e.target.value as 'private' | 'link')}
+                      className="cursor-pointer rounded-md bg-transparent py-0.5 text-[13.5px] font-medium text-zinc-100 outline-none hover:text-white disabled:opacity-60"
+                    >
+                      <option value="private" className="bg-zinc-900">Restricted</option>
+                      <option value="link" className="bg-zinc-900">Anyone with the link</option>
+                    </select>
+                    {visBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-500" />}
+                  </div>
+                  <p className="mt-0.5 text-[12px] text-zinc-500">
+                    {vis === 'link'
+                      ? 'Anyone with the link can view and clone it.'
+                      : 'Only you can open this project.'}
+                  </p>
+                </div>
+              </div>
+
+              {vis === 'link' && url && (
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
+                  <code className="min-w-0 truncate font-mono text-[12px] text-zinc-300">{url}</code>
+                  <button
+                    onClick={copyLink}
+                    className="flex shrink-0 items-center gap-1 rounded-md bg-zinc-50 px-2.5 py-1.5 text-[12px] font-medium text-black hover:bg-white"
+                  >
+                    {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    {linkCopied ? 'Copied' : 'Copy link'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={() => setShareOpen(false)}
+                className="rounded-full bg-zinc-50 px-4 py-1.5 text-[13px] font-medium text-black transition-colors hover:bg-white"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

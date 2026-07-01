@@ -67,6 +67,12 @@ export interface ProjectState {
   /** Backend id of the source this read-only view was opened from (template or
    *  shared project) — used by the "Clone to build" action. */
   cloneSourceId?: string
+  /** Sharing state. 'private' (default) = only the owner; 'link' = anyone with
+   *  the share link can view + clone. */
+  visibility?: 'private' | 'link'
+  /** The project's share token (if one has ever been generated). The link only
+   *  resolves while visibility === 'link'. */
+  shareToken?: string | null
 }
 
 interface ProjectsContextValue {
@@ -102,8 +108,12 @@ interface ProjectsContextValue {
   addDeployedContract: (slug: string, contract: DeployedContract) => void
   /** Mark the actions on a message as resolved (hides the action cards). */
   resolveMessageActions: (slug: string, messageIndex: number) => void
-  /** Generate a share link for a project. Returns the share URL. */
-  shareProject: (id: string) => Promise<string>
+  /** Set a project private or link-shareable. Returns the (public) URL when
+   *  link-shared, or null when private. */
+  setVisibility: (
+    id: string,
+    visibility: 'private' | 'link',
+  ) => Promise<{ visibility: 'private' | 'link'; url: string | null }>
   /** Clone a project/template into the caller's account. Returns the new slug. */
   cloneProject: (id: string) => Promise<string>
   /** Clone a shared project (by token) into the caller's account. Returns slug. */
@@ -180,6 +190,7 @@ type BackendProject = {
   updated_at: string
   /** Authoritative current file tree (server keeps this in sync on every edit). */
   current_files?: FileTree
+  visibility?: 'private' | 'link'
 }
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
@@ -280,6 +291,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         versions: { id: string; label: string; summary: string; files: FileTree; created_at: string }[]
         messages: { role: string; content: string; created_at: string }[]
         contracts: DeployedContract[]
+        shareToken?: string | null
       }>(`/api/projects/${p.id}`)
 
       const versions: Version[] = data.versions.map((v) => ({
@@ -308,6 +320,8 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         fileTree: tree,
         savedFileTree: tree,
         loaded: true,
+        visibility: data.project.visibility ?? 'private',
+        shareToken: data.shareToken ?? null,
         // Bump generation so Sandpack remounts with the freshly loaded files —
         // the stub mounted with an empty tree (default "Hello world" preview).
         generation: (ref.current[slug]?.generation ?? 0) + 1,
@@ -751,12 +765,21 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const shareProject = async (id: string): Promise<string> => {
-    const { url } = await api<{ token: string; url: string }>(
-      `/api/projects/${id}/share`,
-      { method: 'POST' },
-    )
-    return url
+  const setVisibility = async (
+    id: string,
+    visibility: 'private' | 'link',
+  ): Promise<{ visibility: 'private' | 'link'; url: string | null }> => {
+    const res = await api<{
+      visibility: 'private' | 'link'
+      token: string | null
+      url: string | null
+    }>(`/api/projects/${id}/visibility`, {
+      method: 'POST',
+      body: JSON.stringify({ visibility }),
+    })
+    const slug = Object.keys(ref.current).find((k) => ref.current[k].id === id)
+    if (slug) patch(slug, { visibility: res.visibility, shareToken: res.token })
+    return { visibility: res.visibility, url: res.url }
   }
 
   const cloneProject = async (id: string): Promise<string> => {
@@ -834,7 +857,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     deleteEntry,
     addDeployedContract,
     resolveMessageActions,
-    shareProject,
+    setVisibility,
     cloneProject,
     cloneSharedProject,
   }

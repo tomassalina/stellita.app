@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { requireUser } from '../middleware/auth.js'
 import { adminClient } from '../lib/supabase.js'
 import { sendEmail } from '../lib/email.js'
@@ -27,6 +28,42 @@ function contractDTO(c: Record<string, unknown>) {
     config: c['config'] ?? {},
     createdAt: c['created_at'] ? new Date(c['created_at'] as string).getTime() : 0,
   }
+}
+
+/** Get the project's existing share token, or create one. Idempotent — the old
+ *  /share handler inserted a fresh token row on every call, leaving a project
+ *  with many orphan links. One token per project is enough. */
+async function ensureShareToken(
+  supabase: SupabaseClient,
+  projectId: string,
+  userId: string,
+): Promise<string> {
+  const { data: existing } = await supabase
+    .from('project_shares')
+    .select('token')
+    .eq('project_id', projectId)
+    .limit(1)
+    .maybeSingle()
+  if (existing?.token) return existing.token as string
+
+  const { data, error } = await supabase
+    .from('project_shares')
+    .insert({ project_id: projectId, created_by: userId })
+    .select('token')
+    .single()
+  if (error) {
+    // A concurrent call may have inserted the row first (unique project_id) —
+    // re-read rather than failing the request.
+    const { data: raced } = await supabase
+      .from('project_shares')
+      .select('token')
+      .eq('project_id', projectId)
+      .limit(1)
+      .maybeSingle()
+    if (raced?.token) return raced.token as string
+    throw new Error(error.message)
+  }
+  return data.token as string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -116,7 +153,7 @@ router.post('/projects', requireUser, async (req, res) => {
 router.get('/projects/:id', requireUser, async (req, res) => {
   const { id } = req.params
 
-  const [projectRes, versionsRes, messagesRes, contractsRes] = await Promise.all([
+  const [projectRes, versionsRes, messagesRes, contractsRes, shareRes] = await Promise.all([
     req.supabase.from('projects').select('*').eq('id', id).single(),
     req.supabase
       .from('project_versions')
@@ -133,6 +170,12 @@ router.get('/projects/:id', requireUser, async (req, res) => {
       .select('*')
       .eq('project_id', id)
       .order('created_at', { ascending: true }),
+    req.supabase
+      .from('project_shares')
+      .select('token')
+      .eq('project_id', id)
+      .limit(1)
+      .maybeSingle(),
   ])
 
   if (projectRes.error) {
@@ -145,6 +188,9 @@ router.get('/projects/:id', requireUser, async (req, res) => {
     versions: versionsRes.data ?? [],
     messages: messagesRes.data ?? [],
     contracts: (contractsRes.data ?? []).map(contractDTO),
+    // Share token (if any) so the client can show the existing link without
+    // creating one. The token only *works* while visibility === 'link'.
+    shareToken: (shareRes.data?.token as string | undefined) ?? null,
   })
 })
 
@@ -395,18 +441,58 @@ router.post('/projects/:id/contracts', requireUser, async (req, res) => {
 /** POST /api/projects/:id/share — create a share token */
 router.post('/projects/:id/share', requireUser, async (req, res) => {
   const { id } = req.params
+  // Explicitly generating a link means making it usable → flip to 'link'.
+  const { error: visErr } = await req.supabase
+    .from('projects')
+    .update({ visibility: 'link' })
+    .eq('id', id)
+  if (visErr) { res.status(500).json({ error: visErr.message }); return }
+  try {
+    const token = await ensureShareToken(req.supabase, id as string, req.user.id)
+    res.json({ token, url: `${FRONTEND_ORIGIN}/p/${token}` })
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'share failed' })
+  }
+})
 
-  const { data, error } = await req.supabase
-    .from('project_shares')
-    .insert({ project_id: id, created_by: req.user.id })
-    .select('token')
-    .single()
+/** POST /api/projects/:id/visibility — set a project private or link-shareable.
+ *  { visibility: 'private' | 'link' }. Switching to 'link' ensures a token
+ *  exists; switching to 'private' keeps the token but the link stops resolving. */
+router.post('/projects/:id/visibility', requireUser, async (req, res) => {
+  const { id } = req.params
+  const { visibility } = req.body as { visibility?: string }
+  if (visibility !== 'private' && visibility !== 'link') {
+    res.status(400).json({ error: 'visibility must be "private" or "link"' })
+    return
+  }
 
-  if (error) { res.status(500).json({ error: error.message }); return }
-  res.json({
-    token: data.token,
-    url: `${FRONTEND_ORIGIN}/p/${data.token}`,
-  })
+  const { error: upErr } = await req.supabase
+    .from('projects')
+    .update({ visibility })
+    .eq('id', id)
+  if (upErr) { res.status(500).json({ error: upErr.message }); return }
+
+  try {
+    let token: string | null
+    if (visibility === 'link') {
+      token = await ensureShareToken(req.supabase, id as string, req.user.id)
+    } else {
+      const { data } = await req.supabase
+        .from('project_shares')
+        .select('token')
+        .eq('project_id', id)
+        .limit(1)
+        .maybeSingle()
+      token = (data?.token as string | undefined) ?? null
+    }
+    res.json({
+      visibility,
+      token,
+      url: visibility === 'link' && token ? `${FRONTEND_ORIGIN}/p/${token}` : null,
+    })
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'visibility failed' })
+  }
 })
 
 /** POST /api/projects/:id/share/email — create a share link + email it (Resend) */
@@ -423,14 +509,22 @@ router.post('/projects/:id/share/email', requireUser, async (req, res) => {
     .single()
   if (pErr || !project) { res.status(404).json({ error: 'project not found' }); return }
 
-  const { data: share, error: sErr } = await req.supabase
-    .from('project_shares')
-    .insert({ project_id: id, created_by: req.user.id })
-    .select('token')
-    .single()
-  if (sErr) { res.status(500).json({ error: sErr.message }); return }
+  // Emailing someone the link means they must be able to open it → enable 'link'.
+  const { error: visErr } = await req.supabase
+    .from('projects')
+    .update({ visibility: 'link' })
+    .eq('id', id)
+  if (visErr) { res.status(500).json({ error: visErr.message }); return }
 
-  const url = `${FRONTEND_ORIGIN}/p/${share.token}`
+  let token: string
+  try {
+    token = await ensureShareToken(req.supabase, id as string, req.user.id)
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'share failed' })
+    return
+  }
+
+  const url = `${FRONTEND_ORIGIN}/p/${token}`
   const { subject, html } = shareInviteEmail({
     projectName: project.name as string,
     url,
@@ -493,7 +587,15 @@ router.get('/shared/:token', async (req, res) => {
       .order('created_at', { ascending: true }),
   ])
 
-  if (projectRes.error) { res.status(404).json({ error: 'not found' }); return }
+  // Gate on visibility: a private project 404s even if an old token exists.
+  if (
+    projectRes.error ||
+    !projectRes.data ||
+    (projectRes.data as { visibility?: string }).visibility !== 'link'
+  ) {
+    res.status(404).json({ error: 'not found' })
+    return
+  }
 
   res.json({
     project: projectRes.data,
@@ -515,6 +617,17 @@ router.post('/shared/:token/clone', requireUser, async (req, res) => {
     .single()
 
   if (shareErr || !share) { res.status(404).json({ error: 'share not found' }); return }
+
+  // Only clone if the source is still link-shared (not flipped back to private).
+  const { data: src } = await admin
+    .from('projects')
+    .select('visibility')
+    .eq('id', share.project_id as string)
+    .single()
+  if (!src || (src as { visibility?: string }).visibility !== 'link') {
+    res.status(404).json({ error: 'not found' })
+    return
+  }
 
   const { data: newId, error } = await req.supabase.rpc('clone_project', {
     p_source: share.project_id as string,
