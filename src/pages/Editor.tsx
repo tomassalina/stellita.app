@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigate, useParams, useNavigate } from 'react-router-dom'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { ChatPanel } from '../components/ChatPanel'
 import { WorkspacePanel } from '../components/WorkspacePanel'
 import { useProjects } from '../projects/store'
+import { useAuth } from '../auth/store'
 import { getFreighterAddress } from '../wallet/freighterBridge'
 import { fetchCatalog, deployContract } from '../lib/contracts'
 import { emailShareLink } from '../lib/backend'
@@ -30,10 +31,19 @@ export function Editor() {
     cloneProject,
     setVisibility,
   } = useProjects()
+  const { refreshCredits } = useAuth()
   const project = slug ? getProject(slug) : undefined
   // While dragging the divider, kill pointer events on the preview so the
   // Sandpack iframe doesn't swallow the mouse and freeze the resize.
   const [resizing, setResizing] = useState(false)
+
+  // Refresh the credit balance whenever a prompt finishes (busy → false), so
+  // the sidebar bar drops right after each message. Consumption is enforced
+  // server-side; this only re-reads the count.
+  const busy = project?.busy
+  useEffect(() => {
+    if (busy === false) void refreshCredits()
+  }, [busy, refreshCredits])
 
   // Don't decide the project is missing until the list has loaded — otherwise a
   // hard reload / direct URL redirects away before the project is even known.

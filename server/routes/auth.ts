@@ -152,17 +152,34 @@ router.post('/logout', async (req, res) => {
  * Returns the current user + their profile row.
  */
 router.get('/me', requireUser, async (req, res) => {
-  const { data: profile, error } = await req.supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', req.user.id)
-    .single()
+  const [profileRes, creditsRes] = await Promise.all([
+    req.supabase.from('profiles').select('*').eq('id', req.user.id).single(),
+    // Read-only credit status (never consumes) — computed server-side.
+    req.supabase.rpc('prompt_status'),
+  ])
 
+  if (profileRes.error) {
+    res.status(500).json({ error: profileRes.error.message })
+    return
+  }
+  res.json({
+    user: publicUser(req.user),
+    profile: profileRes.data,
+    credits: creditsRes.data ?? null,
+  })
+})
+
+/**
+ * GET /auth/usage
+ * Per-day prompt usage history for the current user (last 30 days).
+ */
+router.get('/usage', requireUser, async (req, res) => {
+  const { data, error } = await req.supabase.rpc('usage_daily', { p_days: 30 })
   if (error) {
     res.status(500).json({ error: error.message })
     return
   }
-  res.json({ user: publicUser(req.user), profile })
+  res.json({ days: data ?? [] })
 })
 
 export default router

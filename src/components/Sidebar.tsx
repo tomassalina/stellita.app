@@ -12,6 +12,7 @@ import {
 import { useProjects } from '../projects/store'
 import { useAuth } from '../auth/store'
 import { DeleteProjectModal } from './DeleteProjectModal'
+import { PlanBadge } from './PlanBadge'
 import { Logo, Wordmark } from '../marketing/shared'
 
 function initials(name: string): string {
@@ -36,7 +37,7 @@ export function Sidebar({
   onToggle: () => void
 }) {
   const { projects, deleteProject } = useProjects()
-  const { user, logout } = useAuth()
+  const { user, logout, credits } = useAuth()
   const navigate = useNavigate()
   const { slug: activeSlug } = useParams<{ slug: string }>()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -165,6 +166,37 @@ export function Sidebar({
           )}
         </nav>
       </div>
+
+      {/* Credits (bottom): plan badge + a bar that drops as prompts are used. */}
+      {!collapsed && credits && (
+        <div className="border-t border-zinc-800 px-3 py-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+              Credits
+            </span>
+            <PlanBadge plan={credits.plan} />
+          </div>
+          {credits.unlimited ? (
+            <p className="text-[13px] font-medium text-zinc-300">∞ Unlimited</p>
+          ) : (
+            <>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+                <div
+                  className="h-full rounded-full bg-[#FDDA24] transition-[width] duration-300"
+                  style={{
+                    width: `${credits.limit > 0 ? Math.max((credits.remaining / credits.limit) * 100, 0) : 0}%`,
+                  }}
+                />
+              </div>
+              <p className="mt-1.5 text-[12px] text-zinc-400">
+                <span className="font-medium text-zinc-200">{credits.remaining}</span>
+                {' / '}
+                {credits.limit} credits left today
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {/* User profile (bottom-left) — opens a popover menu */}
       {user && (
