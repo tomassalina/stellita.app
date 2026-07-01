@@ -1,4 +1,5 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
+import { PROMPT_MAX } from '../../shared/types'
 
 /** Auto-clearing prompt box. Enter sends, Shift+Enter newlines.
  *  Type `@` to reference a file from the project (autocomplete over filePaths). */
@@ -65,6 +66,13 @@ export function PromptInput({
   }
 
   const menuOpen = mention !== null && matches.length > 0
+  const count = value.length
+  const countColor =
+    count >= PROMPT_MAX
+      ? 'text-[#dc2626]'
+      : count >= PROMPT_MAX - 200
+        ? 'text-[#D9A400]'
+        : 'text-[#8a8266]'
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (menuOpen) {
@@ -124,6 +132,7 @@ export function PromptInput({
         onChange={onChange}
         onKeyDown={onKeyDown}
         rows={2}
+        maxLength={PROMPT_MAX}
         placeholder={placeholder}
         className="max-h-40 w-full select-text resize-none bg-transparent px-2 py-1.5 text-[14px] text-[#222222] placeholder:text-[#a89f80] focus:outline-none"
       />
@@ -131,13 +140,18 @@ export function PromptInput({
         <span className="text-[11px] text-[#8a8266]">
           ↵ to send · ⇧↵ newline{filePaths.length ? ' · @ to reference a file' : ''}
         </span>
-        <button
-          onClick={submit}
-          disabled={busy || !value.trim()}
-          className="rounded-full border-2 border-[#222] bg-[#FFD700] px-3.5 py-1.5 text-[13px] font-medium text-[#222222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_#222] disabled:cursor-not-allowed disabled:border-[#c9bf99] disabled:bg-[#FFF9E0] disabled:text-[#a89f80] disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-        >
-          {busy ? 'Working…' : 'Send'}
-        </button>
+        <div className="flex items-center gap-2.5">
+          <span className={`text-[11px] font-semibold tabular-nums ${countColor}`}>
+            {count}/{PROMPT_MAX}
+          </span>
+          <button
+            onClick={submit}
+            disabled={busy || !value.trim()}
+            className="rounded-full border-2 border-[#222] bg-[#FFD700] px-3.5 py-1.5 text-[13px] font-medium text-[#222222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_#222] disabled:cursor-not-allowed disabled:border-[#c9bf99] disabled:bg-[#FFF9E0] disabled:text-[#a89f80] disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+          >
+            {busy ? 'Working…' : 'Send'}
+          </button>
+        </div>
       </div>
     </div>
   )

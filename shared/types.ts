@@ -14,6 +14,11 @@
 import type { AgentAction } from './schema'
 export type { FileOp, ContractOp, AgentResponse, AgentAction } from './schema'
 
+/** Max characters for any user prompt (landing, /app, in-project chat). ~500
+ *  tokens. Single source of truth — enforced client-side (UX) AND server-side
+ *  (the chat route rejects anything longer). */
+export const PROMPT_MAX = 2000
+
 /** The user's generated app, in memory: path -> file contents. */
 export type FileTree = Record<string, string>
 

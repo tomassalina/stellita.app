@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProjects } from '../projects/store'
 import { TEMPLATES } from '../lib/templates'
+import { PROMPT_MAX } from '../../shared/types'
 
 /** Route "/app" — the build home inside the authed shell. Ports the Stellita
  *  prompt box look manually (Tailwind/inline styles) rather than importing the
@@ -24,6 +25,14 @@ export function BuildHome() {
     if (!text) return
     navigate(`/projects/${createProject(text)}`)
   }
+
+  const count = prompt.length
+  const countColor =
+    count >= PROMPT_MAX
+      ? 'text-[#dc2626]'
+      : count >= PROMPT_MAX - 200
+        ? 'text-[#D9A400]'
+        : 'text-[#8a8266]'
 
   return (
     <main className="flex flex-1 items-center justify-center px-4">
@@ -52,10 +61,14 @@ export function BuildHome() {
               }
             }}
             rows={2}
+            maxLength={PROMPT_MAX}
             placeholder='Describe a contract or dApp… e.g. "an NFT collection with royalties"'
             className="min-h-14.5 w-full resize-none border-none bg-transparent font-sans text-[18px] leading-normal font-medium text-[#222222] outline-none placeholder:text-[#9a9384]"
           />
-          <div className="mt-3.5 flex items-center justify-end">
+          <div className="mt-3.5 flex items-center justify-between">
+            <span className={`text-[12.5px] font-semibold tabular-nums ${countColor}`}>
+              {count}/{PROMPT_MAX}
+            </span>
             <button
               onClick={submitPrompt}
               disabled={!prompt.trim()}

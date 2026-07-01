@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PROMPT_MAX } from '../../shared/types'
 import './marketing.css'
 
 /* Stellita-branded landing hero prompt box. Same behavior contract as the app's
@@ -65,6 +66,9 @@ export function StellitaPromptComposer({
   onSubmit: () => void
   placeholder?: string
 }) {
+  const count = value.length
+  const countColor =
+    count >= PROMPT_MAX ? '#dc2626' : count >= PROMPT_MAX - 200 ? '#D9A400' : '#a89f80'
   return (
     <div className="st-pop" style={{ position: 'relative', maxWidth: 760, margin: '0 auto', background: '#fff', border: '2.5px solid #222', borderRadius: 20, padding: '22px 22px 16px', textAlign: 'left', boxShadow: '6px 6px 0 #FFD700' }}>
       <textarea
@@ -77,12 +81,16 @@ export function StellitaPromptComposer({
           }
         }}
         rows={2}
+        maxLength={PROMPT_MAX}
         placeholder={placeholder}
         style={{ width: '100%', resize: 'none', background: 'transparent', border: 'none', outline: 'none', color: '#222', fontSize: 18, lineHeight: 1.5, minHeight: 58, fontWeight: 500, fontFamily: 'inherit' }}
       />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
         <ModelSelector />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: countColor, fontVariantNumeric: 'tabular-nums' }}>
+            {count}/{PROMPT_MAX}
+          </span>
           <div className="st-softfill" style={{ width: 40, height: 40, borderRadius: 11, border: '2px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#222', cursor: 'pointer', background: '#FFFDF5' }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
           </div>

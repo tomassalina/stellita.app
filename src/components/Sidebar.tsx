@@ -71,7 +71,7 @@ export function Sidebar({
         {!collapsed && (
           <Link
             to="/app"
-            className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-white/60"
+            className="flex items-center gap-2 rounded-md px-1 py-1"
             title="Stellita — home"
           >
             <Logo size={20} />

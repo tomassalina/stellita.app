@@ -5,6 +5,7 @@ import { streamChat } from '../_lib/llm.js'
 import { checkGuardrail, refusalMessage } from '../_lib/guardrail.js'
 import { listManifests } from '../_lib/contracts.js'
 import type { FileTree, ChatMessage } from '../../shared/types.js'
+import { PROMPT_MAX } from '../../shared/types.js'
 
 const router = Router()
 
@@ -34,6 +35,7 @@ router.post('/projects/:id/chat', requireUser, async (req, res) => {
   }
 
   if (!userMessage) { res.status(400).json({ error: 'userMessage required' }); return }
+  if (userMessage.length > PROMPT_MAX) { res.status(400).json({ error: `message too long (max ${PROMPT_MAX} characters)` }); return }
 
   const apiKey = process.env.OPENAI_API_KEY ?? ''
 
