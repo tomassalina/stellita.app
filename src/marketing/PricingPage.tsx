@@ -112,7 +112,7 @@ export function PricingPage() {
                   cursor: 'pointer',
                   marginBottom: 26,
                   background: t.popular ? YELLOW : 'var(--surface)',
-                  color: 'var(--ink)',
+                  color: t.popular ? 'var(--gink)' : 'var(--ink)',
                   border: '2px solid var(--ink)',
                   boxShadow: t.popular ? '3px 3px 0 var(--shadow)' : undefined,
                 }}

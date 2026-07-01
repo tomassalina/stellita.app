@@ -97,7 +97,7 @@ export function Nav({
             style={{
               fontSize: 15,
               fontWeight: 700,
-              color: 'var(--ink)',
+              color: 'var(--gink)',
               background: YELLOW,
               padding: '9px 22px',
               borderRadius: 12,
