@@ -30,6 +30,7 @@ const FRONTEND_ORIGIN = (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173')
   .split(',')[0]
   .trim()
 const API_BASE = process.env.API_BASE ?? 'http://localhost:8787'
+const IS_PROD = process.env.NODE_ENV === 'production'
 
 /**
  * POST /auth/otp/start
@@ -87,10 +88,23 @@ function safeNext(raw: unknown): string {
 
 router.get('/google', async (req, res) => {
   const next = safeNext(req.query['next'])
+  // Stash `next` in a short-lived cookie instead of appending it to redirect_to.
+  // Supabase validates redirect_to against the allow-list with EXACT matching
+  // (no implicit query-string wildcard): a `?next=...` suffix fails the match
+  // and Supabase silently falls back to the Site URL — which is why Google
+  // login was landing on the frontend with a raw `?code=`. Keeping redirect_to
+  // exactly `${API_BASE}/auth/callback` matches the allow-list entry verbatim.
+  res.cookie('oauth_next', next, {
+    httpOnly: true,
+    secure: IS_PROD,
+    sameSite: 'lax',
+    path: '/auth',
+    maxAge: 10 * 60 * 1000,
+  })
   const supabase = serverClient(req, res)
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: `${API_BASE}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { redirectTo: `${API_BASE}/auth/callback` },
   })
   if (error || !data.url) {
     res.status(500).json({ error: error?.message ?? 'OAuth error' })
@@ -100,13 +114,16 @@ router.get('/google', async (req, res) => {
 })
 
 /**
- * GET /auth/callback?code=...&next=/p/abc
+ * GET /auth/callback?code=...
  * Exchanges the OAuth code for a session, sets cookies, and redirects back to
- * where the user started (next), defaulting to the app root.
+ * where the user started (`next`, read from the oauth_next cookie set in
+ * /auth/google), defaulting to the app root.
  */
 router.get('/callback', async (req, res) => {
   const code = req.query['code'] as string | undefined
-  const next = safeNext(req.query['next'])
+  const cookies = req.cookies as Record<string, string> | undefined
+  const next = safeNext(cookies?.['oauth_next'])
+  res.clearCookie('oauth_next', { path: '/auth' })
   if (!code) {
     res.status(400).json({ error: 'missing code' })
     return

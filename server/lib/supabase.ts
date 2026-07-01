@@ -27,7 +27,11 @@ export function serverClient(req: Request, res: Response) {
             httpOnly: true,
             secure: IS_PROD,
             sameSite: IS_PROD ? 'none' : 'lax',
-            domain: COOKIE_DOMAIN ?? undefined,
+            // Only scope the cookie to a parent domain in production. In dev the
+            // browser is on localhost, where any Domain attribute (e.g. an
+            // accidental ".xlmcode.dev" left in .env.local) makes the browser
+            // REJECT the cookie → the session never persists. Host-only in dev.
+            domain: IS_PROD ? COOKIE_DOMAIN || undefined : undefined,
           })
         }
       },

@@ -16,6 +16,7 @@ import { applyFileOps, initialFileTree, injectDappPlumbing } from '../lib/projec
 import { buildContractsFile, CONTRACTS_FILE } from '../lib/contracts'
 import { api, streamChat, RateLimitError } from '../lib/backend'
 import type { AgentAction } from '../../shared/types'
+import { useAuth } from '../auth/store'
 
 /**
  * In-memory project store with optional backend persistence.
@@ -182,6 +183,7 @@ type BackendProject = {
 }
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
+  const { user, loading: authLoading } = useAuth()
   const ref = useRef<Record<string, ProjectState>>({})
   // `ref` holds the latest map for synchronous async reads; `snapshot` mirrors
   // it for rendering so we never read a ref during render.
@@ -200,12 +202,29 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     commit({ ...ref.current, [slug]: { ...current, ...partial } })
   }
 
-  // On mount: load projects list from backend.
+  // Load the user's projects once auth resolves, and re-load whenever the
+  // signed-in user changes (login / logout). The old `[]` effect fired once on
+  // mount — BEFORE login — so the fetch 401'd, the list stayed empty, and the
+  // sidebar showed "No projects yet" until a manual reload. Gating on auth also
+  // avoids a wasted unauthenticated request on first paint.
   useEffect(() => {
-    api<BackendProject[]>('/api/projects')
-      .then((list) => {
-        const current = ref.current
-        const next = { ...current }
+    if (authLoading) return
+    let active = true
+
+    async function loadList() {
+      if (!user) {
+        // Signed out (or never signed in): clear any prior user's projects.
+        if (active) {
+          commit({})
+          setReady(true)
+        }
+        return
+      }
+      setReady(false)
+      try {
+        const list = await api<BackendProject[]>('/api/projects')
+        if (!active) return
+        const next = { ...ref.current }
         for (const p of list) {
           if (!next[p.slug]) {
             // Add as a stub; full data loads on demand.
@@ -232,10 +251,18 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           }
         }
         commit(next)
-      })
-      .catch((err) => console.warn('[projects] failed to load list from backend:', err))
-      .finally(() => setReady(true))
-  }, [])
+      } catch (err) {
+        console.warn('[projects] failed to load list from backend:', err)
+      } finally {
+        if (active) setReady(true)
+      }
+    }
+
+    void loadList()
+    return () => {
+      active = false
+    }
+  }, [user, authLoading])
 
   const loadProject = async (slugOrId: string): Promise<void> => {
     // Find the slug from the map if an id was passed
