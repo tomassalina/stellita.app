@@ -51,11 +51,11 @@ export function Nav({
         position: 'sticky',
         top: 0,
         zIndex: 60,
-        height: 68,
-        background: 'rgba(0,0,0,0.72)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderBottom: '1px solid #161616',
+        height: 72,
+        background: 'rgba(255,253,245,0.85)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '2px solid #222',
       }}
     >
       <div
@@ -71,10 +71,10 @@ export function Nav({
       >
         <div
           onClick={() => navigate('/')}
-          style={{ display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
         >
-          <Logo />
-          <Wordmark />
+          <Logo size={38} />
+          <Wordmark size={20} />
         </div>
         <div className="xlm-hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 15 }}>
           {NAV_LINKS.map((l) => (
@@ -82,7 +82,7 @@ export function Nav({
               key={l.key}
               className="xlm-navlink"
               onClick={() => navigate(l.to)}
-              style={l.key === active ? { color: '#fff' } : undefined}
+              style={l.key === active ? { color: '#222' } : undefined}
             >
               {l.label}
             </span>
@@ -90,14 +90,16 @@ export function Nav({
         </div>
         <div
           onClick={onSignIn}
-          className="xlm-pill"
+          className="xlm-pill st-lift st-lift-dark"
           style={{
             fontSize: 15,
-            fontWeight: 600,
-            color: '#0a0a0a',
+            fontWeight: 700,
+            color: '#222',
             background: YELLOW,
             padding: '9px 22px',
-            borderRadius: 999,
+            borderRadius: 12,
+            border: '2px solid #222',
+            boxShadow: '3px 3px 0 #222',
             cursor: 'pointer',
           }}
         >
@@ -108,10 +110,10 @@ export function Nav({
   )
 }
 
-/** Eyebrow label used above section headings. */
+/** Eyebrow label used above section headings. Press Start 2P pixel label. */
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <div style={{ fontSize: 13, letterSpacing: '0.18em', color: YELLOW, fontWeight: 500, marginBottom: 16 }}>
+    <div className="st-pixel" style={{ fontSize: 11, color: '#D9A400', marginBottom: 18 }}>
       {children}
     </div>
   )
@@ -140,7 +142,7 @@ export function Footer() {
     { title: 'Build', links: [{ label: 'Open the app', to: '/app' }, { label: 'Templates', to: '/app' }] },
   ]
   return (
-    <footer style={{ borderTop: '1px solid #131313', padding: '56px 32px 48px' }}>
+    <footer style={{ borderTop: '2px solid #222', padding: '56px 32px 48px', marginTop: 40, background: '#FFF9E0' }}>
       <div
         style={{
           maxWidth: 1280,
@@ -154,18 +156,18 @@ export function Footer() {
         <div style={{ maxWidth: 320 }}>
           <div
             onClick={() => navigate('/')}
-            style={{ display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer', marginBottom: 14 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 14 }}
           >
-            <Logo />
-            <Wordmark />
+            <Logo size={32} />
+            <Wordmark size={17} />
           </div>
-          <p style={{ fontSize: 14, color: '#7a7a7a', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontSize: 14, color: '#6b6659', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
             Build on Stellar without writing a single line of Rust. Prompt, deploy, done.
           </p>
         </div>
         {col.map((c) => (
           <div key={c.title}>
-            <div style={{ fontSize: 12, letterSpacing: '0.14em', color: '#6e6e6e', marginBottom: 16, textTransform: 'uppercase' }}>
+            <div className="st-pixel" style={{ fontSize: 10, color: '#8a8266', marginBottom: 16 }}>
               {c.title}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -178,7 +180,7 @@ export function Footer() {
           </div>
         ))}
       </div>
-      <div style={{ maxWidth: 1280, margin: '40px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', fontSize: 13, color: '#5a5a5a' }}>
+      <div style={{ maxWidth: 1280, margin: '40px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', fontSize: 13, color: '#a89f80', fontWeight: 500 }}>
         <span>© {2026} Stellita · Runs on Stellar testnet.</span>
         <span>
           Created by{' '}
@@ -186,7 +188,7 @@ export function Footer() {
             href="https://www.instagram.com/lasoftwarefactory/"
             target="_blank"
             rel="noreferrer"
-            style={{ color: '#7a7a7a', textDecoration: 'none' }}
+            style={{ color: '#6b6659', textDecoration: 'none', fontWeight: 600 }}
           >
             lasoftwarefactory
           </a>

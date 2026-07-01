@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/store'
 import { LoginModal } from '../auth/LoginModal'
-import { Nav, Footer, Eyebrow, YELLOW } from './shared'
+import { Nav, Footer, Eyebrow } from './shared'
 import { useMarketingSeo } from './seo'
 import './marketing.css'
 
@@ -33,19 +33,19 @@ export function FaqPage() {
       <div style={{ maxWidth: 820, margin: '0 auto', padding: '90px 32px 60px' }}>
         <div className="xlm-fadeup" style={{ marginBottom: 36 }}>
           <Eyebrow>FAQ</Eyebrow>
-          <h1 className="xlm-h1" style={{ fontSize: 56, fontWeight: 700, letterSpacing: '-0.035em', margin: 0, lineHeight: 1.04 }}>
+          <h1 className="xlm-h1" style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-0.03em', margin: 0, lineHeight: 1.04 }}>
             Questions, answered
           </h1>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {FAQS.map((f, i) => (
-            <div key={i} style={{ border: '1px solid #1f1f1f', borderRadius: 16, background: '#070707', overflow: 'hidden' }}>
-              <div onClick={() => setOpen(open === i ? null : i)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', cursor: 'pointer', fontSize: 17, fontWeight: 600 }}>
+            <div key={i} style={{ border: '2px solid #222', borderRadius: 16, background: '#fff', overflow: 'hidden', boxShadow: open === i ? '4px 4px 0 #FFD700' : undefined }}>
+              <div onClick={() => setOpen(open === i ? null : i)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', cursor: 'pointer', fontSize: 17, fontWeight: 700 }}>
                 {f.q}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={open === i ? YELLOW : '#8a8a8a'} strokeWidth="2" style={{ transform: open === i ? 'rotate(45deg)' : 'none', transition: 'transform .2s ease' }}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={open === i ? '#D9A400' : '#8a8266'} strokeWidth="2.4" style={{ transform: open === i ? 'rotate(45deg)' : 'none', transition: 'transform .2s ease', flexShrink: 0 }}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
               </div>
               {open === i && (
-                <div style={{ padding: '0 24px 22px', fontSize: 15.5, color: '#9a9a9a', lineHeight: 1.6 }}>{f.a}</div>
+                <div style={{ padding: '0 24px 22px', fontSize: 15.5, color: '#6b6659', lineHeight: 1.6, fontWeight: 500 }}>{f.a}</div>
               )}
             </div>
           ))}

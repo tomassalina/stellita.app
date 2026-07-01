@@ -66,10 +66,10 @@ export function PricingPage() {
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: '90px 32px 40px' }}>
         <div className="xlm-fadeup" style={{ textAlign: 'center', marginBottom: 56 }}>
           <Eyebrow>PRICING</Eyebrow>
-          <h1 className="xlm-h1" style={{ fontSize: 56, fontWeight: 700, letterSpacing: '-0.035em', margin: '0 0 18px', lineHeight: 1.04 }}>
+          <h1 className="xlm-h1" style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 18px', lineHeight: 1.04 }}>
             Free to experiment.<br />Priced to ship.
           </h1>
-          <p style={{ fontSize: 19, color: '#9a9a9a', maxWidth: 620, margin: '0 auto', lineHeight: 1.55 }}>
+          <p style={{ fontSize: 19, color: '#6b6659', maxWidth: 620, margin: '0 auto', lineHeight: 1.55, fontWeight: 500 }}>
             Everything runs on testnet, so you can start for nothing. Upgrade when you're building for real.
           </p>
         </div>
@@ -81,46 +81,48 @@ export function PricingPage() {
               className="xlm-cardext"
               style={{
                 position: 'relative',
-                border: `1px solid ${t.popular ? '#3a3320' : '#1f1f1f'}`,
+                border: '2.5px solid #222',
                 borderRadius: 22,
                 padding: 32,
-                background: t.popular ? 'radial-gradient(120% 80% at 50% 0%, rgba(253,218,36,0.08), transparent 60%)' : '#070707',
+                background: t.popular ? '#FFF9E0' : '#fff',
+                boxShadow: t.popular ? '6px 6px 0 #FFD700' : undefined,
               }}
             >
               {t.popular && (
-                <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: YELLOW, color: '#0a0a0a', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', padding: '5px 12px', borderRadius: 999 }}>
+                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: YELLOW, color: '#222', fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', padding: '5px 12px', borderRadius: 999, border: '2px solid #222' }}>
                   MOST POPULAR
                 </div>
               )}
-              <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 6 }}>{t.name}</div>
-              <div style={{ fontSize: 14.5, color: '#8a8a8a', marginBottom: 22 }}>{t.tagline}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>{t.name}</div>
+              <div style={{ fontSize: 14.5, color: '#6b6659', marginBottom: 22, fontWeight: 500 }}>{t.tagline}</div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 8 }}>
-                <span style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.03em' }}>{t.price}</span>
-                {t.per && <span style={{ fontSize: 17, color: '#8a8a8a', marginBottom: 9 }}>{t.per}</span>}
+                <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-0.03em' }}>{t.price}</span>
+                {t.per && <span style={{ fontSize: 17, color: '#8a8266', marginBottom: 9, fontWeight: 500 }}>{t.per}</span>}
               </div>
-              <div style={{ fontSize: 13.5, color: '#7a7a7a', marginBottom: 22 }}>{t.note}</div>
+              <div style={{ fontSize: 13.5, color: '#8a8266', marginBottom: 22, fontWeight: 500 }}>{t.note}</div>
               <div
                 onClick={enter}
                 className={t.popular ? 'xlm-pill' : 'xlm-soft'}
                 style={{
                   textAlign: 'center',
                   fontSize: 15,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   padding: '12px 0',
                   borderRadius: 12,
                   cursor: 'pointer',
                   marginBottom: 26,
-                  background: t.popular ? YELLOW : 'transparent',
-                  color: t.popular ? '#0a0a0a' : '#fafafa',
-                  border: t.popular ? 'none' : '1px solid #2a2a2a',
+                  background: t.popular ? YELLOW : '#fff',
+                  color: '#222',
+                  border: '2px solid #222',
+                  boxShadow: t.popular ? '3px 3px 0 #222' : undefined,
                 }}
               >
                 {t.cta}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
                 {t.features.map((f) => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14.5, color: '#cfcfcf' }}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={YELLOW} strokeWidth="2.4" style={{ marginTop: 1, flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14.5, color: '#4a4536', fontWeight: 500 }}>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={'#D9A400'} strokeWidth="2.8" style={{ marginTop: 1, flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
                     {f}
                   </div>
                 ))}
@@ -130,18 +132,18 @@ export function PricingPage() {
         </div>
 
         {/* Credits */}
-        <div style={{ marginTop: 28, border: '1px solid #1f1f1f', borderRadius: 22, background: '#070707', padding: 32, display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ marginTop: 28, border: '2.5px solid #222', borderRadius: 22, background: '#fff', padding: 32, display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center', justifyContent: 'space-between', boxShadow: '6px 6px 0 #222' }}>
           <div style={{ maxWidth: 560 }}>
-            <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Runs on credits — top up anytime</div>
-            <p style={{ fontSize: 15, color: '#8a8a8a', lineHeight: 1.55, margin: 0 }}>
-              Every prompt, generation and deploy spends credits. Builder includes <span style={{ color: '#fafafa' }}>$20 in credits each month</span>; add more whenever you need them.
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Runs on credits — top up anytime</div>
+            <p style={{ fontSize: 15, color: '#6b6659', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
+              Every prompt, generation and deploy spends credits. Builder includes <span style={{ color: '#222', fontWeight: 700 }}>$20 in credits each month</span>; add more whenever you need them.
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {TOPUPS.map((t) => (
-              <div key={t} className="xlm-soft" style={{ border: '1px solid #2a2a2a', borderRadius: 12, padding: '11px 18px', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>{t}</div>
+              <div key={t} className="xlm-soft" style={{ border: '2px solid #222', borderRadius: 12, padding: '11px 18px', fontSize: 15, fontWeight: 700, color: '#222', background: '#fff', cursor: 'pointer' }}>{t}</div>
             ))}
-            <div onClick={enter} className="xlm-pill" style={{ background: YELLOW, color: '#0a0a0a', borderRadius: 12, padding: '11px 20px', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>Buy credits</div>
+            <div onClick={enter} className="xlm-pill" style={{ background: YELLOW, color: '#222', borderRadius: 12, padding: '11px 20px', fontSize: 15, fontWeight: 700, border: '2px solid #222', boxShadow: '3px 3px 0 #222', cursor: 'pointer' }}>Buy credits</div>
           </div>
         </div>
       </div>

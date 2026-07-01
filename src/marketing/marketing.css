@@ -4,24 +4,25 @@
    Poppins + Press Start 2P, cream canvas, neobrutalist yellow accent.
 
    The remaining marketing sub-pages (contracts / templates / pricing / faq)
-   still use the legacy XLM Code look (scoped under .xlm-marketing): Space
-   Grotesk + JetBrains Mono, black canvas. Both scopes are self-contained so
-   nothing leaks into the app. Inline styles cover layout; this file covers what
-   inline can't: fonts, keyframes, :hover, ::selection, responsive. */
+   share the Stellita brand too (scoped under .xlm-marketing): Poppins body,
+   Press Start 2P pixel eyebrows, cream canvas, neobrutalist yellow accent,
+   hard offset shadows. Both scopes are self-contained so nothing leaks into the
+   app. Inline styles cover layout; this file covers what inline can't: fonts,
+   keyframes, :hover, ::selection, responsive. */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Press+Start+2P&display=swap');
 
 .xlm-marketing {
-  background: #000;
-  color: #fafafa;
-  font-family: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif;
+  background: #FFFDF5;
+  color: #222222;
+  font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 .xlm-marketing * { box-sizing: border-box; }
-.xlm-marketing ::selection { background: #FDDA24; color: #000; }
+.xlm-marketing ::selection { background: #FFD700; color: #222; }
 
 @keyframes xlmMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes xlmGlow { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.85; } }
@@ -32,32 +33,32 @@
 .xlm-popin { opacity: 0; animation: xlmPopIn .7s ease .15s forwards; }
 
 @keyframes xlmPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-.xlm-skel { background: #161616; border-radius: 8px; animation: xlmPulse 1.4s ease-in-out infinite; }
+.xlm-skel { background: #F0EBDD; border-radius: 8px; animation: xlmPulse 1.4s ease-in-out infinite; }
 
-/* Hover patterns ported from the design's style-hover */
-.xlm-navlink { color: #bdbdbd; cursor: pointer; transition: color .2s ease; }
-.xlm-navlink:hover { color: #fff; }
+/* Hover patterns — Stellita neobrutalist hard-shadow lift */
+.xlm-navlink { color: #6b6659; cursor: pointer; font-weight: 600; transition: color .15s ease; }
+.xlm-navlink:hover { color: #222; }
 
-.xlm-pill { transition: transform .2s ease, box-shadow .25s ease; }
-.xlm-pill:hover { transform: translateY(-1px); box-shadow: 16px -14px 40px -8px rgba(253, 218, 36, 0.6); }
+.xlm-pill { transition: transform .12s ease, box-shadow .12s ease; }
+.xlm-pill:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #222; }
 
-.xlm-chip { transition: transform .2s ease, box-shadow .25s ease, background .2s ease; }
-.xlm-chip:hover { background: #141414 !important; transform: translateY(-1px); box-shadow: 14px -12px 32px -10px rgba(253, 218, 36, 0.32); }
+.xlm-chip { transition: transform .12s ease, box-shadow .12s ease; }
+.xlm-chip:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 #FFD700; }
 
-.xlm-card { transition: transform .2s ease, box-shadow .25s ease, border-color .2s ease; }
-.xlm-card:hover { transform: translateY(-2px); border-color: #3a3320; box-shadow: 16px -14px 40px -12px rgba(253, 218, 36, 0.3); }
+.xlm-card { transition: transform .12s ease, box-shadow .12s ease; }
+.xlm-card:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #FFD700; }
 
-.xlm-cardext { transition: transform .2s ease, box-shadow .25s ease; }
-.xlm-cardext:hover { transform: translateY(-2px); box-shadow: 16px -14px 40px -12px rgba(253, 218, 36, 0.26); }
+.xlm-cardext { transition: transform .12s ease, box-shadow .12s ease; }
+.xlm-cardext:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #FFD700; }
 
-.xlm-bento { transition: transform .2s ease, box-shadow .25s ease; }
-.xlm-bento:hover { transform: translateY(-3px); box-shadow: 22px -18px 56px -14px rgba(253, 218, 36, 0.3); }
+.xlm-bento { transition: transform .12s ease, box-shadow .12s ease; }
+.xlm-bento:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #222; }
 
-.xlm-soft { transition: transform .2s ease, box-shadow .25s ease, background .2s ease; }
-.xlm-soft:hover { background: #141414; transform: translateY(-2px); box-shadow: 20px -16px 50px -12px rgba(253, 218, 36, 0.34); }
+.xlm-soft { transition: transform .12s ease, box-shadow .12s ease, background .15s ease; }
+.xlm-soft:hover { background: #FFF3C4; transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #FFD700; }
 
-.xlm-iconbtn { transition: background .2s ease, box-shadow .25s ease; }
-.xlm-iconbtn:hover { background: #141414; box-shadow: 14px -12px 34px -10px rgba(253, 218, 36, 0.4); }
+.xlm-iconbtn { transition: background .15s ease; }
+.xlm-iconbtn:hover { background: #FFF3C4; }
 
 /* Responsive: collapse grids + scale type on narrow screens */
 @media (max-width: 900px) {
