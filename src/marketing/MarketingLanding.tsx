@@ -1,22 +1,51 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/store'
 import { useProjects } from '../projects/store'
 import { LoginModal } from '../auth/LoginModal'
 import { TEMPLATES, type StaticTemplate } from '../lib/templates'
-import { Nav, Footer, Eyebrow, Glow, YELLOW } from './shared'
-import { ContractLibrary } from './ContractLibrary'
-import { PromptComposer } from './PromptComposer'
+import { StellitaPromptComposer } from './StellitaPromptComposer'
 import './marketing.css'
 import { useMarketingSeo } from './seo'
 
-/** Public XLM Code landing — faithful to the Claude Design doc. Keeps the real
- *  auth + project flow (prompt → login → create; chips → open template). */
+/** Public Stellita landing ("/") — faithful to the "Stellita Landing" design
+ *  doc (neobrutalist, cream, Poppins + Press Start 2P pixel eyebrows). Keeps the
+ *  real auth + project flow: prompt → login → create; chips → open template.
+ *
+ *  Everything Stellita-branded lives inline here (or in StellitaPromptComposer)
+ *  so we never touch shared.tsx / PromptComposer.tsx, which the APP reuses and
+ *  which must stay XLM Code. */
+
+const MASCOT = '/stellita/mascot.png'
+const MASCOT_MAIN = '/stellita/mascot-main.gif'
+const MASCOT_EXPLAIN = '/stellita/mascot-explaining.gif'
+
+type NavKey = 'contracts' | 'templates' | 'pricing' | 'faq'
+const NAV_LINKS: { key: NavKey; label: string; to: string }[] = [
+  { key: 'contracts', label: 'Contracts', to: '/contracts' },
+  { key: 'templates', label: 'Templates', to: '/templates' },
+  { key: 'pricing', label: 'Pricing', to: '/pricing' },
+  { key: 'faq', label: 'FAQ', to: '/faq' },
+]
+
+/** The Stellita pixel wordmark: mascot + "STELLITA.APP". Built inline (NOT the
+ *  shared Logo/Wordmark, which stay XLM Code for the app). */
+function StellitaMark({ size = 38, font = 20 }: { size?: number; font?: number }) {
+  return (
+    <>
+      <img src={MASCOT} alt="Stellita" width={size} height={size} className="st-pixelated" style={{ display: 'block' }} />
+      <span style={{ fontSize: font, fontWeight: 800, letterSpacing: '-0.01em' }}>
+        STELLITA<span style={{ color: '#D9A400' }}>.APP</span>
+      </span>
+    </>
+  )
+}
+
 export function MarketingLanding() {
   useMarketingSeo({
-    title: 'XLM Code — Build on Stellar without writing Rust',
+    title: 'Stellita — Build on Stellar without writing Rust',
     description:
-      'Describe a contract or dApp in plain language. XLM Code generates audited Soroban smart contracts, deploys them to Stellar testnet, and wires up a working frontend — no Rust, no setup.',
+      'Describe a contract or dApp in plain language. Stellita generates audited Soroban smart contracts, deploys them to Stellar testnet, and wires up a working frontend — no Rust, no CLI, no setup.',
     path: '/',
   })
   const navigate = useNavigate()
@@ -59,28 +88,46 @@ export function MarketingLanding() {
   if (user) return <Navigate to="/app" replace />
 
   return (
-    <div className="xlm-marketing" style={{ height: '100%', overflowY: 'auto' }}>
-      <Nav active="home" signedIn={!!user} onSignIn={enter} />
-
-      {/* HERO */}
-      <section style={{ position: 'relative', padding: '64px 32px 80px', textAlign: 'center', overflow: 'hidden' }}>
-        <Glow style={{ top: -120, left: '50%', transform: 'translateX(-50%)', width: 780, height: 400, background: 'radial-gradient(50% 50% at 50% 50%, rgba(253,218,36,0.11), transparent 70%)' }} />
-        <div style={{ position: 'relative', maxWidth: 880, margin: '0 auto' }}>
-          <div className="xlm-fadeup" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, border: '1px solid #262626', background: '#0c0c0c', borderRadius: 999, padding: '7px 16px', fontSize: 13, color: '#cfcfcf', marginBottom: 36 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: YELLOW, boxShadow: `0 0 8px ${YELLOW}` }} />
-            Build on Stellar without writing a single line of Rust
+    <div className="st-marketing" style={{ height: '100%', overflowY: 'auto' }}>
+      {/* ============ NAV ============ */}
+      <nav style={{ position: 'sticky', top: 0, zIndex: 60, height: 72, background: 'rgba(255,253,245,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '2px solid #222' }}>
+        <div style={{ maxWidth: 1280, height: '100%', margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <StellitaMark />
           </div>
-          <h1 className="xlm-h1 xlm-fadeup" style={{ fontSize: 68, fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.0, margin: '0 0 40px' }}>
+          <div className="st-hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 30, fontSize: 15 }}>
+            {NAV_LINKS.map((l) => (
+              <span key={l.key} className="st-navlink" onClick={() => navigate(l.to)}>
+                {l.label}
+              </span>
+            ))}
+          </div>
+          <div onClick={enter} className="st-lift st-lift-dark" style={{ fontSize: 15, fontWeight: 700, color: '#222', background: '#FFD700', padding: '9px 22px', borderRadius: 12, border: '2px solid #222', cursor: 'pointer', boxShadow: '3px 3px 0 #222' }}>
+            Sign In
+          </div>
+        </div>
+      </nav>
+
+      {/* ============ HERO ============ */}
+      <section style={{ position: 'relative', padding: '56px 32px 72px', textAlign: 'center', overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', top: -60, left: '50%', transform: 'translateX(-50%)', width: 760, height: 420, background: 'radial-gradient(50% 50% at 50% 50%, rgba(255,215,0,0.28), transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', maxWidth: 900, margin: '0 auto' }}>
+          <img src={MASCOT_MAIN} alt="Stellita" width={150} className="st-pixelated" style={{ display: 'block', margin: '0 auto 20px' }} />
+          <div className="st-up st-pixel" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, border: '2px solid #222', background: '#fff', borderRadius: 999, padding: '7px 16px 7px 12px', fontSize: 11, color: '#222', marginBottom: 28, boxShadow: '3px 3px 0 #222' }}>
+            <span style={{ width: 9, height: 9, borderRadius: 2, background: '#FFD700', border: '1.5px solid #222' }} />
+            NO RUST · NO CLI · JUST VIBES
+          </div>
+          <h1 className="st-h1 st-up-1" style={{ fontSize: 66, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.02, margin: '0 0 36px' }}>
             What do you want to<br />build on Stellar?
           </h1>
 
-          {/* prompt box — identical composer to /app */}
-          <PromptComposer value={prompt} onChange={setPrompt} onSubmit={submitPrompt} />
+          {/* prompt box — same behavior contract as /app's composer */}
+          <StellitaPromptComposer value={prompt} onChange={setPrompt} onSubmit={submitPrompt} />
 
           {/* quick chips → static templates → /p/:token (no fetch, no flicker) */}
-          <div className="xlm-fadeup" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 26 }}>
+          <div className="st-up-2" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 26 }}>
             {TEMPLATES.map((t, i) => (
-              <div key={t.token} onClick={() => openTemplate(t)} className="xlm-chip" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #242424', background: '#0a0a0a', borderRadius: 999, padding: '10px 18px', fontSize: 14, color: '#d4d4d4', cursor: 'pointer' }}>
+              <div key={t.token} onClick={() => openTemplate(t)} className="st-lift st-lift-yellow-sm" style={{ display: 'flex', alignItems: 'center', gap: 8, border: '2px solid #222', background: '#fff', borderRadius: 999, padding: '9px 18px', fontSize: 14, fontWeight: 600, color: '#222', cursor: 'pointer' }}>
                 <ChipIcon kind={t.kind} highlight={i === 0} />
                 {t.name}
               </div>
@@ -89,92 +136,263 @@ export function MarketingLanding() {
         </div>
       </section>
 
-      {/* CONTRACT TEASER */}
-      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '50px 32px 30px' }}>
-        <div style={{ marginBottom: 36 }}>
-          <Eyebrow>THE CONTRACT LIBRARY</Eyebrow>
-          <h2 className="xlm-h2" style={{ fontSize: 46, fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 16px', lineHeight: 1.05 }}>
+      {/* ============ CONTRACT LIBRARY ============ */}
+      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '44px 32px 30px' }}>
+        <div style={{ marginBottom: 32 }}>
+          <div className="st-pixel" style={{ fontSize: 11, color: '#D9A400', marginBottom: 18 }}>THE CONTRACT LIBRARY</div>
+          <h2 className="st-h2" style={{ fontSize: 46, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 16px', lineHeight: 1.05 }}>
             Deploy audited contracts.<br />Write zero Rust.
           </h2>
-          <p style={{ fontSize: 19, color: '#9a9a9a', maxWidth: 680, margin: 0, lineHeight: 1.55 }}>
-            Pick a battle-tested OpenZeppelin contract, connect to a live protocol, or describe your own — we compile and deploy it to Stellar testnet.
+          <p style={{ fontSize: 19, color: '#6b6659', maxWidth: 680, margin: 0, lineHeight: 1.55, fontWeight: 500 }}>
+            Pick a battle-tested OpenZeppelin contract, connect to a live protocol, or describe your own — Stellita compiles and deploys it to Stellar testnet.
           </p>
         </div>
         <ContractLibrary onCustom={enter} />
       </section>
 
-      {/* BENTO */}
-      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '70px 32px 40px' }}>
-        <div style={{ marginBottom: 40 }}>
-          <Eyebrow>WHY XLM CODE</Eyebrow>
-          <h2 className="xlm-h2" style={{ fontSize: 46, fontWeight: 700, letterSpacing: '-0.03em', margin: 0, lineHeight: 1.05 }}>Everything you need to ship on Stellar</h2>
+      {/* ============ BENTO ============ */}
+      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '64px 32px 40px' }}>
+        <div style={{ marginBottom: 38 }}>
+          <div className="st-pixel" style={{ fontSize: 11, color: '#D9A400', marginBottom: 18 }}>WHY STELLITA</div>
+          <h2 className="st-h2" style={{ fontSize: 46, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, lineHeight: 1.05 }}>
+            Everything you need to ship on Stellar
+          </h2>
         </div>
-        <div className="xlm-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 18 }}>
-          <div className="xlm-bento xlm-bento-tall" style={{ gridRow: 'span 2', border: '1px solid #1f1f1f', borderRadius: 22, padding: 38, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', minHeight: 420, background: 'radial-gradient(120% 90% at 0% 100%, rgba(253,218,36,0.08), transparent 60%)' }}>
-            <h3 style={{ fontSize: 42, fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05, margin: '0 0 18px' }}>Prompt.<br />Deploy.<br />Done.</h3>
-            <p style={{ fontSize: 16, color: '#9a9a9a', lineHeight: 1.55, margin: 0 }}>Generate a working Soroban smart contract in minutes and deploy it to Stellar testnet in seconds.</p>
+        <div className="st-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+          <div className="st-bento-tall" style={{ gridRow: 'span 2', border: '2.5px solid #222', borderRadius: 20, padding: 36, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 420, background: '#FFD700', boxShadow: '6px 6px 0 #222' }}>
+            <img src={MASCOT} alt="Stellita" width={96} className="st-pixelated" />
+            <div>
+              <h3 style={{ fontSize: 42, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.02, margin: '0 0 16px' }}>Prompt.<br />Deploy.<br />Done.</h3>
+              <p style={{ fontSize: 16, color: '#4a4536', lineHeight: 1.55, margin: 0, fontWeight: 600 }}>Generate a working Soroban smart contract in minutes and deploy it to Stellar testnet in seconds.</p>
+            </div>
           </div>
-          <BentoCard title="Audited by default" body="Every base contract is an audited OpenZeppelin implementation. You build on code that's already battle-tested." icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={YELLOW} strokeWidth="1.7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></svg>} />
-          <div className="xlm-bento" style={{ border: '1px solid #1f1f1f', borderRadius: 22, padding: 32, overflow: 'hidden' }}>
-            <h3 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 10px' }}>Plug into live protocols</h3>
-            <p style={{ fontSize: 15, color: '#8a8a8a', lineHeight: 1.55, margin: '0 0 22px' }}>Compose with Soroswap, Blend, Reflector, USDC and more — by contract ID.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10 }}>
-              {['#cbb6f5', '#7dd6a8', YELLOW, '#9ec5ff', '#cfcfcf'].map((c, i) => (
-                <div key={i} style={{ aspectRatio: '1', borderRadius: 10, background: '#121212', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+          <BentoCard
+            title="Audited by default"
+            body="Every base contract is an audited OpenZeppelin implementation. You build on code that's already battle-tested."
+            iconMarginBottom={50}
+            icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></svg>}
+          />
+          <div className="st-lift st-lift-yellow" style={{ border: '2px solid #222', borderRadius: 20, padding: 30, background: '#fff', overflow: 'hidden' }}>
+            <h3 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 10px' }}>Plug into live protocols</h3>
+            <p style={{ fontSize: 15, color: '#6b6659', lineHeight: 1.55, margin: '0 0 20px', fontWeight: 500 }}>Compose with Soroswap, Blend, Reflector, USDC and more — by contract ID.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 9 }}>
+              {[
+                { l: 'S', bg: '#EDE3FA', c: '#6a3fb0' },
+                { l: 'B', bg: '#D8F3E2', c: '#1f7a4d' },
+                { l: 'R', bg: '#FFF3C4', c: '#8a6a00' },
+                { l: 'D', bg: '#D9E6FA', c: '#2b5bab' },
+                { l: '$', bg: '#F0EBDD', c: '#6b6659' },
+              ].map((p) => (
+                <div key={p.l} style={{ aspectRatio: '1', borderRadius: 10, border: '2px solid #222', background: p.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: p.c }}>
+                  {p.l}
                 </div>
               ))}
             </div>
           </div>
-          <BentoCard title="One-click testnet deploy" body="Go live on Stellar testnet instantly. No CLI, no toolchain, no funding dance — keys and faucet are handled." icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fafafa" strokeWidth="1.7"><path d="M12 2 2 7l10 5 10-5-10-5z" /><path d="m2 17 10 5 10-5" /><path d="m2 12 10 5 10-5" /></svg>} />
-          <BentoCard title="Start from templates" body="Token dashboards, NFT minters and swap UIs — ready to fork and make your own." icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fafafa" strokeWidth="1.7"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>} />
+          <BentoCard
+            title="One-click testnet deploy"
+            body="Go live on Stellar testnet instantly. No CLI, no toolchain, no funding dance — keys and faucet are handled."
+            icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 2 7l10 5 10-5-10-5z" /><path d="m2 17 10 5 10-5" /><path d="m2 12 10 5 10-5" /></svg>}
+          />
+          <BentoCard
+            title="Start from templates"
+            body="Token dashboards, NFT minters and swap UIs — ready to fork and make your own."
+            icon={<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>}
+          />
         </div>
       </section>
 
-      {/* MARQUEE */}
-      <section style={{ padding: '70px 0 30px', borderTop: '1px solid #131313', borderBottom: '1px solid #131313', marginTop: 60 }}>
-        <div style={{ textAlign: 'center', fontSize: 14, color: '#7a7a7a', letterSpacing: '0.04em', marginBottom: 38 }}>Composable with the protocols you already trust</div>
+      {/* ============ MARQUEE ============ */}
+      <section style={{ padding: '60px 0 30px', borderTop: '2px solid #222', borderBottom: '2px solid #222', marginTop: 56, background: '#FFF9E0' }}>
+        <div style={{ textAlign: 'center', fontSize: 14, color: '#8a8266', letterSpacing: '0.04em', marginBottom: 34, fontWeight: 600 }}>Composable with the protocols you already trust</div>
         <div style={{ overflow: 'hidden', WebkitMaskImage: 'linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)', maskImage: 'linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)' }}>
-          <div style={{ display: 'flex', gap: 72, width: 'max-content', animation: 'xlmMarquee 28s linear infinite', fontSize: 28, fontWeight: 600, color: '#454545', whiteSpace: 'nowrap', padding: '0 36px' }}>
+          <div style={{ display: 'flex', gap: 64, width: 'max-content', animation: 'stMarquee 28s linear infinite', fontSize: 28, fontWeight: 800, color: '#c9bf99', whiteSpace: 'nowrap', padding: '0 32px' }}>
             {[...Array(2)].flatMap((_, r) => ['Soroswap', 'Blend', 'Reflector', 'DeFindex', 'Trustless Work', 'USDC', 'x402', 'OpenZeppelin', 'Soroban'].map((n) => <span key={`${r}-${n}`}>{n}</span>))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section style={{ padding: '130px 32px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <Glow style={{ bottom: -160, left: '50%', transform: 'translateX(-50%)', width: 820, height: 420 }} />
+      {/* ============ CTA ============ */}
+      <section style={{ padding: '110px 32px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div aria-hidden style={{ position: 'absolute', bottom: -120, left: '50%', transform: 'translateX(-50%)', width: 820, height: 420, background: 'radial-gradient(50% 50% at 50% 50%, rgba(255,215,0,0.3), transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
-          <h2 className="xlm-cta-h2" style={{ fontSize: 60, fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.04, margin: '0 0 22px' }}>Start building<br />on Stellar</h2>
-          <p style={{ fontSize: 20, color: '#9a9a9a', lineHeight: 1.55, margin: '0 0 40px' }}>Experiment freely. Everything runs on testnet — deploy fearlessly, break nothing.</p>
+          <img src={MASCOT} alt="Stellita" width={120} className="st-pixelated" style={{ display: 'block', margin: '0 auto 22px' }} />
+          <h2 className="st-cta-h2" style={{ fontSize: 58, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.04, margin: '0 0 20px' }}>
+            Start building<br />on Stellar
+          </h2>
+          <p style={{ fontSize: 20, color: '#6b6659', lineHeight: 1.55, margin: '0 0 36px', fontWeight: 500 }}>Experiment freely. Everything runs on testnet — deploy fearlessly, break nothing.</p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <div onClick={enter} className="xlm-pill" style={{ background: YELLOW, color: '#0a0a0a', fontWeight: 600, fontSize: 17, padding: '16px 36px', borderRadius: 999, cursor: 'pointer' }}>Get Started</div>
-            <div onClick={() => navigate('/faq')} className="xlm-soft" style={{ border: '1px solid #2a2a2a', color: '#fafafa', fontWeight: 500, fontSize: 17, padding: '16px 36px', borderRadius: 999, cursor: 'pointer' }}>Read the FAQ</div>
+            <div onClick={enter} className="st-lift st-lift-dark-lg" style={{ background: '#FFD700', color: '#222', fontWeight: 700, fontSize: 17, padding: '15px 34px', borderRadius: 14, border: '2.5px solid #222', cursor: 'pointer', boxShadow: '5px 5px 0 #222' }}>Get Started</div>
+            <div onClick={() => navigate('/faq')} className="st-lift st-lift-yellow-lg" style={{ background: '#fff', color: '#222', fontWeight: 700, fontSize: 17, padding: '15px 34px', borderRadius: 14, border: '2.5px solid #222', cursor: 'pointer', boxShadow: '5px 5px 0 #FFD700' }}>Read the FAQ</div>
           </div>
         </div>
       </section>
 
-      <Footer />
+      {/* ============ FOOTER ============ */}
+      <footer style={{ borderTop: '2px solid #222', padding: '42px 32px', marginTop: 40, background: '#FFF9E0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+          <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <StellitaMark size={32} font={17} />
+          </div>
+          <div style={{ display: 'flex', gap: 26, fontSize: 14, fontWeight: 600 }}>
+            {NAV_LINKS.map((l) => (
+              <span key={l.key} className="st-navlink" onClick={() => navigate(l.to)}>
+                {l.label}
+              </span>
+            ))}
+          </div>
+          <div style={{ fontSize: 13, color: '#a89f80', fontWeight: 500 }}>Audited Soroban contracts · testnet only · © 2026 Stellita.app</div>
+        </div>
+      </footer>
 
       {showLogin && <LoginModal onClose={handleLoginClose} />}
     </div>
   )
 }
 
-function BentoCard({ title, body, icon }: { title: string; body: string; icon: ReactNode }) {
+/* ---- Bento card ---- */
+function BentoCard({ title, body, icon, iconMarginBottom = 16 }: { title: string; body: string; icon: ReactNode; iconMarginBottom?: number }) {
   return (
-    <div className="xlm-bento" style={{ border: '1px solid #1f1f1f', borderRadius: 22, padding: 32 }}>
-      <div style={{ width: 42, height: 42, borderRadius: 11, border: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>{icon}</div>
-      <h3 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 10px' }}>{title}</h3>
-      <p style={{ fontSize: 15, color: '#8a8a8a', lineHeight: 1.55, margin: 0 }}>{body}</p>
+    <div className="st-lift st-lift-yellow" style={{ border: '2px solid #222', borderRadius: 20, padding: 30, background: '#fff' }}>
+      <div style={{ width: 44, height: 44, borderRadius: 11, border: '2px solid #222', background: '#FFF3C4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: iconMarginBottom, color: '#222' }}>{icon}</div>
+      <h3 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 10px' }}>{title}</h3>
+      <p style={{ fontSize: 15, color: '#6b6659', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>{body}</p>
     </div>
   )
 }
 
+/* ---- Chip icon (quick templates) ---- */
 function ChipIcon({ kind, highlight }: { kind: string | null; highlight?: boolean }) {
-  const c = highlight ? YELLOW : '#9a9a9a'
-  if (kind === 'nft') return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.5-3.5L9 20" /></svg>
-  if (kind === 'swap') return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8"><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></svg>
-  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8"><circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /></svg>
+  const c = highlight ? '#D9A400' : '#222'
+  if (kind === 'nft') return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.5-3.5L9 20" /></svg>
+  if (kind === 'swap') return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></svg>
+  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /></svg>
 }
 
+/* ==========================================================================
+   Contract library — tabbed catalog (Configurable / Existing / Custom).
+   Built inline in Stellita brand rather than reusing marketing/ContractLibrary
+   (which is XLM-Code-styled and shared with the /contracts page). Presentational
+   + a single onCustom CTA that runs the real enter() flow.
+   ========================================================================== */
+
+function Svg({ children, color = '#222', w = 22 }: { children: ReactNode; color?: string; w?: number }) {
+  return (
+    <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {children}
+    </svg>
+  )
+}
+
+type Card = { name: string; blurb: string; soon?: boolean; icon: ReactNode }
+
+const CONFIGURABLE: Card[] = [
+  { name: 'Fungible Token', blurb: 'Token with name, symbol and supply. The MVP hello-world.', icon: <Svg color="#D9A400"><circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /></Svg> },
+  { name: 'Non-Fungible Token (NFT)', blurb: 'Unique collectibles: galleries, art, items.', icon: <Svg><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.5-3.5L9 20" /></Svg> },
+  { name: 'NFT with Royalties', blurb: 'NFTs where the creator earns on resales.', soon: true, icon: <Svg color="#a89f80"><circle cx="12" cy="12" r="10" /><path d="m9 9 6 6" /></Svg> },
+  { name: 'Ownable', blurb: 'Simple access control: a single owner account.', icon: <Svg><circle cx="7.5" cy="15.5" r="4.5" /><path d="m10.5 12.5 7-7" /><path d="m16 7 2 2 3-3-2-2z" /></Svg> },
+  { name: 'Role-Based Access Control', blurb: 'Distinct roles per privileged action.', soon: true, icon: <Svg color="#a89f80"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></Svg> },
+  { name: 'Vault (SEP-56)', blurb: 'Tokenized shares of an asset pool; yield products.', soon: true, icon: <Svg color="#a89f80"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="10" y1="9" x2="10" y2="15" /><line x1="14" y1="9" x2="14" y2="15" /></Svg> },
+  { name: 'Pausable', blurb: 'Pause/unpause functions for emergencies.', soon: true, icon: <Svg color="#a89f80"><circle cx="12" cy="12" r="10" /><line x1="10" y1="9" x2="10" y2="15" /><line x1="14" y1="9" x2="14" y2="15" /></Svg> },
+  { name: 'Smart Account', blurb: 'Programmable auth (signers + policies).', soon: true, icon: <Svg color="#a89f80"><circle cx="9" cy="8" r="3.5" /><path d="M3 20c0-3.3 2.7-6 6-6" /><circle cx="17.5" cy="16.5" r="3" /></Svg> },
+]
+
+type Protocol = { name: string; desc: string; initial: string; tint: string; wide?: boolean }
+const EXISTING: Protocol[] = [
+  { name: 'Soroswap', desc: 'DEX + liquidity aggregator. Best-price swaps (XLM/USDC).', initial: 'S', tint: '#EDE3FA' },
+  { name: 'Blend', desc: 'Lending / borrowing pools with backstop.', initial: 'B', tint: '#D8F3E2' },
+  { name: 'Reflector', desc: 'Price oracle (SEP-40). Read-only, low risk.', initial: 'R', tint: '#FFF3C4' },
+  { name: 'DeFindex', desc: 'Yield infrastructure: automated vault strategies.', initial: 'D', tint: '#D9E6FA' },
+  { name: 'Trustless Work', desc: 'Non-custodial milestone escrow in USDC.', initial: 'T', tint: '#D9E6FA' },
+  { name: 'USDC (Stellar Asset Contract)', desc: 'The asset most flows touch. First-class citizen.', initial: '$', tint: '#F0EBDD' },
+  { name: 'x402', desc: 'HTTP-request payments / micropayments / agent payments.', initial: 'x', tint: '#FFF3C4', wide: true },
+]
+
+const SOON_PILL = (
+  <span style={{ fontSize: 10, fontWeight: 700, color: '#7a6a1a', background: '#FFF3C4', border: '1.5px solid #E8D98A', borderRadius: 999, padding: '3px 10px' }}>SOON</span>
+)
+
+function tabStyle(active: boolean): CSSProperties {
+  return {
+    padding: '9px 16px',
+    borderRadius: 10,
+    fontSize: 14.5,
+    fontWeight: 600,
+    cursor: 'pointer',
+    color: active ? '#222' : '#8a8266',
+    background: active ? '#FFF3C4' : 'transparent',
+    border: active ? '2px solid #222' : '2px solid transparent',
+    transition: 'background .15s ease, color .15s ease',
+  }
+}
+
+function ContractLibrary({ onCustom }: { onCustom: () => void }) {
+  const [tab, setTab] = useState<'cfg' | 'ext' | 'cus'>('cfg')
+  return (
+    <div style={{ border: '2.5px solid #222', borderRadius: 22, background: '#fff', overflow: 'hidden', boxShadow: '6px 6px 0 #FFD700' }}>
+      <div style={{ display: 'flex', gap: 6, padding: '16px 18px', borderBottom: '2px solid #222', background: '#FFFDF5' }}>
+        <div onClick={() => setTab('cfg')} style={tabStyle(tab === 'cfg')}>Configurable</div>
+        <div onClick={() => setTab('ext')} style={tabStyle(tab === 'ext')}>Existing</div>
+        <div onClick={() => setTab('cus')} style={tabStyle(tab === 'cus')}>Custom</div>
+      </div>
+
+      {tab === 'cfg' && (
+        <div style={{ padding: 26 }}>
+          <div style={{ fontSize: 14.5, color: '#6b6659', marginBottom: 22, fontWeight: 500 }}>Audited OpenZeppelin contracts for Soroban. Configure, then deploy.</div>
+          <div className="st-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {CONFIGURABLE.map((c) =>
+              c.soon ? (
+                <div key={c.name} style={{ border: '2px dashed #cfc7ac', borderRadius: 14, padding: 22, background: '#FBF8EC' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                    {c.icon}
+                    {SOON_PILL}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7, color: '#8a8266' }}>{c.name}</div>
+                  <div style={{ fontSize: 14.5, color: '#a89f80', lineHeight: 1.5, fontWeight: 500 }}>{c.blurb}</div>
+                </div>
+              ) : (
+                <div key={c.name} className="st-lift st-lift-yellow" style={{ border: '2px solid #222', borderRadius: 14, padding: 22, background: '#fff' }}>
+                  <div style={{ marginBottom: 16 }}>{c.icon}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7 }}>{c.name}</div>
+                  <div style={{ fontSize: 14.5, color: '#6b6659', lineHeight: 1.5, fontWeight: 500 }}>{c.blurb}</div>
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      )}
+
+      {tab === 'ext' && (
+        <div style={{ padding: 26 }}>
+          <div style={{ fontSize: 14.5, color: '#6b6659', marginBottom: 22, fontWeight: 500 }}>Connect to a live, audited protocol by its contract ID — coming soon.</div>
+          <div className="st-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {EXISTING.map((p) => (
+              <div key={p.name} className="st-lift st-lift-yellow" style={{ border: '2px solid #222', borderRadius: 14, padding: 22, background: '#fff', gridColumn: p.wide ? '1 / -1' : undefined }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid #222', background: p.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#222', fontWeight: 800, fontSize: 16 }}>{p.initial}</div>
+                  {SOON_PILL}
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7 }}>{p.name}</div>
+                <div style={{ fontSize: 14.5, color: '#6b6659', lineHeight: 1.5, fontWeight: 500 }}>{p.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === 'cus' && (
+        <div style={{ padding: '48px 26px 58px', textAlign: 'center' }}>
+          <img src={MASCOT_EXPLAIN} alt="Stellita" width={90} className="st-pixelated" style={{ display: 'block', margin: '0 auto 20px' }} />
+          <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Describe any contract in plain language</div>
+          <div style={{ fontSize: 16, color: '#6b6659', maxWidth: 480, margin: '0 auto 26px', lineHeight: 1.55, fontWeight: 500 }}>
+            Stellita generates the Soroban code, compiles it, and deploys it to testnet — so you can experiment with logic that no template covers.
+          </div>
+          <div onClick={onCustom} className="st-lift st-lift-dark-lg" style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: '#FFD700', color: '#222', fontWeight: 700, fontSize: 15, padding: '12px 24px', borderRadius: 12, border: '2px solid #222', cursor: 'pointer', boxShadow: '4px 4px 0 #222' }}>
+            Generate a custom contract
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
