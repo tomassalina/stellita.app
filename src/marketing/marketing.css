@@ -87,6 +87,10 @@
 }
 .st-marketing * { box-sizing: border-box; }
 .st-marketing ::selection { background: #FFD700; color: #222; }
+/* On yellow surfaces the default yellow highlight is invisible → use white so
+   selected text stays readable (e.g. the "Prompt. Deploy. Done." bento card). */
+.st-onyellow ::selection { background: #fff; color: #222; }
+.st-onyellow ::-moz-selection { background: #fff; color: #222; }
 .st-pixel { font-family: 'Press Start 2P', monospace; }
 .st-pixelated { image-rendering: pixelated; }
 

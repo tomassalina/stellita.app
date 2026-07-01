@@ -1,4 +1,4 @@
--- xlmcode — initial schema. All access is via the Express backend:
+-- Stellita — initial schema. All access is via the Express backend:
 --   * per-request client (publishable key + user cookie) → RLS via auth.uid()
 --   * admin client (secret key) → bypasses RLS, only for system writes (usage, etc.)
 -- RLS is enabled + deny-by-default on every table. Policies target `authenticated`.

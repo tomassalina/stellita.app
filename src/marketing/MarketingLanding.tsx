@@ -19,6 +19,8 @@ import { useMarketingSeo } from './seo'
 const MASCOT = '/stellita/mascot.png'
 const MASCOT_MAIN = '/stellita/mascot-main.gif'
 const MASCOT_EXPLAIN = '/stellita/mascot-explaining.gif'
+const MASCOT_LOADING = '/stellita/mascot-loading.gif'
+const MASCOT_THINKING = '/stellita/mascot-thinking.gif'
 
 type NavKey = 'contracts' | 'templates' | 'pricing' | 'faq'
 const NAV_LINKS: { key: NavKey; label: string; to: string }[] = [
@@ -159,8 +161,8 @@ export function MarketingLanding() {
           </h2>
         </div>
         <div className="st-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-          <div className="st-bento-tall" style={{ gridRow: 'span 2', border: '2.5px solid #222', borderRadius: 20, padding: 36, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 420, background: '#FFD700', boxShadow: '6px 6px 0 #222' }}>
-            <img src={MASCOT} alt="Stellita" width={96} className="st-pixelated" />
+          <div className="st-bento-tall st-onyellow" style={{ gridRow: 'span 2', border: '2.5px solid #222', borderRadius: 20, padding: 36, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 420, background: '#FFD700', boxShadow: '6px 6px 0 #222' }}>
+            <img src={MASCOT_LOADING} alt="Stellita" width={96} className="st-pixelated" />
             <div>
               <h3 style={{ fontSize: 42, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.02, margin: '0 0 16px' }}>Prompt.<br />Deploy.<br />Done.</h3>
               <p style={{ fontSize: 16, color: '#4a4536', lineHeight: 1.55, margin: 0, fontWeight: 600 }}>Generate a working Soroban smart contract in minutes and deploy it to Stellar testnet in seconds.</p>
@@ -216,7 +218,7 @@ export function MarketingLanding() {
       <section style={{ padding: '110px 32px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div aria-hidden style={{ position: 'absolute', bottom: -120, left: '50%', transform: 'translateX(-50%)', width: 820, height: 420, background: 'radial-gradient(50% 50% at 50% 50%, rgba(255,215,0,0.3), transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
-          <img src={MASCOT} alt="Stellita" width={120} className="st-pixelated" style={{ display: 'block', margin: '0 auto 22px' }} />
+          <img src={MASCOT_THINKING} alt="Stellita" width={120} className="st-pixelated" style={{ display: 'block', margin: '0 auto 22px' }} />
           <h2 className="st-cta-h2" style={{ fontSize: 58, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.04, margin: '0 0 20px' }}>
             Start building<br />on Stellar
           </h2>
