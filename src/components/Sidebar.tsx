@@ -73,6 +73,10 @@ export function SidebarInner({
   const { slug: activeSlug } = useParams<{ slug: string }>()
   const [menuOpen, setMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
+  // How many projects to render before "See more". Projects arrive newest-first
+  // (by last activity); we page through them 20 at a time. A search shows all
+  // matches (searching should never be gated behind pagination).
+  const [visible, setVisible] = useState(20)
   const [deleting, setDeleting] = useState<{ slug: string; name: string } | null>(
     null,
   )
@@ -81,6 +85,8 @@ export function SidebarInner({
   const filtered = q
     ? projects.filter((p) => p.name.toLowerCase().includes(q))
     : projects
+  const shown = q ? filtered : filtered.slice(0, visible)
+  const hasMore = !q && filtered.length > shown.length
 
   const handleDelete = async () => {
     if (!deleting) return
@@ -173,7 +179,7 @@ export function SidebarInner({
           </p>
         )}
         <nav className="flex flex-col gap-0.5">
-          {filtered.map((p) => (
+          {shown.map((p) => (
             <div key={p.slug} className="group relative">
               <NavLink
                 to={`/projects/${p.slug}`}
@@ -213,6 +219,14 @@ export function SidebarInner({
             <p className="px-2.5 py-2 text-[12.5px] text-[var(--muted3)]">
               {q ? 'No chats match your search.' : 'No projects yet.'}
             </p>
+          )}
+          {!collapsed && hasMore && (
+            <button
+              onClick={() => setVisible((v) => v + 20)}
+              className="mt-1 rounded-[10px] px-2.5 py-2 text-left text-[12.5px] font-medium text-[var(--muted2)] transition-colors hover:bg-[var(--surface)]/70 hover:text-[var(--ink)]"
+            >
+              See more ({filtered.length - shown.length})
+            </button>
           )}
         </nav>
       </div>

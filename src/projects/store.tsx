@@ -73,6 +73,10 @@ export interface ProjectState {
   /** The project's share token (if one has ever been generated). The link only
    *  resolves while visibility === 'link'. */
   shareToken?: string | null
+  /** Epoch ms of the last activity (last message sent / creation). Drives the
+   *  sidebar order (most recently active first). Seeded from the backend
+   *  `updated_at`, bumped locally whenever a message is sent. */
+  updatedAt?: number
 }
 
 interface ProjectsContextValue {
@@ -237,6 +241,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         if (!active) return
         const next = { ...ref.current }
         for (const p of list) {
+          const backendUpdated = new Date(p.updated_at).getTime()
           if (!next[p.slug]) {
             // Add as a stub; full data loads on demand.
             next[p.slug] = {
@@ -255,10 +260,16 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
               dirty: false,
               contracts: [],
               loaded: false,
+              updatedAt: backendUpdated,
             }
-          } else if (!next[p.slug].id) {
-            // Hydrate id on existing in-memory project
-            next[p.slug] = { ...next[p.slug], id: p.id }
+          } else {
+            // Hydrate id + freshest activity time on an existing in-memory project
+            // (keep the local time if this session's activity is newer).
+            next[p.slug] = {
+              ...next[p.slug],
+              id: next[p.slug].id ?? p.id,
+              updatedAt: Math.max(next[p.slug].updatedAt ?? 0, backendUpdated),
+            }
           }
         }
         commit(next)
@@ -344,6 +355,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       error: null,
       activity: [],
       streamingMessage: '',
+      updatedAt: startedAt,
     })
     try {
       let accumulated = ''
@@ -520,6 +532,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         dirty: false,
         contracts,
         loaded: true,
+        updatedAt: now(),
       },
     })
   }
@@ -821,6 +834,7 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         dirty: false,
         contracts: [],
         loaded: false,
+        updatedAt: now(),
       },
     })
   }
@@ -837,10 +851,11 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
   const value: ProjectsContextValue = {
     // Sidebar history = the user's OWN projects only. Read-only views (templates
     // / shared projects) live in the store so the editor can render them, but
-    // they must never show up as if they were the user's projects.
+    // they must never show up as if they were the user's projects. Ordered by
+    // last activity (most recently used first) so the sidebar tracks recency.
     projects: Object.values(snapshot)
       .filter((p) => !p.readOnly)
-      .reverse(),
+      .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0)),
     ready,
     getProject,
     createProject,
