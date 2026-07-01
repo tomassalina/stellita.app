@@ -369,16 +369,27 @@ function ContractLibrary({ onCustom }: { onCustom: () => void }) {
         <div style={{ padding: 26 }}>
           <div style={{ fontSize: 14.5, color: '#6b6659', marginBottom: 22, fontWeight: 500 }}>Connect to a live, audited protocol by its contract ID. Soroswap is live — more coming soon.</div>
           <div className="st-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {EXISTING.map((p) => (
-              <div key={p.name} className="st-lift st-lift-yellow" style={{ border: '2px solid #222', borderRadius: 14, padding: 22, background: '#fff', gridColumn: p.wide ? '1 / -1' : undefined }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid #222', background: p.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#222', fontWeight: 800, fontSize: 16 }}>{p.initial}</div>
-                  {p.live ? LIVE_PILL : SOON_PILL}
+            {EXISTING.map((p) =>
+              p.live ? (
+                <div key={p.name} className="st-lift st-lift-yellow" style={{ border: '2px solid #222', borderRadius: 14, padding: 22, background: '#fff', gridColumn: p.wide ? '1 / -1' : undefined }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid #222', background: p.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#222', fontWeight: 800, fontSize: 16 }}>{p.initial}</div>
+                    {LIVE_PILL}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7 }}>{p.name}</div>
+                  <div style={{ fontSize: 14.5, color: '#6b6659', lineHeight: 1.5, fontWeight: 500 }}>{p.desc}</div>
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7 }}>{p.name}</div>
-                <div style={{ fontSize: 14.5, color: '#6b6659', lineHeight: 1.5, fontWeight: 500 }}>{p.desc}</div>
-              </div>
-            ))}
+              ) : (
+                <div key={p.name} style={{ border: '2px dashed #cfc7ac', borderRadius: 14, padding: 22, background: '#FBF8EC', gridColumn: p.wide ? '1 / -1' : undefined }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid #cfc7ac', background: '#F3ECD8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a89f80', fontWeight: 800, fontSize: 16 }}>{p.initial}</div>
+                    {SOON_PILL}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7, color: '#8a8266' }}>{p.name}</div>
+                  <div style={{ fontSize: 14.5, color: '#a89f80', lineHeight: 1.5, fontWeight: 500 }}>{p.desc}</div>
+                </div>
+              ),
+            )}
           </div>
         </div>
       )}

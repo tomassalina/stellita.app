@@ -101,22 +101,38 @@ export function ContractLibrary({ onCustom }: { onCustom: () => void }) {
             Connect to a live, audited protocol by its contract ID. Soroswap is live; more soon.
           </div>
           <div className="xlm-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {EXISTING.map((c) => (
-              <div
-                key={c.name}
-                className="xlm-card"
-                style={{ border: '2px solid #222', borderRadius: 14, padding: 22, background: '#fff', gridColumn: c.wide ? '1 / -1' : undefined }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid #222', background: c.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {c.icon}
+            {EXISTING.map((c) =>
+              c.live ? (
+                <div
+                  key={c.name}
+                  className="xlm-card"
+                  style={{ border: '2px solid #222', borderRadius: 14, padding: 22, background: '#fff', gridColumn: c.wide ? '1 / -1' : undefined }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid #222', background: c.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {c.icon}
+                    </div>
+                    {LIVE}
                   </div>
-                  {c.live ? LIVE : SOON}
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7 }}>{c.name}</div>
+                  <div style={{ fontSize: 14.5, color: '#6b6659', lineHeight: 1.5, fontWeight: 500 }}>{c.blurb}</div>
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7 }}>{c.name}</div>
-                <div style={{ fontSize: 14.5, color: '#6b6659', lineHeight: 1.5, fontWeight: 500 }}>{c.blurb}</div>
-              </div>
-            ))}
+              ) : (
+                <div
+                  key={c.name}
+                  style={{ border: '2px dashed #cfc7ac', borderRadius: 14, padding: 22, background: '#FBF8EC', gridColumn: c.wide ? '1 / -1' : undefined }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid #cfc7ac', background: '#F3ECD8', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.7 }}>
+                      {c.icon}
+                    </div>
+                    {SOON}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7, color: '#8a8266' }}>{c.name}</div>
+                  <div style={{ fontSize: 14.5, color: '#a89f80', lineHeight: 1.5, fontWeight: 500 }}>{c.blurb}</div>
+                </div>
+              ),
+            )}
           </div>
         </div>
       )}
