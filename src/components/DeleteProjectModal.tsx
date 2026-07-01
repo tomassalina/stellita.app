@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Loader2, AlertTriangle } from 'lucide-react'
+import { Loader2, AlertTriangle, Copy, Check } from 'lucide-react'
 
 /** Normalize for the name match: trim, case-insensitive, accent-insensitive. */
 function normalize(s: string): string {
@@ -29,6 +29,18 @@ export function DeleteProjectModal({
   const [wordInput, setWordInput] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const copyName = async () => {
+    try {
+      await navigator.clipboard.writeText(projectName)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // Clipboard unavailable (insecure context / denied) — the user can still
+      // type the name manually.
+    }
+  }
 
   const nameOk = normalize(nameInput) === normalize(projectName)
   const wordOk = wordInput.trim().toLowerCase() === 'delete'
@@ -66,8 +78,25 @@ export function DeleteProjectModal({
         </p>
 
         <label className="mt-4 block">
-          <span className="mb-1 block text-[12px] text-zinc-500">
-            Type the project name to confirm
+          <span className="mb-1.5 flex flex-wrap items-center gap-1.5 text-[12px] text-zinc-500">
+            Type
+            <span className="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-900 px-1.5 py-0.5">
+              <code className="select-all text-[12.5px] text-zinc-200">{projectName}</code>
+              <button
+                type="button"
+                onClick={() => void copyName()}
+                title="Copy project name"
+                aria-label="Copy project name"
+                className="text-zinc-500 transition-colors hover:text-zinc-200"
+              >
+                {copied ? (
+                  <Check className="h-3 w-3 text-green-400" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
+              </button>
+            </span>
+            to confirm
           </span>
           <input
             autoFocus
