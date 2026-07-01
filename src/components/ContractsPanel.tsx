@@ -69,10 +69,10 @@ export function ContractsPanel({
   const current = contracts[Math.min(selected, contracts.length - 1)]
 
   return (
-    <div className="absolute inset-0 flex bg-zinc-950 text-zinc-200">
+    <div className="absolute inset-0 flex bg-[#FFFDF5] text-[#222222]">
       {/* Left: deployed list */}
-      <aside className="flex w-60 shrink-0 flex-col border-r border-zinc-800">
-        <div className="flex items-center justify-between px-3 py-2.5 text-[12px] font-medium text-zinc-400">
+      <aside className="flex w-60 shrink-0 flex-col border-r-2 border-[#222222]">
+        <div className="flex items-center justify-between px-3 py-2.5 text-[12px] font-medium text-[#6b6659]">
           <span>Contracts · {contracts.length}</span>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-2">
@@ -81,20 +81,21 @@ export function ContractsPanel({
               key={c.contractId}
               onClick={() => setSelected(i)}
               className={`mb-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[12.5px] transition-colors ${
-                i === selected ? 'bg-zinc-900 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-900/60'
+                i === selected ? 'bg-[#FFD700] text-[#222222]' : 'text-[#6b6659] hover:bg-[#FFF3C4]'
               }`}
             >
-              <CategoryIcon category={c.category} className="h-4 w-4 shrink-0 text-zinc-500" />
+              <CategoryIcon category={c.category} className="h-4 w-4 shrink-0 text-[#8a8266]" />
               <span className="min-w-0 flex-1 truncate">{c.name}</span>
-              <span className="shrink-0 text-[10px] font-medium text-emerald-500/80">●</span>
+              <span className="shrink-0 text-[10px] font-medium text-emerald-600">●</span>
             </button>
           ))}
         </div>
         {!readOnly && (
-          <div className="border-t border-zinc-800 p-2">
+          <div className="border-t-2 border-[#222222] p-2">
             <button
               onClick={() => setCatalogOpen(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-zinc-50 px-2.5 py-2 text-[12.5px] font-medium text-black transition-colors hover:bg-white"
+              className="flex w-full items-center justify-center gap-1.5 rounded-md border-2 border-[#222222] bg-[#FFD700] px-2.5 py-2 text-[12.5px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
+              style={{ boxShadow: '3px 3px 0 #222' }}
             >
               <Plus className="h-4 w-4" /> Add contract
             </button>
@@ -108,8 +109,8 @@ export function ContractsPanel({
           <DeployedDetail contract={current} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-            <Boxes className="h-8 w-8 text-zinc-700" />
-            <p className="max-w-xs text-[13px] leading-relaxed text-zinc-500">
+            <Boxes className="h-8 w-8 text-[#c9bf99]" />
+            <p className="max-w-xs text-[13px] leading-relaxed text-[#8a8266]">
               {readOnly
                 ? 'This is a read-only view. Clone the project to deploy and wire your own contracts.'
                 : 'Deploy an audited contract to Stellar testnet, or connect an existing protocol. Its address is wired into src/contracts.ts.'}
@@ -117,7 +118,8 @@ export function ContractsPanel({
             {!readOnly && (
               <button
                 onClick={() => setCatalogOpen(true)}
-                className="flex items-center gap-1.5 rounded-md bg-zinc-50 px-3 py-2 text-[12.5px] font-medium text-black transition-colors hover:bg-white"
+                className="flex items-center gap-1.5 rounded-md border-2 border-[#222222] bg-[#FFD700] px-3 py-2 text-[12.5px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
+                style={{ boxShadow: '3px 3px 0 #222' }}
               >
                 <Plus className="h-4 w-4" /> Add contract
               </button>
@@ -144,8 +146,8 @@ export function ContractsPanel({
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-3 py-1.5 text-[12.5px]">
-      <span className="shrink-0 text-zinc-500">{label}</span>
-      <span className={`min-w-0 break-all text-right text-zinc-300 ${mono ? 'font-mono' : ''}`}>
+      <span className="shrink-0 text-[#8a8266]">{label}</span>
+      <span className={`min-w-0 break-all text-right text-[#222222] ${mono ? 'font-mono' : ''}`}>
         {value}
       </span>
     </div>
@@ -161,10 +163,10 @@ function CopyChip({ text }: { text: string }) {
         setCopied(true)
         setTimeout(() => setCopied(false), 1200)
       }}
-      className="rounded p-1 text-zinc-500 transition-colors hover:text-zinc-200"
+      className="rounded p-1 text-[#8a8266] transition-colors hover:text-[#222222]"
       title="Copy"
     >
-      {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
     </button>
   )
 }
@@ -173,40 +175,40 @@ function DeployedDetail({ contract: c }: { contract: DeployedContract }) {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900">
-          <CategoryIcon category={c.category} className="h-5 w-5 text-zinc-300" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-[#222222] bg-white">
+          <CategoryIcon category={c.category} className="h-5 w-5 text-[#222222]" />
         </div>
         <div>
-          <h2 className="text-[16px] font-medium text-zinc-100">{c.name}</h2>
-          <p className="text-[12px] text-zinc-500">
+          <h2 className="text-[16px] font-medium text-[#222222]">{c.name}</h2>
+          <p className="text-[12px] text-[#8a8266]">
             {c.category} · {c.network}
           </p>
         </div>
       </div>
 
-      <div className="mt-5 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+      <div className="mt-5 rounded-xl border-2 border-[#222222] bg-white p-4">
         <div className="flex items-center justify-between">
-          <span className="text-[12.5px] text-zinc-500">Contract ID</span>
+          <span className="text-[12.5px] text-[#8a8266]">Contract ID</span>
           <div className="flex items-center gap-1">
             <CopyChip text={c.contractId} />
             <a
               href={c.explorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded p-1 text-zinc-500 transition-colors hover:text-zinc-200"
+              className="rounded p-1 text-[#8a8266] transition-colors hover:text-[#222222]"
               title="View on Stellar Expert"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
         </div>
-        <code className="mt-1 block break-all font-mono text-[12.5px] text-zinc-300">
+        <code className="mt-1 block break-all font-mono text-[12.5px] text-[#222222]">
           {c.contractId}
         </code>
       </div>
 
-      <div className="mt-4 rounded-xl border border-zinc-800 p-4">
-        <h3 className="mb-1 text-[12px] font-medium uppercase tracking-wide text-zinc-500">
+      <div className="mt-4 rounded-xl border-2 border-[#222222] bg-white p-4">
+        <h3 className="mb-1 text-[12px] font-medium uppercase tracking-wide text-[#8a8266]">
           Configuration
         </h3>
         {Object.entries(c.config).map(([k, v]) => (
@@ -216,9 +218,9 @@ function DeployedDetail({ contract: c }: { contract: DeployedContract }) {
         {c.txHash && <Row label="deploy tx" value={c.txHash} mono />}
       </div>
 
-      <p className="mt-4 text-[12px] leading-relaxed text-zinc-500">
-        Wired into your app at <code className="text-zinc-400">src/contracts.ts</code> as{' '}
-        <code className="text-zinc-400">CONTRACTS["{c.manifestId}"]</code>.
+      <p className="mt-4 text-[12px] leading-relaxed text-[#8a8266]">
+        Wired into your app at <code className="text-[#6b6659]">src/contracts.ts</code> as{' '}
+        <code className="text-[#6b6659]">CONTRACTS["{c.manifestId}"]</code>.
       </p>
     </div>
   )
@@ -402,7 +404,7 @@ function ProtocolLogo({
       />
     )
   }
-  return <Icon className="h-5 w-5 text-zinc-300" />
+  return <Icon className="h-5 w-5 text-[#222222]" />
 }
 
 function AddContractModal({
@@ -435,7 +437,8 @@ function AddContractModal({
       onClick={onClose}
     >
       <div
-        className="flex h-[560px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl"
+        className="flex h-[560px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-2 border-[#222222] bg-white"
+        style={{ boxShadow: '8px 8px 0 #222' }}
         onClick={(e) => e.stopPropagation()}
       >
         {picked ? (
@@ -447,13 +450,15 @@ function AddContractModal({
           />
         ) : (
           <>
-            <div className="flex items-center gap-1 border-b border-zinc-800 px-3 py-2.5">
+            <div className="flex items-center gap-1 border-b-2 border-[#222222] px-3 py-2.5">
               {MODES.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setMode(m.id)}
-                  className={`rounded-md px-3 py-1.5 text-[13px] transition-colors ${
-                    mode === m.id ? 'bg-zinc-900 text-zinc-50' : 'text-zinc-500 hover:text-zinc-300'
+                  className={`rounded-md border-2 px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                    mode === m.id
+                      ? 'border-[#222222] bg-[#FFD700] text-[#222222]'
+                      : 'border-transparent text-[#8a8266] hover:text-[#222222]'
                   }`}
                 >
                   {m.label}
@@ -463,7 +468,7 @@ function AddContractModal({
 
             <div className="min-h-0 flex-1 overflow-y-auto p-4">
               {error && (
-                <div className="mb-3 flex items-center gap-2 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-[12.5px] text-red-300">
+                <div className="mb-3 flex items-center gap-2 rounded-lg border-2 border-red-700 bg-red-50 px-3 py-2 text-[12.5px] text-red-700">
                   <AlertTriangle className="h-4 w-4" /> {error}
                 </div>
               )}
@@ -481,11 +486,12 @@ function AddContractModal({
                         <button
                           key={entry.name}
                           onClick={() => setPicked(manifest)}
-                          className="flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 p-3.5 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
+                          className="flex flex-col gap-2 rounded-xl border-2 border-[#222222] bg-white p-3.5 text-left transition-transform hover:-translate-y-0.5"
+                          style={{ boxShadow: '3px 3px 0 #222' }}
                         >
-                          <Icon className="h-5 w-5 text-zinc-300" />
-                          <span className="text-[13px] font-medium text-zinc-100">{entry.name}</span>
-                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-zinc-500">
+                          <Icon className="h-5 w-5 text-[#222222]" />
+                          <span className="text-[13px] font-medium text-[#222222]">{entry.name}</span>
+                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[#8a8266]">
                             {entry.blurb}
                           </span>
                         </button>
@@ -495,14 +501,14 @@ function AddContractModal({
                     return (
                       <div
                         key={entry.name}
-                        className="relative flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 p-3.5 opacity-60"
+                        className="relative flex flex-col gap-2 rounded-xl border-2 border-[#222222] bg-[#FFF9E0] p-3.5 opacity-60"
                       >
-                        <Icon className="h-5 w-5 text-zinc-300" />
-                        <span className="text-[13px] font-medium text-zinc-100">{entry.name}</span>
-                        <span className="line-clamp-3 text-[11.5px] leading-relaxed text-zinc-500">
+                        <Icon className="h-5 w-5 text-[#222222]" />
+                        <span className="text-[13px] font-medium text-[#222222]">{entry.name}</span>
+                        <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[#8a8266]">
                           {entry.blurb}
                         </span>
-                        <span className="absolute right-2.5 top-2.5 rounded-full bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+                        <span className="absolute right-2.5 top-2.5 rounded-full border border-[#222222] bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#6b6659]">
                           Soon
                         </span>
                       </div>
@@ -513,7 +519,7 @@ function AddContractModal({
 
               {mode === 'existing' && (
                 <div className="flex flex-col gap-3">
-                  <p className="text-[12px] leading-relaxed text-zinc-500">
+                  <p className="text-[12px] leading-relaxed text-[#8a8266]">
                     Connect to a live, audited protocol by its contract ID — no deploy needed.
                   </p>
                   <div className="grid grid-cols-2 gap-2.5">
@@ -537,18 +543,21 @@ function AddContractModal({
                                   })
                               : undefined
                           }
-                          className={`relative flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 p-3.5 transition-colors ${
-                            live ? 'cursor-pointer hover:border-zinc-700 hover:bg-zinc-900/60' : 'opacity-60'
+                          className={`relative flex flex-col gap-2 rounded-xl border-2 border-[#222222] bg-white p-3.5 transition-transform ${
+                            live ? 'cursor-pointer hover:-translate-y-0.5' : 'opacity-60'
                           }`}
+                          style={live ? { boxShadow: '3px 3px 0 #222' } : undefined}
                         >
                           <ProtocolLogo logo={entry.logo} name={entry.name} icon={entry.icon} />
-                          <span className="text-[13px] font-medium text-zinc-100">{entry.name}</span>
-                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-zinc-500">
+                          <span className="text-[13px] font-medium text-[#222222]">{entry.name}</span>
+                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[#8a8266]">
                             {entry.blurb}
                           </span>
                           <span
-                            className={`absolute right-2.5 top-2.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                              live ? 'bg-[#FDDA24]/12 text-[#FDDA24]' : 'bg-zinc-800 text-zinc-400'
+                            className={`absolute right-2.5 top-2.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
+                              live
+                                ? 'border-[#D9A400] bg-[#FFF3C4] text-[#D9A400]'
+                                : 'border-[#222222] bg-white text-[#6b6659]'
                             }`}
                           >
                             {live ? 'Connect' : 'Soon'}
@@ -625,27 +634,27 @@ function ConfigForm({
 
   return (
     <>
-      <div className="flex items-center gap-2 border-b border-zinc-800 px-3 py-2.5">
+      <div className="flex items-center gap-2 border-b-2 border-[#222222] px-3 py-2.5">
         <button
           onClick={onBack}
           disabled={deploying}
-          className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-40"
+          className="rounded-md p-1.5 text-[#6b6659] transition-colors hover:bg-[#FFF3C4] hover:text-[#222222] disabled:opacity-40"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <CategoryIcon category={manifest.category} className="h-4 w-4 text-zinc-300" />
-        <span className="text-[13px] font-medium text-zinc-100">{manifest.name}</span>
+        <CategoryIcon category={manifest.category} className="h-4 w-4 text-[#222222]" />
+        <span className="text-[13px] font-medium text-[#222222]">{manifest.name}</span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <p className="mb-4 text-[12.5px] leading-relaxed text-zinc-500">{manifest.description}</p>
+        <p className="mb-4 text-[12.5px] leading-relaxed text-[#8a8266]">{manifest.description}</p>
         <div className="space-y-3">
           {manifest.config.map((f) => (
             <label key={f.key} className="block">
-              <span className="mb-1 block text-[12px] font-medium text-zinc-400">
+              <span className="mb-1 block text-[12px] font-medium text-[#6b6659]">
                 {f.label}
                 {f.type === 'address' && (
-                  <span className="ml-1.5 font-normal text-zinc-600">
+                  <span className="ml-1.5 font-normal text-[#a89f80]">
                     · defaults to deployer
                   </span>
                 )}
@@ -656,28 +665,29 @@ function ConfigForm({
                 disabled={deploying}
                 onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
                 inputMode={f.type === 'number' ? 'numeric' : 'text'}
-                className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-[13px] text-zinc-100 outline-none focus:border-zinc-600 disabled:opacity-50"
+                className="w-full rounded-lg border-2 border-[#222222] bg-white px-3 py-2 font-mono text-[13px] text-[#222222] outline-none focus:border-[#D9A400] disabled:opacity-50"
               />
             </label>
           ))}
         </div>
 
         {error && (
-          <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-[12px] text-red-300">
+          <div className="mt-4 flex items-start gap-2 rounded-lg border-2 border-red-700 bg-red-50 px-3 py-2 text-[12px] text-red-700">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="break-all">{error}</span>
           </div>
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t border-zinc-800 px-4 py-3">
-        <span className="text-[11.5px] text-zinc-600">
+      <div className="flex items-center justify-between gap-3 border-t-2 border-[#222222] px-4 py-3">
+        <span className="text-[11.5px] text-[#a89f80]">
           {deploying ? 'Funding deployer · uploading WASM · invoking constructor…' : 'Deploys to Stellar testnet'}
         </span>
         <button
           onClick={deploy}
           disabled={deploying}
-          className="flex items-center gap-1.5 rounded-lg bg-zinc-50 px-4 py-2 text-[13px] font-medium text-black transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+          className="flex items-center gap-1.5 rounded-lg border-2 border-[#222222] bg-[#FFD700] px-4 py-2 text-[13px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
+          style={{ boxShadow: '3px 3px 0 #222' }}
         >
           {deploying && <Loader2 className="h-4 w-4 animate-spin" />}
           {deploying ? 'Deploying…' : 'Deploy to testnet'}
@@ -698,9 +708,9 @@ function ComingSoon({
 }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-      <Icon className="h-7 w-7 text-zinc-700" />
-      <p className="text-[13px] font-medium text-zinc-300">{title}</p>
-      <p className="max-w-sm text-[12px] leading-relaxed text-zinc-500">{body}</p>
+      <Icon className="h-7 w-7 text-[#c9bf99]" />
+      <p className="text-[13px] font-medium text-[#222222]">{title}</p>
+      <p className="max-w-sm text-[12px] leading-relaxed text-[#8a8266]">{body}</p>
     </div>
   )
 }
@@ -709,7 +719,7 @@ function Skeletons() {
   return (
     <>
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="h-28 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900/30" />
+        <div key={i} className="h-28 animate-pulse rounded-xl border-2 border-[#222222] bg-[#FFF9E0]" />
       ))}
     </>
   )

@@ -52,17 +52,17 @@ export function LoginModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#222222]/60 p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl border-[2.5px] border-[#222] bg-white p-6 shadow-[6px_6px_0_#222]"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-1 text-[17px] font-semibold text-zinc-50">
-          {step === 'email' ? 'Sign in to XLM Code' : 'Check your email'}
+        <h2 className="mb-1 text-[17px] font-semibold text-[#222222]">
+          {step === 'email' ? 'Sign in to Stellita' : 'Check your email'}
         </h2>
-        <p className="mb-6 text-[13px] text-zinc-500">
+        <p className="mb-6 text-[13px] text-[#8a8266]">
           {step === 'email'
             ? 'Enter your email to receive a sign-in code.'
             : `We sent a 6-digit code to ${email}.`}
@@ -77,12 +77,12 @@ export function LoginModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3.5 py-2.5 text-[14px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-[#FDDA24]"
+              className="w-full rounded-lg border-2 border-[#222] bg-white px-3.5 py-2.5 text-[14px] text-[#222222] outline-none placeholder:text-[#a89f80] focus:border-[#D9A400]"
             />
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-[#FDDA24] py-2.5 text-[14px] font-medium text-black transition-colors hover:bg-[#ffe23f] disabled:opacity-50"
+              className="rounded-lg border-2 border-[#222] bg-[#FFD700] py-2.5 text-[14px] font-medium text-[#222222] shadow-[3px_3px_0_#222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#222] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#222]"
             >
               {loading ? 'Sending…' : 'Send code'}
             </button>
@@ -98,19 +98,19 @@ export function LoginModal({
               onChange={(e) => setCode(e.target.value)}
               maxLength={6}
               required
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3.5 py-2.5 text-[14px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-[#FDDA24]"
+              className="w-full rounded-lg border-2 border-[#222] bg-white px-3.5 py-2.5 text-[14px] text-[#222222] outline-none placeholder:text-[#a89f80] focus:border-[#D9A400]"
             />
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-[#FDDA24] py-2.5 text-[14px] font-medium text-black transition-colors hover:bg-[#ffe23f] disabled:opacity-50"
+              className="rounded-lg border-2 border-[#222] bg-[#FFD700] py-2.5 text-[14px] font-medium text-[#222222] shadow-[3px_3px_0_#222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#222] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#222]"
             >
               {loading ? 'Verifying…' : 'Verify'}
             </button>
             <button
               type="button"
               onClick={() => { setStep('email'); setCode(''); setError('') }}
-              className="text-[12.5px] text-zinc-500 hover:text-zinc-300"
+              className="text-[12.5px] text-[#8a8266] hover:text-[#222222]"
             >
               Use a different email
             </button>
@@ -118,18 +118,18 @@ export function LoginModal({
         )}
 
         {error && (
-          <p className="mt-3 text-[12.5px] text-red-400">{error}</p>
+          <p className="mt-3 text-[12.5px] text-red-600">{error}</p>
         )}
 
         <div className="my-5 flex items-center gap-3">
-          <div className="h-px flex-1 bg-zinc-800" />
-          <span className="text-[11.5px] text-zinc-600">or</span>
-          <div className="h-px flex-1 bg-zinc-800" />
+          <div className="h-px flex-1 bg-[#e8e0c0]" />
+          <span className="text-[11.5px] text-[#a89f80]">or</span>
+          <div className="h-px flex-1 bg-[#e8e0c0]" />
         </div>
 
         <button
           onClick={() => loginWithGoogle(googleNext)}
-          className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-700 bg-zinc-800 py-2.5 text-[14px] text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-700"
+          className="flex w-full items-center justify-center gap-2.5 rounded-lg border-2 border-[#222] bg-white py-2.5 text-[14px] font-medium text-[#222222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#FFF3C4] hover:shadow-[3px_3px_0_#222]"
         >
           <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
             <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908C16.658 14.463 17.64 12.037 17.64 9.2z" fill="#4285F4"/>

@@ -102,9 +102,13 @@ export function SharedProject() {
 
   if (error) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 bg-black text-zinc-400">
+      <div className="flex h-full flex-col items-center justify-center gap-3 bg-[#FFFDF5] text-[#6b6659]">
         <p className="text-[14px]">{error}</p>
-        <button onClick={() => navigate('/')} className="rounded-lg border border-zinc-800 px-4 py-2 text-[13px] text-zinc-200 hover:border-zinc-700">
+        <button
+          onClick={() => navigate('/')}
+          style={{ boxShadow: '3px 3px 0 #222' }}
+          className="rounded-lg border-2 border-[#222] bg-white px-4 py-2 text-[13px] text-[#222222] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
+        >
           Go home
         </button>
       </div>
@@ -112,20 +116,20 @@ export function SharedProject() {
   }
 
   if (!data) {
-    return <div className="flex h-full items-center justify-center bg-black text-[13px] text-zinc-500">Loading shared project…</div>
+    return <div className="flex h-full items-center justify-center bg-[#FFFDF5] text-[13px] text-[#8a8266]">Loading shared project…</div>
   }
 
   return (
-    <div className="flex h-full flex-col bg-black text-zinc-50">
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-zinc-800 px-4">
+    <div className="flex h-full flex-col bg-[#FFFDF5] text-[#222222]">
+      <header className="flex h-12 shrink-0 items-center justify-between border-b-2 border-[#222] bg-white px-4">
         <div onClick={() => navigate('/')} className="flex cursor-pointer items-center gap-2.5">
           <Logo size={20} />
           <Wordmark size={16} />
-          <span className="ml-2 rounded-full border border-zinc-700 px-2 py-0.5 text-[10.5px] uppercase tracking-wide text-zinc-400">
+          <span className="ml-2 rounded-full border-2 border-[#222] px-2 py-0.5 text-[10.5px] uppercase tracking-wide text-[#6b6659]">
             Shared · read-only
           </span>
         </div>
-        <span className="truncate text-[13px] text-zinc-400">{data.name}</span>
+        <span className="truncate text-[13px] text-[#8a8266]">{data.name}</span>
       </header>
 
       <PanelGroup direction="horizontal" className="relative min-h-0 flex-1">
@@ -151,7 +155,7 @@ export function SharedProject() {
         </Panel>
         <PanelResizeHandle
           onDragging={setResizing}
-          className="w-1 bg-zinc-800 transition-colors hover:bg-[#FDDA24]/60 data-[resize-handle-state=drag]:bg-[#FDDA24]"
+          className="w-1 bg-[#222] transition-colors hover:bg-[#FFD700]/70 data-[resize-handle-state=drag]:bg-[#FFD700]"
         />
         <Panel defaultSize={66} minSize={30}>
           <div className={`h-full ${resizing ? 'pointer-events-none' : ''}`}>

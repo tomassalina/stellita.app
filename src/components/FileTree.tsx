@@ -102,14 +102,14 @@ export function FileExplorer({
             onClick={() => toggle(node.path)}
             onContextMenu={(e) => openMenu(e, node)}
             style={pad}
-            className="flex w-full items-center gap-1.5 py-1 pr-2 text-left text-[12.5px] text-zinc-300 hover:bg-zinc-900"
+            className="flex w-full items-center gap-1.5 py-1 pr-2 text-left text-[12.5px] text-[#6b6659] hover:bg-[#FFF3C4]"
           >
             {open ? (
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#8a8266]" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#8a8266]" />
             )}
-            <Folder className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+            <Folder className="h-3.5 w-3.5 shrink-0 text-[#8a8266]" />
             <span className="truncate">{node.name}</span>
           </button>
           {open &&
@@ -124,11 +124,11 @@ export function FileExplorer({
         onClick={() => sandpack.setActiveFile(node.path)}
         onContextMenu={(e) => openMenu(e, node)}
         style={pad}
-        className={`flex w-full items-center gap-1.5 py-1 pr-2 text-left text-[12.5px] hover:bg-zinc-900 ${
-          active ? 'bg-zinc-900 text-zinc-100' : 'text-zinc-400'
+        className={`flex w-full items-center gap-1.5 py-1 pr-2 text-left text-[12.5px] hover:bg-[#FFF3C4] ${
+          active ? 'bg-[#FFD700] text-[#222222]' : 'text-[#6b6659]'
         }`}
       >
-        <File className="h-3.5 w-3.5 shrink-0 text-zinc-600" />
+        <File className="h-3.5 w-3.5 shrink-0 text-[#a89f80]" />
         <span className="truncate">{node.name}</span>
       </button>
     )
@@ -136,7 +136,7 @@ export function FileExplorer({
 
   return (
     <div
-      className="relative h-full w-52 shrink-0 overflow-y-auto border-r border-zinc-800 bg-zinc-950 py-1"
+      className="relative h-full w-52 shrink-0 overflow-y-auto border-r-2 border-[#222222] bg-[#FFFDF5] py-1"
       onContextMenu={(e) => openMenu(e, root)}
     >
       {sortNodes(root.children).map((c) => renderNode(c, 0))}
@@ -145,15 +145,15 @@ export function FileExplorer({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenu(null)} />
           <div
-            className="fixed z-50 w-40 rounded-lg border border-zinc-800 bg-zinc-950 p-1 shadow-xl"
-            style={{ top: menu.y, left: menu.x }}
+            className="fixed z-50 w-40 rounded-lg border-2 border-[#222222] bg-white p-1"
+            style={{ top: menu.y, left: menu.x, boxShadow: '4px 4px 0 #222' }}
           >
             <button
               onClick={() => {
                 setModal({ kind: 'file', base: menu.node.dir ? menu.node.path : '' })
                 setMenu(null)
               }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12.5px] text-zinc-300 hover:bg-zinc-900"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12.5px] text-[#222222] hover:bg-[#FFF3C4]"
             >
               <FilePlus className="h-3.5 w-3.5" /> New file
             </button>
@@ -162,7 +162,7 @@ export function FileExplorer({
                 setModal({ kind: 'folder', base: menu.node.dir ? menu.node.path : '' })
                 setMenu(null)
               }}
-              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12.5px] text-zinc-300 hover:bg-zinc-900"
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12.5px] text-[#222222] hover:bg-[#FFF3C4]"
             >
               <FolderPlus className="h-3.5 w-3.5" /> New folder
             </button>
@@ -172,7 +172,7 @@ export function FileExplorer({
                   onDelete(menu.node.path)
                   setMenu(null)
                 }}
-                className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12.5px] text-red-400 hover:bg-zinc-900"
+                className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12.5px] text-red-600 hover:bg-[#FFF3C4]"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Delete
               </button>
@@ -219,11 +219,12 @@ function NameModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl"
+        className="w-full max-w-sm rounded-xl border-2 border-[#222222] bg-white p-5"
+        style={{ boxShadow: '6px 6px 0 #222' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-[15px] font-medium">
-          New {kind} {base && <span className="text-zinc-500">in {base}/</span>}
+        <h2 className="text-[15px] font-medium text-[#222222]">
+          New {kind} {base && <span className="text-[#8a8266]">in {base}/</span>}
         </h2>
         <input
           autoFocus
@@ -234,19 +235,20 @@ function NameModal({
             if (e.key === 'Escape') onClose()
           }}
           placeholder={kind === 'file' ? 'Button.tsx' : 'components'}
-          className="mt-4 w-full select-text rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-[14px] text-zinc-100 outline-none focus:border-zinc-600"
+          className="mt-4 w-full select-text rounded-lg border-2 border-[#222222] bg-white px-3 py-2 text-[14px] text-[#222222] outline-none focus:border-[#D9A400]"
         />
         <div className="mt-5 flex justify-end gap-2 text-[13px]">
           <button
             onClick={onClose}
-            className="rounded-lg px-3.5 py-1.5 text-zinc-400 hover:text-zinc-100"
+            className="rounded-lg px-3.5 py-1.5 text-[#6b6659] hover:text-[#222222]"
           >
             Cancel
           </button>
           <button
             onClick={() => onSubmit(value)}
             disabled={!value.trim()}
-            className="rounded-lg bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white disabled:opacity-50"
+            className="rounded-lg border-2 border-[#222222] bg-[#FFD700] px-3.5 py-1.5 font-medium text-[#222222] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+            style={{ boxShadow: '3px 3px 0 #222' }}
           >
             Create
           </button>

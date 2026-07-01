@@ -102,7 +102,7 @@ function CodeBar({
   const { code } = useActiveCode()
   const [copied, setCopied] = useState(false)
   return (
-    <div className="flex shrink-0 items-center justify-end gap-1.5 border-b border-zinc-800 px-2 py-1.5">
+    <div className="flex shrink-0 items-center justify-end gap-1.5 border-b-2 border-[#222222] bg-white px-2 py-1.5">
       <button
         onClick={() => {
           void navigator.clipboard?.writeText(code)
@@ -110,10 +110,10 @@ function CodeBar({
           setTimeout(() => setCopied(false), 1200)
         }}
         title="Copy file"
-        className="rounded-md border border-zinc-800 p-1.5 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+        className="rounded-md border-2 border-[#222222] p-1.5 text-[#6b6659] transition-colors hover:bg-[#FFF3C4] hover:text-[#222222]"
       >
         {copied ? (
-          <Check className="h-3.5 w-3.5 text-emerald-400" />
+          <Check className="h-3.5 w-3.5 text-emerald-600" />
         ) : (
           <Copy className="h-3.5 w-3.5" />
         )}
@@ -122,10 +122,10 @@ function CodeBar({
         <button
           onClick={() => setEditable(!editable)}
           title={editable ? 'Switch to read-only' : 'Edit file'}
-          className={`rounded-md border p-1.5 transition-colors ${
+          className={`rounded-md border-2 p-1.5 transition-colors ${
             editable
-              ? 'border-[#FDDA24]/50 text-[#FDDA24]'
-              : 'border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'
+              ? 'border-[#D9A400] bg-[#FFF3C4] text-[#D9A400]'
+              : 'border-[#222222] text-[#6b6659] hover:bg-[#FFF3C4] hover:text-[#222222]'
           }`}
         >
           {editable ? <Eye className="h-3.5 w-3.5" /> : <SquarePen className="h-3.5 w-3.5" />}
@@ -166,16 +166,16 @@ function ConsolePanel() {
     setTimeout(() => setCopied(false), 1200)
   }
   return (
-    <div className="flex h-full min-h-0 flex-col bg-zinc-950">
-      <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 px-3 py-1.5 text-[12px] text-zinc-500">
+    <div className="flex h-full min-h-0 flex-col bg-[#FFFDF5]">
+      <div className="flex shrink-0 items-center justify-between border-b-2 border-[#222222] bg-white px-3 py-1.5 text-[12px] text-[#8a8266]">
         <span>Console · {logs.length}</span>
         <div className="flex items-center gap-1.5">
           <button
             onClick={copy}
-            className="flex items-center gap-1 rounded-md border border-zinc-800 px-2 py-1 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+            className="flex items-center gap-1 rounded-md border-2 border-[#222222] px-2 py-1 text-[#6b6659] transition-colors hover:bg-[#FFF3C4] hover:text-[#222222]"
           >
             {copied ? (
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
+              <Check className="h-3.5 w-3.5 text-emerald-600" />
             ) : (
               <Copy className="h-3.5 w-3.5" />
             )}
@@ -183,7 +183,7 @@ function ConsolePanel() {
           </button>
           <button
             onClick={reset}
-            className="rounded-md border border-zinc-800 px-2 py-1 text-zinc-400 transition-colors hover:border-zinc-700 hover:text-zinc-100"
+            className="rounded-md border-2 border-[#222222] px-2 py-1 text-[#6b6659] transition-colors hover:bg-[#FFF3C4] hover:text-[#222222]"
           >
             Clear
           </button>
@@ -191,17 +191,17 @@ function ConsolePanel() {
       </div>
       <div className="min-h-0 flex-1 select-text overflow-y-auto p-2 font-mono text-[12px]">
         {logs.length === 0 ? (
-          <p className="px-1 text-zinc-600">No console output.</p>
+          <p className="px-1 text-[#a89f80]">No console output.</p>
         ) : (
           logs.map((l, i) => (
             <div
               key={i}
               className={`whitespace-pre-wrap px-1 py-0.5 ${
                 l.method === 'error'
-                  ? 'text-red-400'
+                  ? 'text-red-700'
                   : l.method === 'warn'
-                    ? 'text-amber-400'
-                    : 'text-zinc-300'
+                    ? 'text-amber-700'
+                    : 'text-[#222222]'
               }`}
             >
               {lineOf(l.data)}
@@ -233,7 +233,7 @@ function VersionMenu({
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded-md border border-zinc-800 px-3 py-1.5 text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"
+        className="flex items-center gap-1.5 rounded-md border-2 border-[#222222] bg-white px-3 py-1.5 text-[#222222] transition-colors hover:bg-[#FFF3C4]"
         title="Version history"
       >
         <History className="h-4 w-4" />
@@ -242,14 +242,17 @@ function VersionMenu({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-1 max-h-96 w-80 overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-950 p-1 shadow-xl">
+          <div
+            className="absolute right-0 z-50 mt-1 max-h-96 w-80 overflow-y-auto rounded-lg border-2 border-[#222222] bg-white p-1"
+            style={{ boxShadow: '5px 5px 0 #222' }}
+          >
             {versions
               .map((v, i) => ({ v, n: i + 1, latest: i === versions.length - 1 }))
               .reverse()
               .map(({ v, n, latest }) => (
                 <div
                   key={v.id}
-                  className="group rounded-md px-2.5 py-2 hover:bg-zinc-900"
+                  className="group rounded-md px-2.5 py-2 hover:bg-[#FFF3C4]"
                 >
                   <button
                     onClick={() => {
@@ -259,17 +262,17 @@ function VersionMenu({
                     className="block w-full text-left"
                     title="Open this version"
                   >
-                    <div className="flex items-center gap-2 text-[12.5px] text-zinc-200">
-                      <span className="text-zinc-500">v{n}</span>
+                    <div className="flex items-center gap-2 text-[12.5px] text-[#222222]">
+                      <span className="text-[#8a8266]">v{n}</span>
                       <span className="truncate font-medium">{v.label}</span>
                       {latest && (
-                        <span className="ml-auto shrink-0 rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-400">
+                        <span className="ml-auto shrink-0 rounded bg-[#FFF3C4] px-1.5 py-0.5 text-[10px] text-[#6b6659]">
                           current
                         </span>
                       )}
                     </div>
                     {v.summary && (
-                      <p className="mt-0.5 line-clamp-2 text-[11.5px] text-zinc-500">
+                      <p className="mt-0.5 line-clamp-2 text-[11.5px] text-[#8a8266]">
                         {v.summary}
                       </p>
                     )}
@@ -279,7 +282,7 @@ function VersionMenu({
                   {onRestore && !latest && versions.length > 1 && (
                     <button
                       onClick={() => setConfirm({ id: v.id, n })}
-                      className="mt-1.5 rounded border border-zinc-800 px-2 py-0.5 text-[11px] text-zinc-500 hover:border-red-900 hover:text-red-400"
+                      className="mt-1.5 rounded border-2 border-[#222222] px-2 py-0.5 text-[11px] text-[#6b6659] hover:border-red-700 hover:text-red-700"
                     >
                       Restore (discard newer)
                     </button>
@@ -322,15 +325,16 @@ function RestoreConfirm({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl"
+        className="w-full max-w-sm rounded-xl border-2 border-[#222222] bg-white p-5"
+        style={{ boxShadow: '6px 6px 0 #222' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-[15px] font-medium text-red-300">Restore to v{n}?</h2>
-        <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
+        <h2 className="text-[15px] font-medium text-red-700">Restore to v{n}?</h2>
+        <p className="mt-2 text-[13px] leading-relaxed text-[#6b6659]">
           This reverts the project to v{n} and{' '}
-          <span className="text-zinc-200">permanently discards every newer
+          <span className="text-[#222222]">permanently discards every newer
           version</span>
-          . This can't be undone. Type <code className="text-zinc-300">restore</code>{' '}
+          . This can't be undone. Type <code className="text-[#222222]">restore</code>{' '}
           to confirm.
         </p>
         <input
@@ -342,19 +346,19 @@ function RestoreConfirm({
             if (e.key === 'Escape') onClose()
           }}
           placeholder="restore"
-          className="mt-4 w-full select-text rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-[14px] text-zinc-100 outline-none focus:border-zinc-600"
+          className="mt-4 w-full select-text rounded-lg border-2 border-[#222222] bg-white px-3 py-2 text-[14px] text-[#222222] outline-none focus:border-[#D9A400]"
         />
         <div className="mt-5 flex justify-end gap-2 text-[13px]">
           <button
             onClick={onClose}
-            className="rounded-lg px-3.5 py-1.5 text-zinc-400 hover:text-zinc-100"
+            className="rounded-lg px-3.5 py-1.5 text-[#6b6659] hover:text-[#222222]"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={!ok}
-            className="rounded-lg bg-red-500 px-3.5 py-1.5 font-medium text-white transition-colors hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg border-2 border-[#222222] bg-red-600 px-3.5 py-1.5 font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Restore
           </button>
@@ -393,20 +397,20 @@ function PreviewBar({
   onDownload: () => void
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-1.5 border-b border-zinc-800 px-2 py-1.5">
+    <div className="flex shrink-0 items-center gap-1.5 border-b-2 border-[#222222] bg-white px-2 py-1.5">
       <Navigator clientId="default" className="min-w-0 flex-1" />
-      <div className="flex items-center rounded-md border border-zinc-800 p-0.5">
+      <div className="flex items-center rounded-md border-2 border-[#222222] p-0.5">
         <button
           onClick={() => setDevice('desktop')}
           title="Desktop"
-          className={`rounded p-1 transition-colors ${device === 'desktop' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+          className={`rounded p-1 transition-colors ${device === 'desktop' ? 'bg-[#FFD700] text-[#222222]' : 'text-[#8a8266] hover:text-[#222222]'}`}
         >
           <Monitor className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => setDevice('mobile')}
           title="Mobile"
-          className={`rounded p-1 transition-colors ${device === 'mobile' ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+          className={`rounded p-1 transition-colors ${device === 'mobile' ? 'bg-[#FFD700] text-[#222222]' : 'text-[#8a8266] hover:text-[#222222]'}`}
         >
           <Smartphone className="h-3.5 w-3.5" />
         </button>
@@ -421,7 +425,7 @@ function PreviewBar({
       <button
         onClick={onDownload}
         title="Download project"
-        className="flex items-center gap-1.5 rounded-md border border-zinc-800 px-2.5 py-1.5 text-[12.5px] text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-50"
+        className="flex items-center gap-1.5 rounded-md border-2 border-[#222222] bg-white px-2.5 py-1.5 text-[12.5px] text-[#222222] transition-colors hover:bg-[#FFF3C4]"
       >
         <Download className="h-3.5 w-3.5" />
         Download
@@ -559,21 +563,21 @@ export function WorkspacePanel({
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col">
-      <nav className="flex shrink-0 items-center justify-between border-b border-zinc-800 px-3 py-2.5 text-[13px]">
+      <nav className="flex shrink-0 items-center justify-between border-b-2 border-[#222222] bg-white px-3 py-2.5 text-[13px]">
         <div className="flex items-center gap-1">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors ${
+              className={`flex items-center gap-1.5 rounded-md border-2 px-3 py-1.5 font-medium transition-colors ${
                 tab === t.id
-                  ? 'bg-zinc-900 text-zinc-50'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  ? 'border-[#222222] bg-[#FFD700] text-[#222222]'
+                  : 'border-transparent text-[#8a8266] hover:text-[#222222]'
               }`}
             >
               {t.label}
               {t.id === 'console' && previewError && (
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
               )}
             </button>
           ))}
@@ -581,7 +585,7 @@ export function WorkspacePanel({
         {!readOnly && (
           <div className="flex items-center gap-3">
             <span
-              className="flex items-center gap-1 text-[11.5px] font-normal text-zinc-500"
+              className="flex items-center gap-1 text-[11.5px] font-normal text-[#8a8266]"
               title={vis === 'link' ? 'Anyone with the link can view and clone' : 'Only you can access this project'}
             >
               {vis === 'link' ? (
@@ -593,7 +597,8 @@ export function WorkspacePanel({
             </span>
             <button
               onClick={() => setShareOpen(true)}
-              className="rounded-full bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
+              className="rounded-full border-2 border-[#222222] bg-[#FFD700] px-3.5 py-1.5 font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
+              style={{ boxShadow: '3px 3px 0 #222' }}
             >
               Share
             </button>
@@ -601,7 +606,7 @@ export function WorkspacePanel({
         )}
       </nav>
 
-      <div className="relative min-h-0 flex-1 bg-zinc-950">
+      <div className="relative min-h-0 flex-1 bg-[#FFFDF5]">
         <div className="absolute inset-0">
           <SandpackProvider
             key={generation}
@@ -629,7 +634,7 @@ export function WorkspacePanel({
                   onRestore={onRestore}
                   onDownload={() => setDownloadOpen(true)}
                 />
-                <div className="flex min-h-0 flex-1 justify-center bg-zinc-900/30">
+                <div className="flex min-h-0 flex-1 justify-center bg-[#FFF9E0]">
                   <div
                     className="h-full"
                     style={{ width: device === 'mobile' ? 390 : '100%' }}
@@ -686,11 +691,14 @@ export function WorkspacePanel({
 
 
         {previewError && (
-          <div className="absolute bottom-4 left-1/2 z-30 flex w-[min(92%,560px)] -translate-x-1/2 items-start gap-3 rounded-xl border border-red-900/70 bg-red-950/90 px-3 py-2.5 shadow-2xl">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+          <div
+            className="absolute bottom-4 left-1/2 z-30 flex w-[min(92%,560px)] -translate-x-1/2 items-start gap-3 rounded-xl border-2 border-[#222222] bg-white px-3 py-2.5"
+            style={{ boxShadow: '5px 5px 0 #222' }}
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
             <div className="min-w-0 flex-1">
-              <p className="text-[12.5px] font-medium text-red-200">App error</p>
-              <p className="mt-0.5 max-h-16 select-text overflow-y-auto whitespace-pre-wrap font-mono text-[11.5px] text-red-300/90">
+              <p className="text-[12.5px] font-medium text-red-700">App error</p>
+              <p className="mt-0.5 max-h-16 select-text overflow-y-auto whitespace-pre-wrap font-mono text-[11.5px] text-[#222222]">
                 {previewError}
               </p>
             </div>
@@ -698,14 +706,15 @@ export function WorkspacePanel({
               {onFixError && (
                 <button
                   onClick={() => onFixError(previewError)}
-                  className="flex items-center gap-1 rounded-md bg-zinc-50 px-2.5 py-1 text-[12px] font-medium text-black transition-colors hover:bg-white"
+                  className="flex items-center gap-1 rounded-md border-2 border-[#222222] bg-[#FFD700] px-2.5 py-1 text-[12px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
+                  style={{ boxShadow: '2px 2px 0 #222' }}
                 >
                   <Wand2 className="h-3.5 w-3.5" /> Fix with AI
                 </button>
               )}
               <button
                 onClick={() => void navigator.clipboard?.writeText(previewError)}
-                className="rounded-md border border-red-900/60 px-2.5 py-1 text-[12px] text-red-200 transition-colors hover:text-red-100"
+                className="rounded-md border-2 border-[#222222] px-2.5 py-1 text-[12px] text-red-700 transition-colors hover:bg-[#FFF3C4]"
               >
                 Copy
               </button>
@@ -714,14 +723,17 @@ export function WorkspacePanel({
         )}
 
         {!previewError && dirty && (onDiscard || onSave) && (
-          <div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 shadow-2xl">
-            <span className="text-[13px] text-zinc-200">
+          <div
+            className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-xl border-2 border-[#222222] bg-white px-3 py-2"
+            style={{ boxShadow: '5px 5px 0 #222' }}
+          >
+            <span className="text-[13px] text-[#222222]">
               You have unsaved edits
             </span>
             {onDiscard && (
               <button
                 onClick={onDiscard}
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-zinc-400 transition-colors hover:text-zinc-100"
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-[#6b6659] transition-colors hover:text-[#222222]"
               >
                 <X className="h-3.5 w-3.5" />
                 Discard
@@ -730,7 +742,8 @@ export function WorkspacePanel({
             {onSave && (
               <button
                 onClick={onSave}
-                className="rounded-md bg-zinc-50 px-3 py-1 text-[12.5px] font-medium text-black transition-colors hover:bg-white"
+                className="rounded-md border-2 border-[#222222] bg-[#FFD700] px-3 py-1 text-[12.5px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
+                style={{ boxShadow: '2px 2px 0 #222' }}
               >
                 Save
               </button>
@@ -745,19 +758,20 @@ export function WorkspacePanel({
           onClick={() => setDownloadOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl"
+            className="w-full max-w-sm rounded-xl border-2 border-[#222222] bg-white p-5"
+            style={{ boxShadow: '6px 6px 0 #222' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-[15px] font-medium">Download project</h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
-              Download <span className="text-zinc-200">{projectName}</span> as a
+            <h2 className="text-[15px] font-medium text-[#222222]">Download project</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#6b6659]">
+              Download <span className="text-[#222222]">{projectName}</span> as a
               complete Vite + React + TypeScript project (.zip) that runs locally
-              with <code className="text-zinc-300">pnpm install &amp;&amp; pnpm dev</code>.
+              with <code className="text-[#6b6659]">pnpm install &amp;&amp; pnpm dev</code>.
             </p>
             <div className="mt-5 flex justify-end gap-2 text-[13px]">
               <button
                 onClick={() => setDownloadOpen(false)}
-                className="rounded-lg px-3.5 py-1.5 text-zinc-400 hover:text-zinc-100"
+                className="rounded-lg px-3.5 py-1.5 text-[#6b6659] hover:text-[#222222]"
               >
                 Cancel
               </button>
@@ -766,7 +780,8 @@ export function WorkspacePanel({
                   void downloadProjectZip(projectName, fileTree)
                   setDownloadOpen(false)
                 }}
-                className="rounded-lg bg-zinc-50 px-3.5 py-1.5 font-medium text-black transition-colors hover:bg-white"
+                className="rounded-lg border-2 border-[#222222] bg-[#FFD700] px-3.5 py-1.5 font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
+                style={{ boxShadow: '3px 3px 0 #222' }}
               >
                 Download
               </button>
@@ -781,27 +796,28 @@ export function WorkspacePanel({
           onClick={() => setShareOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl"
+            className="w-full max-w-md rounded-xl border-2 border-[#222222] bg-white p-5"
+            style={{ boxShadow: '6px 6px 0 #222' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-[15px] font-medium">Share “{projectName}”</h2>
+              <h2 className="text-[15px] font-medium text-[#222222]">Share "{projectName}"</h2>
               <button
                 onClick={() => setShareOpen(false)}
-                className="rounded p-1 text-zinc-500 hover:text-zinc-200"
+                className="rounded p-1 text-[#8a8266] hover:text-[#222222]"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
+            <p className="mt-1.5 text-[13px] leading-relaxed text-[#6b6659]">
               Anyone you share this with can{' '}
-              <span className="text-zinc-200">clone it</span> into their own
+              <span className="text-[#222222]">clone it</span> into their own
               account — not just view.
             </p>
 
             {onEmailShare && (
               <div className="mt-4">
-                <label className="mb-1.5 block text-[12px] font-medium text-zinc-400">
+                <label className="mb-1.5 block text-[12px] font-medium text-[#6b6659]">
                   Add people
                 </label>
                 <div className="flex gap-2">
@@ -811,12 +827,12 @@ export function WorkspacePanel({
                     onKeyDown={(e) => { if (e.key === 'Enter') void sendShareEmail() }}
                     type="email"
                     placeholder="name@email.com"
-                    className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-[13px] text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-zinc-600"
+                    className="min-w-0 flex-1 rounded-lg border border-[#222] bg-white/60 px-3 py-2 text-[13px] text-[#222222] outline-none placeholder:text-[#a89f80] focus:border-[#D9A400]"
                   />
                   <button
                     onClick={() => void sendShareEmail()}
                     disabled={emailState === 'sending' || !emailTo.trim()}
-                    className="shrink-0 rounded-lg bg-zinc-50 px-3.5 py-2 text-[13px] font-medium text-black transition-colors hover:bg-white disabled:opacity-50"
+                    className="shrink-0 rounded-lg bg-[#FFD700] border-2 border-[#222] px-3.5 py-2 text-[13px] font-medium text-[#222222] transition-colors hover:bg-[#ffe23f] disabled:opacity-50"
                   >
                     {emailState === 'sending' ? 'Sending…' : 'Send'}
                   </button>
@@ -834,10 +850,10 @@ export function WorkspacePanel({
               </div>
             )}
 
-            <div className="mt-4 border-t border-zinc-800 pt-4">
-              <p className="mb-2 text-[12px] font-medium text-zinc-400">General access</p>
+            <div className="mt-4 border-t border-[#222] pt-4">
+              <p className="mb-2 text-[12px] font-medium text-[#6b6659]">General access</p>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-zinc-300">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF9E0] text-[#6b6659]">
                   {vis === 'link' ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -846,14 +862,14 @@ export function WorkspacePanel({
                       value={vis}
                       disabled={visBusy || !onSetVisibility}
                       onChange={(e) => void changeVisibility(e.target.value as 'private' | 'link')}
-                      className="cursor-pointer rounded-md bg-transparent py-0.5 text-[13.5px] font-medium text-zinc-100 outline-none hover:text-white disabled:opacity-60"
+                      className="cursor-pointer rounded-md bg-transparent py-0.5 text-[13.5px] font-medium text-[#222222] outline-none hover:text-white disabled:opacity-60"
                     >
-                      <option value="private" className="bg-zinc-900">Restricted</option>
-                      <option value="link" className="bg-zinc-900">Anyone with the link</option>
+                      <option value="private" className="bg-white">Restricted</option>
+                      <option value="link" className="bg-white">Anyone with the link</option>
                     </select>
-                    {visBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-500" />}
+                    {visBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#222222]0" />}
                   </div>
-                  <p className="mt-0.5 text-[12px] text-zinc-500">
+                  <p className="mt-0.5 text-[12px] text-[#222222]0">
                     {vis === 'link'
                       ? 'Anyone with the link can view and clone it.'
                       : 'Only you can open this project.'}
@@ -862,11 +878,11 @@ export function WorkspacePanel({
               </div>
 
               {vis === 'link' && url && (
-                <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2">
-                  <code className="min-w-0 truncate font-mono text-[12px] text-zinc-300">{url}</code>
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-[#222] bg-white/40 px-3 py-2">
+                  <code className="min-w-0 truncate font-mono text-[12px] text-[#6b6659]">{url}</code>
                   <button
                     onClick={copyLink}
-                    className="flex shrink-0 items-center gap-1 rounded-md bg-zinc-50 px-2.5 py-1.5 text-[12px] font-medium text-black hover:bg-white"
+                    className="flex shrink-0 items-center gap-1 rounded-md bg-[#FFD700] border-2 border-[#222] px-2.5 py-1.5 text-[12px] font-medium text-[#222222] hover:bg-[#ffe23f]"
                   >
                     {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                     {linkCopied ? 'Copied' : 'Copy link'}
@@ -878,7 +894,7 @@ export function WorkspacePanel({
             <div className="mt-5 flex justify-end">
               <button
                 onClick={() => setShareOpen(false)}
-                className="rounded-full bg-zinc-50 px-4 py-1.5 text-[13px] font-medium text-black transition-colors hover:bg-white"
+                className="rounded-full bg-[#FFD700] border-2 border-[#222] px-4 py-1.5 text-[13px] font-medium text-[#222222] transition-colors hover:bg-[#ffe23f]"
               >
                 Done
               </button>

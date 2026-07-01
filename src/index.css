@@ -1,16 +1,18 @@
 @import 'tailwindcss';
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&display=swap');
 
-/* XLM Code aesthetic: near-black, hairline borders, #FDDA24 accent. Space Grotesk
-   is the default typeface, JetBrains Mono for code. The user's generated app
-   styles itself inside Sandpack and is unaffected by anything here. */
+/* Stellita aesthetic: light neobrutalist pixel-art. Cream canvas, #222 text,
+   #FFD700 accent, hard offset shadows, 2–2.5px borders. Poppins is the default
+   UI typeface, JetBrains Mono for code/addresses, Press Start 2P for small pixel
+   accent labels only. The user's generated app styles itself inside Sandpack and
+   is unaffected by anything here. */
 @theme {
-  --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -21,6 +23,21 @@ body,
 
 body {
   margin: 0;
+  background: #fffdf5;
+  color: #222222;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #ffd700;
+  color: #222;
+}
+
+/* Small pixel accent label — Press Start 2P, sparingly */
+.st-pixel {
+  font-family: 'Press Start 2P', monospace;
+}
+.st-pixelated {
+  image-rendering: pixelated;
 }

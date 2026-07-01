@@ -1,23 +1,26 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export const YELLOW = '#FDDA24'
+export const YELLOW = '#FFD700'
 
-/** The XLM Code mark: an X drawn as a white stroke crossed by a yellow stroke. */
+/** The Stellita mark: the pixel star mascot. Rendered pixelated. */
 export function Logo({ size = 24 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden>
-      <line x1="24" y1="24" x2="76" y2="76" stroke="#F6F7F8" strokeWidth="14" strokeLinecap="square" />
-      <line x1="76" y1="24" x2="24" y2="76" stroke={YELLOW} strokeWidth="14" strokeLinecap="square" />
-    </svg>
+    <img
+      src="/stellita/mascot.png"
+      alt="Stellita"
+      width={size}
+      height={size}
+      style={{ display: 'block', imageRendering: 'pixelated' }}
+    />
   )
 }
 
-/** "XLM Code" wordmark — XLM bold, " Code" light. */
+/** "STELLITA.APP" wordmark — STELLITA bold, ".APP" in accent-dark. */
 export function Wordmark({ size = 19 }: { size?: number }) {
   return (
-    <span style={{ fontSize: size, fontWeight: 700, letterSpacing: '-0.01em' }}>
-      XLM<span style={{ fontWeight: 400, color: '#bdbdbd' }}> Code</span>
+    <span style={{ fontSize: size, fontWeight: 800, letterSpacing: '-0.01em', color: '#222222' }}>
+      STELLITA<span style={{ color: '#D9A400' }}>.APP</span>
     </span>
   )
 }
@@ -176,7 +179,7 @@ export function Footer() {
         ))}
       </div>
       <div style={{ maxWidth: 1280, margin: '40px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', fontSize: 13, color: '#5a5a5a' }}>
-        <span>© {2026} XLM Code · Runs on Stellar testnet.</span>
+        <span>© {2026} Stellita · Runs on Stellar testnet.</span>
         <span>
           Created by{' '}
           <a
