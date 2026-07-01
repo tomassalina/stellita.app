@@ -8,6 +8,7 @@ import {
   LogOut,
   PanelLeft,
   Trash2,
+  Search,
 } from 'lucide-react'
 import { useProjects } from '../projects/store'
 import { useAuth } from '../auth/store'
@@ -41,9 +42,15 @@ export function Sidebar({
   const navigate = useNavigate()
   const { slug: activeSlug } = useParams<{ slug: string }>()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const [deleting, setDeleting] = useState<{ slug: string; name: string } | null>(
     null,
   )
+
+  const q = query.trim().toLowerCase()
+  const filtered = q
+    ? projects.filter((p) => p.name.toLowerCase().includes(q))
+    : projects
 
   const handleDelete = async () => {
     if (!deleting) return
@@ -82,6 +89,23 @@ export function Sidebar({
           <PanelLeft className="h-4 w-4" />
         </button>
       </div>
+
+      {/* Search conversations */}
+      {!collapsed && (
+        <div className="px-2 pt-1">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              type="search"
+              placeholder="Search chats…"
+              aria-label="Search conversations"
+              className="w-full rounded-md border border-zinc-800 bg-zinc-900/50 py-1.5 pl-8 pr-2.5 text-[13px] text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-zinc-700"
+            />
+          </div>
+        </div>
+      )}
 
       {/* New project */}
       <div className="px-2 py-2">
@@ -123,7 +147,7 @@ export function Sidebar({
           </p>
         )}
         <nav className="flex flex-col gap-0.5">
-          {projects.map((p) => (
+          {filtered.map((p) => (
             <div key={p.slug} className="group relative">
               <NavLink
                 to={`/projects/${p.slug}`}
@@ -159,9 +183,9 @@ export function Sidebar({
               )}
             </div>
           ))}
-          {!collapsed && projects.length === 0 && (
+          {!collapsed && filtered.length === 0 && (
             <p className="px-2.5 py-2 text-[12.5px] text-zinc-600">
-              No projects yet.
+              {q ? 'No chats match your search.' : 'No projects yet.'}
             </p>
           )}
         </nav>
