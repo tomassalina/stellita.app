@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProjects } from '../projects/store'
 import { TEMPLATES } from '../lib/templates'
@@ -9,7 +9,15 @@ import { TEMPLATES } from '../lib/templates'
 export function BuildHome() {
   const navigate = useNavigate()
   const { createProject } = useProjects()
-  const [prompt, setPrompt] = useState('')
+  // A prompt typed on the landing while logged out is stashed in localStorage
+  // across the login round-trip — prefill it (lazy init) so the user just hits
+  // Enter. The effect below consumes it so a refresh won't re-prefill it.
+  const [prompt, setPrompt] = useState(
+    () => localStorage.getItem('stellita_pending_prompt') ?? '',
+  )
+  useEffect(() => {
+    localStorage.removeItem('stellita_pending_prompt')
+  }, [])
 
   const submitPrompt = () => {
     const text = prompt.trim()

@@ -54,7 +54,6 @@ export function MarketingLanding() {
   const { user } = useAuth()
   const { createProject } = useProjects()
   const [showLogin, setShowLogin] = useState(false)
-  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
   const [prompt, setPrompt] = useState('')
 
   const enter = () => (user ? navigate('/app') : setShowLogin(true))
@@ -64,7 +63,11 @@ export function MarketingLanding() {
     if (!text) return enter()
     if (user) navigate(`/projects/${createProject(text)}`)
     else {
-      setPendingPrompt(text)
+      // Preserve the (possibly long) prompt across the login round-trip.
+      // localStorage survives the Google OAuth full-page redirect (same origin) —
+      // unlike React state, or a URL/cookie that would truncate a long prompt.
+      // /app reads + prefills it so the user just hits Enter (see BuildHome).
+      localStorage.setItem('stellita_pending_prompt', text)
       setShowLogin(true)
     }
   }
@@ -73,17 +76,6 @@ export function MarketingLanding() {
   // "Sign in" → "Clone" lives — same flow as a shared project. Static, no fetch.
   const openTemplate = (t: StaticTemplate) => {
     navigate(`/p/${t.token}`)
-  }
-
-  const handleLoginClose = () => {
-    setShowLogin(false)
-    if (pendingPrompt !== null) {
-      const text = pendingPrompt
-      setPendingPrompt(null)
-      navigate(`/projects/${createProject(text)}`)
-    } else {
-      navigate('/app')
-    }
   }
 
   // Logged-in users never see the public landing.
@@ -247,7 +239,7 @@ export function MarketingLanding() {
         </div>
       </footer>
 
-      {showLogin && <LoginModal onClose={handleLoginClose} />}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} googleNext="/app" />}
     </div>
   )
 }
