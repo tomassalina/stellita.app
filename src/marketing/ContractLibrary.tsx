@@ -139,12 +139,12 @@ export function ContractLibrary({ onCustom }: { onCustom: () => void }) {
 
       {tab === 'cus' && (
         <div style={{ padding: '48px 26px 58px', textAlign: 'center' }}>
-          <div style={{ width: 60, height: 60, borderRadius: 14, border: '2px solid #222', background: '#FFF3C4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px' }}>
-            <svg width="28" height="28" viewBox="0 0 100 100">
-              <line x1="24" y1="24" x2="76" y2="76" stroke="#222" strokeWidth="13" strokeLinecap="square" />
-              <line x1="76" y1="24" x2="24" y2="76" stroke={YELLOW} strokeWidth="13" strokeLinecap="square" />
-            </svg>
-          </div>
+          <img
+            src="/stellita/mascot-explaining.gif"
+            alt="Stellita"
+            width={90}
+            style={{ display: 'block', margin: '0 auto 20px', imageRendering: 'pixelated' }}
+          />
           <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Describe any contract in plain language</div>
           <div style={{ fontSize: 16, color: '#6b6659', maxWidth: 480, margin: '0 auto 26px', lineHeight: 1.55, fontWeight: 500 }}>
             We generate the Soroban code, compile it, and deploy it to testnet — so you can experiment with logic that no template covers.

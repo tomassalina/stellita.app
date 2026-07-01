@@ -7,7 +7,7 @@
 
 ## Purpose
 
-XLM Code lets anyone build on Stellar from a natural-language prompt: an LLM
+Stellita lets anyone build on Stellar from a natural-language prompt: an LLM
 generates a working React dApp and deploys audited OpenZeppelin Soroban contracts
 to Stellar **testnet**, wiring the frontend to them — no Rust, no toolchain.
 

@@ -50,7 +50,7 @@ const TOPUPS = ['+$10', '+$25', '+$50']
 
 export function PricingPage() {
   useMarketingSeo({
-    title: 'Pricing — XLM Code',
+    title: 'Pricing — Stellita',
     description:
       'Free to experiment, priced to ship. Everything runs on Stellar testnet so you can start for nothing. Upgrade when you are building for real.',
     path: '/pricing',

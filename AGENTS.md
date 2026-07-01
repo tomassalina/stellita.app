@@ -4,7 +4,7 @@ Guidance for humans and AI agents working in this repo. Read this before making 
 
 ## What this is
 
-XLM Code turns a natural-language prompt into a working Stellar dApp: an LLM
+Stellita turns a natural-language prompt into a working Stellar dApp: an LLM
 generates a multi-file React app (held in memory as a `FileTree`, rendered live
 in Sandpack) and deploys audited OpenZeppelin Soroban contracts to **testnet**,
 then wires the frontend to them. Everything runs on testnet — no real funds.
@@ -76,7 +76,7 @@ Before any PR: **`pnpm typecheck && pnpm lint && pnpm build` must all be green.*
   for deployables). The LLM catalog is built from these and injected into the
   system prompt — don't hardcode contracts in the prompt.
 - **Generated apps style themselves.** Don't rebrand the in-preview demos in
-  `src/lib/project.ts`; XLM Code branding (Space Grotesk + `#FDDA24`) applies to
+  `src/lib/project.ts`; Stellita branding (Space Grotesk + `#FDDA24`) applies to
   our chrome only.
 - **RLS is deny-by-default.** New tables need explicit policies; user data is
   owner-scoped via `auth.uid()`; system writes use the admin client.

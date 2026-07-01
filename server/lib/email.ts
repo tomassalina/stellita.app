@@ -4,7 +4,7 @@
  * warning so local dev never crashes on a missing key.
  */
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? ''
-const EMAIL_FROM = process.env.EMAIL_FROM ?? 'XLM Code <noreply@xlmcode.dev>'
+const EMAIL_FROM = process.env.EMAIL_FROM ?? 'Stellita <noreply@stellita.app>'
 
 export interface SendResult {
   ok: boolean

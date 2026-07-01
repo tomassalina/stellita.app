@@ -14,7 +14,7 @@ import { useMarketingSeo } from './seo'
  *
  *  Everything Stellita-branded lives inline here (or in StellitaPromptComposer)
  *  so we never touch shared.tsx / PromptComposer.tsx, which the APP reuses and
- *  which must stay XLM Code. */
+ *  which must stay Stellita. */
 
 const MASCOT = '/stellita/mascot.png'
 const MASCOT_MAIN = '/stellita/mascot-main.gif'
@@ -29,7 +29,7 @@ const NAV_LINKS: { key: NavKey; label: string; to: string }[] = [
 ]
 
 /** The Stellita pixel wordmark: mascot + "STELLITA.APP". Built inline (NOT the
- *  shared Logo/Wordmark, which stay XLM Code for the app). */
+ *  shared Logo/Wordmark, which stay Stellita for the app). */
 function StellitaMark({ size = 38, font = 20 }: { size?: number; font?: number }) {
   return (
     <>
@@ -43,9 +43,9 @@ function StellitaMark({ size = 38, font = 20 }: { size?: number; font?: number }
 
 export function MarketingLanding() {
   useMarketingSeo({
-    title: 'Stellita — Build on Stellar without writing Rust',
+    title: 'Stellita — Ship on Stellar without a line of Rust',
     description:
-      'Describe a contract or dApp in plain language. Stellita generates audited Soroban smart contracts, deploys them to Stellar testnet, and wires up a working frontend — no Rust, no CLI, no setup.',
+      'Stellita is the AI builder for Stellar. Describe a dApp in plain language and it generates audited OpenZeppelin Soroban contracts, deploys them to Stellar testnet in one click, and wires up a working React frontend connected to your wallet — no Rust, no CLI, no setup.',
     path: '/',
   })
   const navigate = useNavigate()
@@ -272,7 +272,7 @@ function ChipIcon({ kind, highlight }: { kind: string | null; highlight?: boolea
 /* ==========================================================================
    Contract library — tabbed catalog (Configurable / Existing / Custom).
    Built inline in Stellita brand rather than reusing marketing/ContractLibrary
-   (which is XLM-Code-styled and shared with the /contracts page). Presentational
+   (which is Stellita-styled and shared with the /contracts page). Presentational
    + a single onCustom CTA that runs the real enter() flow.
    ========================================================================== */
 

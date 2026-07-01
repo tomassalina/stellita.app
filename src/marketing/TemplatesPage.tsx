@@ -7,7 +7,7 @@ import './marketing.css'
 
 export function TemplatesPage() {
   useMarketingSeo({
-    title: 'Templates — XLM Code',
+    title: 'Templates — Stellita',
     description: 'Start from a working Stellar template: a fungible token dashboard, an NFT collection minter, or a Soroswap token swap. Preview the code and clone it in one click.',
     path: '/templates',
   })

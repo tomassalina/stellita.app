@@ -1,10 +1,10 @@
 <div align="center">
 
-# XLM Code
+# Stellita
 
 **Build on Stellar without writing a single line of Rust.**
 
-Describe a dApp in plain language → XLM Code generates a React frontend, deploys
+Describe a dApp in plain language → Stellita generates a React frontend, deploys
 audited OpenZeppelin Soroban contracts to Stellar **testnet**, and wires them up.
 A "v0 / Lovable for Stellar".
 
@@ -55,7 +55,7 @@ Copy `env.example` → `.env.local` (gitignored — **never commit real secrets*
 | `SUPABASE_SECRET_KEY` | Supabase → Project Settings → API Keys → **secret** key (server only) |
 | `SUPABASE_DB_PASSWORD` | Supabase → Project Settings → Database → password (for `supabase db push`) |
 | `RESEND_API_KEY` | [resend.com](https://resend.com/api-keys) → API Keys |
-| `EMAIL_FROM` | Sender, e.g. `XLM Code <noreply@yourdomain.dev>` (domain must be verified in Resend) |
+| `EMAIL_FROM` | Sender, e.g. `Stellita <noreply@yourdomain.dev>` (domain must be verified in Resend) |
 | `FAUCET_SECRET` | Secret key (`S…`) of a funded testnet account that owns the demo token (see below) |
 | `STELLAR_DEPLOYER_SECRET` | Optional — deploys use an ephemeral friendbot-funded account, so this can be left blank |
 | `VITE_API_BASE` | Backend URL — `http://localhost:8787` in dev |

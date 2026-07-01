@@ -10,7 +10,7 @@ import './marketing.css'
 /** /contracts — sales page for the contract library. */
 export function ContractsPage() {
   useMarketingSeo({
-    title: 'Contracts — XLM Code',
+    title: 'Contracts — Stellita',
     description:
       'Configure an audited OpenZeppelin contract, connect to a live Soroban protocol by its contract ID, or describe your own — and deploy to Stellar testnet, no Rust required.',
     path: '/contracts',

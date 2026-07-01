@@ -95,7 +95,7 @@ dist
 `,
   '/README.md': `# Stellar App
 
-Generated with xlmcode. A real Vite + React + TypeScript + TailwindCSS project.
+Generated with Stellita. A real Vite + React + TypeScript + TailwindCSS project.
 
 ## Run locally
 

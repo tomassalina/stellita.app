@@ -1,5 +1,5 @@
 /**
- * Email templates for XLM Code. Each returns { subject, html }. Plain inline
+ * Email templates for Stellita. Each returns { subject, html }. Plain inline
  * styles (email clients ignore <style>/external CSS). Brand: black + #FDDA24.
  * Add new emails here as the product grows.
  */
@@ -25,7 +25,7 @@ function shell(title: string, body: string): string {
             ${body}
           </td></tr>
         </table>
-        <div style="color:#5a5a5a;font-size:12px;margin-top:20px;">© 2026 XLM Code · Runs on Stellar testnet</div>
+        <div style="color:#5a5a5a;font-size:12px;margin-top:20px;">© 2026 Stellita · Runs on Stellar testnet</div>
       </td></tr>
     </table>
   </body>
@@ -44,12 +44,12 @@ export function shareInviteEmail({
   const who = fromName ? `${fromName} shared` : 'Someone shared'
   const body = `
     <p style="font-size:15px;color:#9a9a9a;line-height:1.6;margin:0 0 24px;">
-      ${who} the project <span style="color:#fafafa;font-weight:600;">${projectName}</span> with you on XLM Code.
+      ${who} the project <span style="color:#fafafa;font-weight:600;">${projectName}</span> with you on Stellita.
       You can view the code, contracts and live preview — and clone it into your own account to start building.
     </p>
     <a href="${url}" style="display:inline-block;background:#FDDA24;color:#0a0a0a;font-size:15px;font-weight:600;text-decoration:none;padding:13px 26px;border-radius:10px;">Open the project</a>
     <p style="font-size:12.5px;color:#6e6e6e;line-height:1.6;margin:24px 0 0;word-break:break-all;">
       Or paste this link: <a href="${url}" style="color:#FDDA24;">${url}</a>
     </p>`
-  return { subject: `${projectName} — shared with you on XLM Code`, html: shell('A project was shared with you', body) }
+  return { subject: `${projectName} — shared with you on Stellita`, html: shell('A project was shared with you', body) }
 }

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-const SITE = 'https://xlmcode.dev'
+const SITE = 'https://www.stellita.app'
 const OG_IMAGE = `${SITE}/og.png`
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -44,7 +44,7 @@ export function useMarketingSeo({
     setCanonical(url)
 
     setMeta('property', 'og:type', 'website')
-    setMeta('property', 'og:site_name', 'XLM Code')
+    setMeta('property', 'og:site_name', 'Stellita')
     setMeta('property', 'og:title', title)
     setMeta('property', 'og:description', description)
     setMeta('property', 'og:url', url)

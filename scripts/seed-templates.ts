@@ -39,7 +39,7 @@ async function ensureSystemUser(): Promise<string> {
     email: SYSTEM_EMAIL,
     email_confirm: true,
     password: randomUUID(),
-    user_metadata: { full_name: 'xlmcode' },
+    user_metadata: { full_name: 'Stellita' },
   })
   if (created?.user?.id) {
     console.log(`Created system user ${SYSTEM_EMAIL}`)

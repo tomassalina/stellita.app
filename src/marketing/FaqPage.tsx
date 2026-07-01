@@ -7,7 +7,7 @@ import { useMarketingSeo } from './seo'
 import './marketing.css'
 
 const FAQS: { q: string; a: string }[] = [
-  { q: 'Do I need to know Rust or Soroban?', a: 'No. You describe what you want in plain language and XLM Code generates, compiles and deploys the Soroban contract for you. The base contracts are audited OpenZeppelin implementations.' },
+  { q: 'Do I need to know Rust or Soroban?', a: 'No. You describe what you want in plain language and Stellita generates, compiles and deploys the Soroban contract for you. The base contracts are audited OpenZeppelin implementations.' },
   { q: 'Where do my contracts deploy?', a: 'Everything runs on the Stellar testnet. Keys and faucet funding are handled for you, so you can deploy and experiment without spending real assets.' },
   { q: 'Can I connect to existing protocols?', a: 'Yes — you can compose with live protocols like Soroswap by contract ID, and the generated frontend wires up the calls for you.' },
   { q: 'Can I edit and export the generated app?', a: 'Every project is a real Vite + React + TypeScript app. You can edit it live, restore previous versions, and download the full project as a zip.' },
@@ -17,8 +17,8 @@ const FAQS: { q: string; a: string }[] = [
 
 export function FaqPage() {
   useMarketingSeo({
-    title: 'FAQ — XLM Code',
-    description: 'Frequently asked questions about building on Stellar with XLM Code — contracts, testnet deploys, sharing, editing and pricing.',
+    title: 'FAQ — Stellita',
+    description: 'Frequently asked questions about building on Stellar with Stellita — contracts, testnet deploys, sharing, editing and pricing.',
     path: '/faq',
   })
   const navigate = useNavigate()

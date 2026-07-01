@@ -20,10 +20,10 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "https://app.xlmcode.dev"
+site_url = "https://www.stellita.app"
 additional_redirect_urls = [
-  "https://app.xlmcode.dev",
-  "https://api.xlmcode.dev/auth/callback",
+  "https://www.stellita.app",
+  "https://api.stellita.app/auth/callback",
   "http://localhost:5173",
   "http://localhost:8787/auth/callback",
 ]

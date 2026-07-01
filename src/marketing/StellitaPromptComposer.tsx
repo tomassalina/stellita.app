@@ -6,7 +6,7 @@ import './marketing.css'
    Shift+Enter for newline) but restyled for the neobrutalist Stellita brand:
    cream card, hard yellow offset shadow, pixel mascot model selector, yellow
    send button. Kept separate from PromptComposer.tsx because that component is
-   shared with the app (/app) which must stay XLM Code. */
+   shared with the app (/app) which must stay Stellita. */
 
 const MASCOT = '/stellita/mascot.png'
 
