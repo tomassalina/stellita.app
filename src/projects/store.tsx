@@ -348,15 +348,49 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
           },
         )
 
-        const res = parseFirstJsonObject(accumulated) as AgentRes | null
-        if (!res) {
+        const parsed = parseFirstJsonObject(accumulated) as
+          | (Record<string, unknown> & Partial<AgentRes>)
+          | null
+        if (!parsed) {
           patch(slug, { busy: false, activity: [], streamingMessage: '' })
           return
         }
 
+        // Guardrail refusal: the backend returns a non-streamed JSON verdict
+        // { blocked: true, message: {...} } instead of an agent response. It has
+        // no file ops, so parsing it as an AgentRes used to crash inside
+        // applyFileOps ("ops is not iterable"). Surface the friendly refusal as
+        // an assistant message and stop.
+        if (parsed['blocked'] === true) {
+          const blocked = parsed['message'] as { content?: string } | undefined
+          const cur = ref.current[slug]
+          patch(slug, {
+            busy: false,
+            activity: [],
+            streamingMessage: '',
+            messages: [
+              ...cur.messages,
+              {
+                role: 'assistant',
+                content:
+                  typeof blocked?.content === 'string'
+                    ? blocked.content
+                    : 'Tell me what app you want to build.',
+                createdAt: now(),
+              },
+            ],
+          })
+          return
+        }
+
+        const res = parsed as AgentRes
+        // Defensive: a well-formed agent response always includes a files array,
+        // but never assume it — a missing/non-array value must not crash the app.
+        const files = Array.isArray(res.files) ? res.files : []
+
         const latest = ref.current[slug]
-        const nextTree = applyFileOps(latest.fileTree, res.files)
-        const ops = res.files.map((f) => ({ op: f.op, path: f.path }))
+        const nextTree = applyFileOps(latest.fileTree, files)
+        const ops = files.map((f) => ({ op: f.op, path: f.path }))
         const name = res.versionName?.trim() || 'Update'
         let added = 0
         let removed = 0
@@ -488,7 +522,11 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ name: deriveName(prompt), slug, current_files: tree }),
     })
       .then(({ id, name }) => {
-        patch(slug, { id, name })
+        // Clear the `busy` flag set above BEFORE calling send(): send() bails
+        // early on `if (p.busy) return`, so leaving it true here made the very
+        // first prompt from /app never fire — the project just span forever.
+        // send() re-sets busy itself while it streams.
+        patch(slug, { id, name, busy: false })
         void send(slug, prompt)
       })
       .catch((err) => {
