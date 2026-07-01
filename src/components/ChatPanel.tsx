@@ -62,13 +62,13 @@ export function ChatPanel({
   }, [messages, busy, activity, streamingMessage])
 
   return (
-    <section className="flex h-full flex-col bg-[#FFFDF5] text-[#222222]">
+    <section className="flex h-full flex-col bg-[var(--bg)] text-[var(--ink)]">
       {/* Header — same height as the workspace tabs row */}
-      <header className="flex shrink-0 items-center border-b-2 border-[#222] bg-white px-3 py-2.5">
+      <header className="flex shrink-0 items-center border-b-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-2.5">
         {readOnly ? (
-          <div className="flex min-w-0 items-center gap-2 px-2 py-1.5 text-[13px] text-[#222222]">
+          <div className="flex min-w-0 items-center gap-2 px-2 py-1.5 text-[13px] text-[var(--ink)]">
             <span className="truncate font-medium">{projectName}</span>
-            <span className="shrink-0 rounded-full border-2 border-[#222] px-2 py-0.5 text-[10.5px] uppercase tracking-wide text-[#6b6659]">
+            <span className="shrink-0 rounded-full border-2 border-[var(--ink)] px-2 py-0.5 text-[10.5px] uppercase tracking-wide text-[var(--muted)]">
               Read-only
             </span>
           </div>
@@ -76,10 +76,10 @@ export function ChatPanel({
           <button
             onClick={() => setRenaming(true)}
             title="Rename chat"
-            className="flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-[#222222] transition-colors hover:bg-[#FFF9E0]"
+            className="flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-[var(--ink)] transition-colors hover:bg-[var(--bg2)]"
           >
             <span className="truncate font-medium">{projectName}</span>
-            <Pencil className="h-3.5 w-3.5 shrink-0 text-[#8a8266]" />
+            <Pencil className="h-3.5 w-3.5 shrink-0 text-[var(--muted2)]" />
           </button>
         )}
       </header>
@@ -109,13 +109,13 @@ export function ChatPanel({
           <ThinkingTrace activity={activity} message={streamingMessage} />
         )}
         {error && (
-          <div className="rounded-lg border-2 border-[#222] bg-[#FFD9D9] px-3 py-2 text-[13px] text-[#7a1f1f]">
+          <div className="rounded-lg border-2 border-[var(--ink)] bg-[#FFD9D9] px-3 py-2 text-[13px] text-[#7a1f1f]">
             {error}
           </div>
         )}
         <div ref={endRef} />
       </div>
-      <div className="border-t-2 border-[#222] bg-white p-4">
+      <div className="border-t-2 border-[var(--ink)] bg-[var(--surface)] p-4">
         {readOnly ? (
           <CloneCta onClone={onClone} signedIn={signedIn} cloning={cloning} />
         ) : (
@@ -151,15 +151,15 @@ function CloneCta({
   return (
     <div className="flex flex-col gap-2.5">
       {/* Locked composer — mirrors the real prompt box but disabled */}
-      <div className="flex items-center gap-2 rounded-xl border-2 border-[#222] bg-[#FFF9E0] px-3.5 py-3 text-[13px] text-[#8a8266]">
+      <div className="flex items-center gap-2 rounded-xl border-2 border-[var(--ink)] bg-[var(--bg2)] px-3.5 py-3 text-[13px] text-[var(--muted2)]">
         <Lock className="h-4 w-4 shrink-0" />
         {signedIn ? 'Clone this project to edit it with the AI' : 'Sign in to edit this project with the AI'}
       </div>
       <button
         onClick={() => void handle()}
         disabled={cloning}
-        style={{ boxShadow: '4px 4px 0 #222' }}
-        className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-[#222] bg-[#FFD700] py-2.5 text-[14px] font-medium text-[#222222] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+        style={{ boxShadow: '4px 4px 0 var(--shadow)' }}
+        className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-[var(--ink)] bg-[var(--gold)] py-2.5 text-[14px] font-medium text-[var(--gink)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {cloning ? (
           <>
@@ -207,8 +207,8 @@ function CopyButton({ text, light }: { text: string; light?: boolean }) {
       title="Copy message"
       className={`rounded p-1 transition-colors ${
         light
-          ? 'text-[#8a8266] hover:text-[#222222]'
-          : 'text-[#8a8266] hover:text-[#222222]'
+          ? 'text-[var(--muted2)] hover:text-[var(--ink)]'
+          : 'text-[var(--muted2)] hover:text-[var(--ink)]'
       }`}
     >
       {copied ? (
@@ -246,7 +246,7 @@ function Message({
   if (kind === 'system') {
     return (
       <div className="flex justify-center px-4 py-1">
-        <span className="text-center text-[12px] text-[#8a8266]">{content}</span>
+        <span className="text-center text-[12px] text-[var(--muted2)]">{content}</span>
       </div>
     )
   }
@@ -255,14 +255,14 @@ function Message({
     <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>
       <div className={`flex w-full flex-col gap-1 ${isUser ? 'items-end' : 'items-start'}`}>
         <div
-          className={`max-w-[90%] rounded-2xl border-2 border-[#222] px-3.5 py-2 text-[13.5px] ${
+          className={`max-w-[90%] rounded-2xl border-2 border-[var(--ink)] px-3.5 py-2 text-[13.5px] ${
             isUser
-              ? 'rounded-br-sm bg-[#FFF3C4] text-[#222222]'
-              : 'rounded-bl-sm bg-white text-[#222222]'
+              ? 'rounded-br-sm bg-[var(--gold-soft)] text-[var(--ink)]'
+              : 'rounded-bl-sm bg-[var(--surface)] text-[var(--ink)]'
           }`}
         >
           {!isUser && versionName && (
-            <div className="mb-1 text-[11px] font-medium text-[#8a8266]">
+            <div className="mb-1 text-[11px] font-medium text-[var(--muted2)]">
               {versionName}
             </div>
           )}
@@ -276,7 +276,7 @@ function Message({
           {long && (
             <button
               onClick={() => setExpanded((e) => !e)}
-              className="mt-1 text-[12px] font-medium text-[#8a8266] hover:opacity-80"
+              className="mt-1 text-[12px] font-medium text-[var(--muted2)] hover:opacity-80"
             >
               {expanded ? 'Show less' : 'Show more'}
             </button>
@@ -302,7 +302,7 @@ function Message({
             content={content}
           />
         ) : (
-          <div className="flex items-center gap-1.5 px-1 text-[11px] text-[#a89f80]">
+          <div className="flex items-center gap-1.5 px-1 text-[11px] text-[var(--muted3)]">
             {createdAt && <span>{timeAgo(createdAt)}</span>}
             <CopyButton text={content} />
           </div>
@@ -345,7 +345,7 @@ function ActionCards({
         <ActionCard key={i} action={action} />
       ))}
       {runError && (
-        <div className="rounded-lg border-2 border-[#222] bg-[#FFD9D9] px-3 py-2 text-[12px] text-[#7a1f1f]">
+        <div className="rounded-lg border-2 border-[var(--ink)] bg-[#FFD9D9] px-3 py-2 text-[12px] text-[#7a1f1f]">
           {runError}
         </div>
       )}
@@ -353,8 +353,8 @@ function ActionCards({
         <button
           onClick={() => void handleConfirm()}
           disabled={running}
-          style={{ boxShadow: '3px 3px 0 #222' }}
-          className="flex items-center gap-1.5 rounded-lg border-2 border-[#222] bg-[#FFD700] px-3.5 py-1.5 text-[12.5px] font-medium text-[#222222] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
+          className="flex items-center gap-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--gold)] px-3.5 py-1.5 text-[12.5px] font-medium text-[var(--gink)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {running ? (
             <>
@@ -368,7 +368,7 @@ function ActionCards({
         <button
           onClick={() => onSkip(messageIndex)}
           disabled={running}
-          className="rounded-lg px-3.5 py-1.5 text-[12.5px] text-[#8a8266] transition-colors hover:text-[#222222] disabled:opacity-50"
+          className="rounded-lg px-3.5 py-1.5 text-[12.5px] text-[var(--muted2)] transition-colors hover:text-[var(--ink)] disabled:opacity-50"
         >
           Skip
         </button>
@@ -387,19 +387,19 @@ function ActionCard({ action }: { action: AgentAction }) {
       // configJson unparseable — show nothing
     }
     return (
-      <div className="rounded-lg border-2 border-[#222] bg-[#FFF9E0] px-3.5 py-3 text-[12.5px]">
-        <div className="flex items-center gap-2 text-[#222222]">
-          <Coins className="h-4 w-4 shrink-0 text-[#8a8266]" />
+      <div className="rounded-lg border-2 border-[var(--ink)] bg-[var(--bg2)] px-3.5 py-3 text-[12.5px]">
+        <div className="flex items-center gap-2 text-[var(--ink)]">
+          <Coins className="h-4 w-4 shrink-0 text-[var(--muted2)]" />
           <span className="font-medium">Deploy contract</span>
-          <code className="ml-auto truncate font-mono text-[11.5px] text-[#8a8266]">{action.manifestId}</code>
+          <code className="ml-auto truncate font-mono text-[11.5px] text-[var(--muted2)]">{action.manifestId}</code>
         </div>
-        <p className="mt-1.5 text-[#6b6659]">{action.reason}</p>
+        <p className="mt-1.5 text-[var(--muted)]">{action.reason}</p>
         {configEntries.length > 0 && (
-          <ul className="mt-2 space-y-0.5 border-t-2 border-[#222] pt-2">
+          <ul className="mt-2 space-y-0.5 border-t-2 border-[var(--ink)] pt-2">
             {configEntries.map(([k, v]) => (
               <li key={k} className="flex items-center gap-1.5 text-[11.5px]">
-                <span className="text-[#8a8266]">{k}:</span>
-                <span className="font-mono text-[#222222]">{String(v)}</span>
+                <span className="text-[var(--muted2)]">{k}:</span>
+                <span className="font-mono text-[var(--ink)]">{String(v)}</span>
               </li>
             ))}
           </ul>
@@ -410,13 +410,13 @@ function ActionCard({ action }: { action: AgentAction }) {
 
   // create_wallet
   return (
-    <div className="rounded-lg border-2 border-[#222] bg-[#FFF9E0] px-3.5 py-3 text-[12.5px]">
-      <div className="flex items-center gap-2 text-[#222222]">
-        <Wallet className="h-4 w-4 shrink-0 text-[#8a8266]" />
+    <div className="rounded-lg border-2 border-[var(--ink)] bg-[var(--bg2)] px-3.5 py-3 text-[12.5px]">
+      <div className="flex items-center gap-2 text-[var(--ink)]">
+        <Wallet className="h-4 w-4 shrink-0 text-[var(--muted2)]" />
         <span className="font-medium">Create test wallet</span>
-        <code className="ml-auto truncate font-mono text-[11.5px] text-[#8a8266]">{action.label}</code>
+        <code className="ml-auto truncate font-mono text-[11.5px] text-[var(--muted2)]">{action.label}</code>
       </div>
-      <p className="mt-1.5 text-[#6b6659]">{action.reason}</p>
+      <p className="mt-1.5 text-[var(--muted)]">{action.reason}</p>
     </div>
   )
 }
@@ -435,11 +435,11 @@ function WorkedFor({
 }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="w-full max-w-[90%] overflow-hidden rounded-lg border-2 border-[#222] bg-white">
-      <div className="flex items-center gap-1.5 px-2 py-1.5 text-[11.5px] text-[#8a8266]">
+    <div className="w-full max-w-[90%] overflow-hidden rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)]">
+      <div className="flex items-center gap-1.5 px-2 py-1.5 text-[11.5px] text-[var(--muted2)]">
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex items-center gap-1.5 hover:text-[#222222]"
+          className="flex items-center gap-1.5 hover:text-[var(--ink)]"
         >
           {open ? (
             <ChevronDown className="h-3.5 w-3.5" />
@@ -449,27 +449,27 @@ function WorkedFor({
           <Check className="h-3.5 w-3.5 text-emerald-600" />
           Worked for {fmtDuration(stats.durationMs)}
         </button>
-        {createdAt && <span className="text-[#a89f80]">· {timeAgo(createdAt)}</span>}
+        {createdAt && <span className="text-[var(--muted3)]">· {timeAgo(createdAt)}</span>}
         <div className="ml-auto">
           <CopyButton text={content} />
         </div>
       </div>
       {open && (
-        <div className="space-y-1.5 border-t-2 border-[#222] px-3 py-2 text-[11.5px]">
+        <div className="space-y-1.5 border-t-2 border-[var(--ink)] px-3 py-2 text-[11.5px]">
           <Stat label="Files modified" value={`${stats.filesModified}`} />
           <Stat label="Lines changed" value={`+${stats.added} -${stats.removed}`} />
           {files && files.length > 0 && (
-            <ul className="mt-1.5 space-y-1 border-t-2 border-[#222] pt-2">
+            <ul className="mt-1.5 space-y-1 border-t-2 border-[var(--ink)] pt-2">
               {files.map((a, i) => {
                 const Icon = OP_ICON[a.op]
                 return (
                   <li
                     key={i}
-                    className="flex items-center gap-1.5 text-[11.5px] text-[#8a8266]"
+                    className="flex items-center gap-1.5 text-[11.5px] text-[var(--muted2)]"
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" />
                     <span>{VERB[a.op]}</span>
-                    <code className="truncate font-mono text-[#6b6659]">{a.path}</code>
+                    <code className="truncate font-mono text-[var(--muted)]">{a.path}</code>
                   </li>
                 )
               })}
@@ -484,8 +484,8 @@ function WorkedFor({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[#8a8266]">{label}</span>
-      <span className="font-mono text-[#222222]">{value}</span>
+      <span className="text-[var(--muted2)]">{label}</span>
+      <span className="font-mono text-[var(--ink)]">{value}</span>
     </div>
   )
 }
@@ -508,13 +508,13 @@ function ThinkingTrace({
   return (
     <div className="flex flex-col gap-2">
       {message && (
-        <div className="max-w-[85%] rounded-2xl rounded-bl-sm border-2 border-[#222] bg-white px-3.5 py-2 text-[13.5px] whitespace-pre-wrap text-[#222222]">
+        <div className="max-w-[85%] rounded-2xl rounded-bl-sm border-2 border-[var(--ink)] bg-[var(--surface)] px-3.5 py-2 text-[13.5px] whitespace-pre-wrap text-[var(--ink)]">
           {message}
         </div>
       )}
-      <div className="rounded-xl border-2 border-[#222] bg-[#FFF9E0] px-3 py-2.5">
+      <div className="rounded-xl border-2 border-[var(--ink)] bg-[var(--bg2)] px-3 py-2.5">
         {activity.length === 0 ? (
-          <div className="flex items-center gap-2 text-[12.5px] text-[#6b6659]">
+          <div className="flex items-center gap-2 text-[12.5px] text-[var(--muted)]">
             <img
               src="/stellita/mascot-thinking.gif"
               alt=""
@@ -540,9 +540,9 @@ function ThinkingTrace({
                   ) : (
                     <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
                   )}
-                  <Icon className="h-3.5 w-3.5 shrink-0 text-[#8a8266]" />
-                  <span className="text-[#8a8266]">{VERB[a.op]}</span>
-                  <code className="truncate font-mono text-[#222222]">{a.path}</code>
+                  <Icon className="h-3.5 w-3.5 shrink-0 text-[var(--muted2)]" />
+                  <span className="text-[var(--muted2)]">{VERB[a.op]}</span>
+                  <code className="truncate font-mono text-[var(--ink)]">{a.path}</code>
                 </li>
               )
             })}
@@ -573,11 +573,11 @@ function RenameModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-xl border-2 border-[#222] bg-white p-5"
-        style={{ boxShadow: '6px 6px 0 #222' }}
+        className="w-full max-w-sm rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-5"
+        style={{ boxShadow: '6px 6px 0 var(--shadow)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-[15px] font-medium text-[#222222]">Rename chat</h2>
+        <h2 className="text-[15px] font-medium text-[var(--ink)]">Rename chat</h2>
         <input
           autoFocus
           value={value}
@@ -586,20 +586,20 @@ function RenameModal({
             if (e.key === 'Enter') save()
             if (e.key === 'Escape') onClose()
           }}
-          className="mt-4 w-full select-text rounded-lg border-2 border-[#222] bg-white px-3 py-2 text-[14px] text-[#222222] outline-none focus:border-[#D9A400]"
+          className="mt-4 w-full select-text rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-2 text-[14px] text-[var(--ink)] outline-none focus:border-[var(--gold-dk)]"
         />
         <div className="mt-5 flex justify-end gap-2 text-[13px]">
           <button
             onClick={onClose}
-            className="rounded-lg px-3.5 py-1.5 text-[#8a8266] hover:text-[#222222]"
+            className="rounded-lg px-3.5 py-1.5 text-[var(--muted2)] hover:text-[var(--ink)]"
           >
             Cancel
           </button>
           <button
             onClick={save}
             disabled={!value.trim()}
-            style={{ boxShadow: '3px 3px 0 #222' }}
-            className="rounded-lg border-2 border-[#222] bg-[#FFD700] px-3.5 py-1.5 font-medium text-[#222222] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
+            className="rounded-lg border-2 border-[var(--ink)] bg-[var(--gold)] px-3.5 py-1.5 font-medium text-[var(--gink)] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Save
           </button>

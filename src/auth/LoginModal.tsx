@@ -52,17 +52,17 @@ export function LoginModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#222222]/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--ink)]/60 p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border-[2.5px] border-[#222] bg-white p-6 shadow-[6px_6px_0_#222]"
+        className="w-full max-w-sm rounded-2xl border-[2.5px] border-[var(--ink)] bg-[var(--surface)] p-6 shadow-[6px_6px_0_var(--shadow)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="mb-1 text-[17px] font-semibold text-[#222222]">
+        <h2 className="mb-1 text-[17px] font-semibold text-[var(--ink)]">
           {step === 'email' ? 'Sign in to Stellita' : 'Check your email'}
         </h2>
-        <p className="mb-6 text-[13px] text-[#8a8266]">
+        <p className="mb-6 text-[13px] text-[var(--muted2)]">
           {step === 'email'
             ? 'Enter your email to receive a sign-in code.'
             : `We sent a 6-digit code to ${email}.`}
@@ -77,12 +77,12 @@ export function LoginModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border-2 border-[#222] bg-white px-3.5 py-2.5 text-[14px] text-[#222222] outline-none placeholder:text-[#a89f80] focus:border-[#D9A400]"
+              className="w-full rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] px-3.5 py-2.5 text-[14px] text-[var(--ink)] outline-none placeholder:text-[var(--muted3)] focus:border-[var(--gold-dk)]"
             />
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg border-2 border-[#222] bg-[#FFD700] py-2.5 text-[14px] font-medium text-[#222222] shadow-[3px_3px_0_#222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#222] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#222]"
+              className="rounded-lg border-2 border-[var(--ink)] bg-[var(--gold)] py-2.5 text-[14px] font-medium text-[var(--gink)] shadow-[3px_3px_0_var(--shadow)] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_var(--shadow)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_var(--shadow)]"
             >
               {loading ? 'Sending…' : 'Send code'}
             </button>
@@ -98,19 +98,19 @@ export function LoginModal({
               onChange={(e) => setCode(e.target.value)}
               maxLength={6}
               required
-              className="w-full rounded-lg border-2 border-[#222] bg-white px-3.5 py-2.5 text-[14px] text-[#222222] outline-none placeholder:text-[#a89f80] focus:border-[#D9A400]"
+              className="w-full rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] px-3.5 py-2.5 text-[14px] text-[var(--ink)] outline-none placeholder:text-[var(--muted3)] focus:border-[var(--gold-dk)]"
             />
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg border-2 border-[#222] bg-[#FFD700] py-2.5 text-[14px] font-medium text-[#222222] shadow-[3px_3px_0_#222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#222] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_#222]"
+              className="rounded-lg border-2 border-[var(--ink)] bg-[var(--gold)] py-2.5 text-[14px] font-medium text-[var(--gink)] shadow-[3px_3px_0_var(--shadow)] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_var(--shadow)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_var(--shadow)]"
             >
               {loading ? 'Verifying…' : 'Verify'}
             </button>
             <button
               type="button"
               onClick={() => { setStep('email'); setCode(''); setError('') }}
-              className="text-[12.5px] text-[#8a8266] hover:text-[#222222]"
+              className="text-[12.5px] text-[var(--muted2)] hover:text-[var(--ink)]"
             >
               Use a different email
             </button>
@@ -123,13 +123,13 @@ export function LoginModal({
 
         <div className="my-5 flex items-center gap-3">
           <div className="h-px flex-1 bg-[#e8e0c0]" />
-          <span className="text-[11.5px] text-[#a89f80]">or</span>
+          <span className="text-[11.5px] text-[var(--muted3)]">or</span>
           <div className="h-px flex-1 bg-[#e8e0c0]" />
         </div>
 
         <button
           onClick={() => loginWithGoogle(googleNext)}
-          className="flex w-full items-center justify-center gap-2.5 rounded-lg border-2 border-[#222] bg-white py-2.5 text-[14px] font-medium text-[#222222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#FFF3C4] hover:shadow-[3px_3px_0_#222]"
+          className="flex w-full items-center justify-center gap-2.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] py-2.5 text-[14px] font-medium text-[var(--ink)] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[var(--gold-soft)] hover:shadow-[3px_3px_0_var(--shadow)]"
         >
           <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
             <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908C16.658 14.463 17.64 12.037 17.64 9.2z" fill="#4285F4"/>

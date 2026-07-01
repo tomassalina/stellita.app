@@ -9,6 +9,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#FFD700" />
 
+    <!-- Apply saved theme before first paint to avoid a flash of the wrong theme -->
+    <script>
+      try {
+        if (localStorage.getItem('stellita_theme') === 'dark')
+          document.documentElement.classList.add('stx-dark')
+      } catch (e) {}
+    </script>
+
     <!-- Primary SEO -->
     <title>Stellita — Ship on Stellar without a line of Rust</title>
     <meta

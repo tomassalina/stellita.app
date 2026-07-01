@@ -25,7 +25,7 @@ export function MobileEditor({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 border-b-2 border-[#222] bg-white">
+      <div className="flex shrink-0 border-b-2 border-[var(--ink)] bg-[var(--surface)]">
         {(
           [
             { id: 'chat', label: 'Chat', Icon: MessageSquare },
@@ -37,8 +37,8 @@ export function MobileEditor({
             onClick={() => setTab(id)}
             className={`flex flex-1 items-center justify-center gap-2 py-3 text-[13px] font-semibold transition-colors ${
               tab === id
-                ? 'border-b-2 border-[#222] bg-[#FFD700] text-[#222222]'
-                : 'text-[#8a8266] hover:text-[#222222]'
+                ? 'border-b-2 border-[var(--ink)] bg-[var(--gold)] text-[var(--gink)]'
+                : 'text-[var(--muted2)] hover:text-[var(--ink)]'
             }`}
           >
             <Icon className="h-4 w-4" />

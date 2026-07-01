@@ -14,15 +14,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Press+Start+2P&display=swap');
 
 .xlm-marketing {
-  background: #FFFDF5;
-  color: #222222;
+  background: var(--bg);
+  color: var(--ink);
   font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 .xlm-marketing * { box-sizing: border-box; }
-.xlm-marketing ::selection { background: #FFD700; color: #222; }
+.xlm-marketing ::selection { background: var(--gold); color: var(--ink); }
 
 @keyframes xlmMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes xlmGlow { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.85; } }
@@ -36,29 +36,29 @@
 .xlm-skel { background: #F0EBDD; border-radius: 8px; animation: xlmPulse 1.4s ease-in-out infinite; }
 
 /* Hover patterns — Stellita neobrutalist hard-shadow lift */
-.xlm-navlink { color: #6b6659; cursor: pointer; font-weight: 600; transition: color .15s ease; }
-.xlm-navlink:hover { color: #222; }
+.xlm-navlink { color: var(--muted); cursor: pointer; font-weight: 600; transition: color .15s ease; }
+.xlm-navlink:hover { color: var(--ink); }
 
 .xlm-pill { transition: transform .12s ease, box-shadow .12s ease; }
-.xlm-pill:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #222; }
+.xlm-pill:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--shadow); }
 
 .xlm-chip { transition: transform .12s ease, box-shadow .12s ease; }
-.xlm-chip:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 #FFD700; }
+.xlm-chip:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--gold); }
 
 .xlm-card { transition: transform .12s ease, box-shadow .12s ease; }
-.xlm-card:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #FFD700; }
+.xlm-card:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--gold); }
 
 .xlm-cardext { transition: transform .12s ease, box-shadow .12s ease; }
-.xlm-cardext:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #FFD700; }
+.xlm-cardext:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--gold); }
 
 .xlm-bento { transition: transform .12s ease, box-shadow .12s ease; }
-.xlm-bento:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #222; }
+.xlm-bento:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--shadow); }
 
 .xlm-soft { transition: transform .12s ease, box-shadow .12s ease, background .15s ease; }
-.xlm-soft:hover { background: #FFF3C4; transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #FFD700; }
+.xlm-soft:hover { background: var(--gold-soft); transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--gold); }
 
 .xlm-iconbtn { transition: background .15s ease; }
-.xlm-iconbtn:hover { background: #FFF3C4; }
+.xlm-iconbtn:hover { background: var(--gold-soft); }
 
 /* Responsive: collapse grids + scale type on narrow screens */
 @media (max-width: 900px) {
@@ -78,19 +78,19 @@
    ========================================================================== */
 
 .st-marketing {
-  background: #FFFDF5;
-  color: #222222;
+  background: var(--bg);
+  color: var(--ink);
   font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 .st-marketing * { box-sizing: border-box; }
-.st-marketing ::selection { background: #FFD700; color: #222; }
+.st-marketing ::selection { background: var(--gold); color: var(--ink); }
 /* On yellow surfaces the default yellow highlight is invisible → use white so
    selected text stays readable (e.g. the "Prompt. Deploy. Done." bento card). */
-.st-onyellow ::selection { background: #fff; color: #222; }
-.st-onyellow ::-moz-selection { background: #fff; color: #222; }
+.st-onyellow ::selection { background: var(--surface); color: var(--ink); }
+.st-onyellow ::-moz-selection { background: var(--surface); color: var(--ink); }
 .st-pixel { font-family: 'Press Start 2P', monospace; }
 .st-pixelated { image-rendering: pixelated; }
 
@@ -108,22 +108,22 @@
 .st-pop { opacity: 0; animation: stPop .7s ease .15s forwards; }
 
 /* Hover patterns ported from the design's style-hover */
-.st-navlink { color: #6b6659; cursor: pointer; font-weight: 600; transition: color .15s ease; }
-.st-navlink:hover { color: #222; }
+.st-navlink { color: var(--muted); cursor: pointer; font-weight: 600; transition: color .15s ease; }
+.st-navlink:hover { color: var(--ink); }
 
 /* Hard-shadow lift: border stays, shadow grows, element nudges up-left */
 .st-lift { transition: transform .12s ease, box-shadow .12s ease; }
-.st-lift-dark:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #222; }
-.st-lift-dark-lg:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #222; }
-.st-lift-yellow:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 #FFD700; }
-.st-lift-yellow-lg:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #FFD700; }
-.st-lift-yellow-sm:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 #FFD700; }
+.st-lift-dark:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--shadow); }
+.st-lift-dark-lg:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--shadow); }
+.st-lift-yellow:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--gold); }
+.st-lift-yellow-lg:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--gold); }
+.st-lift-yellow-sm:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--gold); }
 
 /* Soft-fill hover (model selector / mic) */
 .st-softfill { transition: background .15s ease; }
-.st-softfill:hover { background: #FFF3C4 !important; }
+.st-softfill:hover { background: var(--gold-soft) !important; }
 
-.st-marketing textarea::placeholder { color: #9a9384; font-weight: 500; opacity: 1; }
+.st-marketing textarea::placeholder { color: var(--placeholder); font-weight: 500; opacity: 1; }
 
 /* Responsive: collapse grids + scale type on narrow screens */
 @media (max-width: 900px) {

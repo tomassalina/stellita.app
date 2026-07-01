@@ -1,7 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ThemeToggle } from '../components/ThemeToggle'
 
-export const YELLOW = '#FFD700'
+export const YELLOW = 'var(--gold)'
 
 /** The Stellita mark: the pixel star mascot. Rendered pixelated. */
 export function Logo({ size = 24 }: { size?: number }) {
@@ -19,8 +20,8 @@ export function Logo({ size = 24 }: { size?: number }) {
 /** "STELLITA.APP" wordmark — STELLITA bold, ".APP" in accent-dark. */
 export function Wordmark({ size = 19 }: { size?: number }) {
   return (
-    <span style={{ fontSize: size, fontWeight: 800, letterSpacing: '-0.01em', color: '#222222' }}>
-      STELLITA<span style={{ color: '#D9A400' }}>.APP</span>
+    <span style={{ fontSize: size, fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
+      STELLITA<span style={{ color: 'var(--gold-dk)' }}>.APP</span>
     </span>
   )
 }
@@ -52,10 +53,10 @@ export function Nav({
         top: 0,
         zIndex: 60,
         height: 72,
-        background: 'rgba(255,253,245,0.85)',
+        background: 'var(--nav-bg)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '2px solid #222',
+        borderBottom: '2px solid var(--ink)',
       }}
     >
       <div
@@ -82,28 +83,31 @@ export function Nav({
               key={l.key}
               className="xlm-navlink"
               onClick={() => navigate(l.to)}
-              style={l.key === active ? { color: '#222' } : undefined}
+              style={l.key === active ? { color: 'var(--ink)' } : undefined}
             >
               {l.label}
             </span>
           ))}
         </div>
-        <div
-          onClick={onSignIn}
-          className="xlm-pill st-lift st-lift-dark"
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            color: '#222',
-            background: YELLOW,
-            padding: '9px 22px',
-            borderRadius: 12,
-            border: '2px solid #222',
-            boxShadow: '3px 3px 0 #222',
-            cursor: 'pointer',
-          }}
-        >
-          {signedIn ? 'Go to app' : 'Sign In'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <ThemeToggle size={42} />
+          <div
+            onClick={onSignIn}
+            className="xlm-pill st-lift st-lift-dark"
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: 'var(--ink)',
+              background: YELLOW,
+              padding: '9px 22px',
+              borderRadius: 12,
+              border: '2px solid var(--ink)',
+              boxShadow: '3px 3px 0 var(--shadow)',
+              cursor: 'pointer',
+            }}
+          >
+            {signedIn ? 'Go to app' : 'Sign In'}
+          </div>
         </div>
       </div>
     </nav>
@@ -113,7 +117,7 @@ export function Nav({
 /** Eyebrow label used above section headings. Press Start 2P pixel label. */
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (
-    <div className="st-pixel" style={{ fontSize: 11, color: '#D9A400', marginBottom: 18 }}>
+    <div className="st-pixel" style={{ fontSize: 11, color: 'var(--gold-dk)', marginBottom: 18 }}>
       {children}
     </div>
   )
@@ -142,7 +146,7 @@ export function Footer() {
     { title: 'Build', links: [{ label: 'Open the app', to: '/app' }, { label: 'Templates', to: '/app' }] },
   ]
   return (
-    <footer style={{ borderTop: '2px solid #222', padding: '56px 32px 48px', marginTop: 40, background: '#FFF9E0' }}>
+    <footer style={{ borderTop: '2px solid var(--ink)', padding: '56px 32px 48px', marginTop: 40, background: 'var(--bg2)' }}>
       <div
         style={{
           maxWidth: 1280,
@@ -161,13 +165,13 @@ export function Footer() {
             <Logo size={32} />
             <Wordmark size={17} />
           </div>
-          <p style={{ fontSize: 14, color: '#6b6659', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
+          <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
             Build on Stellar without writing a single line of Rust. Prompt, deploy, done.
           </p>
         </div>
         {col.map((c) => (
           <div key={c.title}>
-            <div className="st-pixel" style={{ fontSize: 10, color: '#8a8266', marginBottom: 16 }}>
+            <div className="st-pixel" style={{ fontSize: 10, color: 'var(--muted2)', marginBottom: 16 }}>
               {c.title}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -180,7 +184,7 @@ export function Footer() {
           </div>
         ))}
       </div>
-      <div style={{ maxWidth: 1280, margin: '40px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', fontSize: 13, color: '#a89f80', fontWeight: 500 }}>
+      <div style={{ maxWidth: 1280, margin: '40px auto 0', display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', fontSize: 13, color: 'var(--muted3)', fontWeight: 500 }}>
         <span>© {2026} Stellita · Runs on Stellar testnet.</span>
         <span>
           Created by{' '}
@@ -188,7 +192,7 @@ export function Footer() {
             href="https://www.instagram.com/lasoftwarefactory/"
             target="_blank"
             rel="noreferrer"
-            style={{ color: '#6b6659', textDecoration: 'none', fontWeight: 600 }}
+            style={{ color: 'var(--muted)', textDecoration: 'none', fontWeight: 600 }}
           >
             lasoftwarefactory
           </a>

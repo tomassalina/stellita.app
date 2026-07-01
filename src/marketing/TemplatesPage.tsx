@@ -27,7 +27,7 @@ export function TemplatesPage() {
           <h1 className="xlm-h1" style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 18px', lineHeight: 1.02 }}>
             Start from a working app
           </h1>
-          <p style={{ fontSize: 19, color: '#6b6659', maxWidth: 700, margin: 0, lineHeight: 1.55, fontWeight: 500 }}>
+          <p style={{ fontSize: 19, color: 'var(--muted)', maxWidth: 700, margin: 0, lineHeight: 1.55, fontWeight: 500 }}>
             Each template is a complete, deployed example. Preview the code, contracts and live app — then clone it to make it your own.
           </p>
         </div>

@@ -69,7 +69,7 @@ export function PricingPage() {
           <h1 className="xlm-h1" style={{ fontSize: 56, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 18px', lineHeight: 1.04 }}>
             Free to experiment.<br />Priced to ship.
           </h1>
-          <p style={{ fontSize: 19, color: '#6b6659', maxWidth: 620, margin: '0 auto', lineHeight: 1.55, fontWeight: 500 }}>
+          <p style={{ fontSize: 19, color: 'var(--muted)', maxWidth: 620, margin: '0 auto', lineHeight: 1.55, fontWeight: 500 }}>
             Everything runs on testnet, so you can start for nothing. Upgrade when you're building for real.
           </p>
         </div>
@@ -81,25 +81,25 @@ export function PricingPage() {
               className="xlm-cardext"
               style={{
                 position: 'relative',
-                border: '2.5px solid #222',
+                border: '2.5px solid var(--ink)',
                 borderRadius: 22,
                 padding: 32,
-                background: t.popular ? '#FFF9E0' : '#fff',
-                boxShadow: t.popular ? '6px 6px 0 #FFD700' : undefined,
+                background: t.popular ? 'var(--bg2)' : 'var(--surface)',
+                boxShadow: t.popular ? '6px 6px 0 var(--gold)' : undefined,
               }}
             >
               {t.popular && (
-                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: YELLOW, color: '#222', fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', padding: '5px 12px', borderRadius: 999, border: '2px solid #222' }}>
+                <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: YELLOW, color: 'var(--gink)', fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', padding: '5px 12px', borderRadius: 999, border: '2px solid var(--ink)' }}>
                   MOST POPULAR
                 </div>
               )}
               <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>{t.name}</div>
-              <div style={{ fontSize: 14.5, color: '#6b6659', marginBottom: 22, fontWeight: 500 }}>{t.tagline}</div>
+              <div style={{ fontSize: 14.5, color: 'var(--muted)', marginBottom: 22, fontWeight: 500 }}>{t.tagline}</div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, marginBottom: 8 }}>
                 <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-0.03em' }}>{t.price}</span>
-                {t.per && <span style={{ fontSize: 17, color: '#8a8266', marginBottom: 9, fontWeight: 500 }}>{t.per}</span>}
+                {t.per && <span style={{ fontSize: 17, color: 'var(--muted2)', marginBottom: 9, fontWeight: 500 }}>{t.per}</span>}
               </div>
-              <div style={{ fontSize: 13.5, color: '#8a8266', marginBottom: 22, fontWeight: 500 }}>{t.note}</div>
+              <div style={{ fontSize: 13.5, color: 'var(--muted2)', marginBottom: 22, fontWeight: 500 }}>{t.note}</div>
               <div
                 onClick={enter}
                 className={t.popular ? 'xlm-pill' : 'xlm-soft'}
@@ -111,10 +111,10 @@ export function PricingPage() {
                   borderRadius: 12,
                   cursor: 'pointer',
                   marginBottom: 26,
-                  background: t.popular ? YELLOW : '#fff',
-                  color: '#222',
-                  border: '2px solid #222',
-                  boxShadow: t.popular ? '3px 3px 0 #222' : undefined,
+                  background: t.popular ? YELLOW : 'var(--surface)',
+                  color: 'var(--ink)',
+                  border: '2px solid var(--ink)',
+                  boxShadow: t.popular ? '3px 3px 0 var(--shadow)' : undefined,
                 }}
               >
                 {t.cta}
@@ -122,7 +122,7 @@ export function PricingPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
                 {t.features.map((f) => (
                   <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14.5, color: '#4a4536', fontWeight: 500 }}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={'#D9A400'} strokeWidth="2.8" style={{ marginTop: 1, flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={'var(--gold-dk)'} strokeWidth="2.8" style={{ marginTop: 1, flexShrink: 0 }}><polyline points="20 6 9 17 4 12" /></svg>
                     {f}
                   </div>
                 ))}
@@ -132,18 +132,18 @@ export function PricingPage() {
         </div>
 
         {/* Credits */}
-        <div style={{ marginTop: 28, border: '2.5px solid #222', borderRadius: 22, background: '#fff', padding: 32, display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center', justifyContent: 'space-between', boxShadow: '6px 6px 0 #222' }}>
+        <div style={{ marginTop: 28, border: '2.5px solid var(--ink)', borderRadius: 22, background: 'var(--surface)', padding: 32, display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center', justifyContent: 'space-between', boxShadow: '6px 6px 0 var(--shadow)' }}>
           <div style={{ maxWidth: 560 }}>
             <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Runs on credits — top up anytime</div>
-            <p style={{ fontSize: 15, color: '#6b6659', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
-              Every prompt, generation and deploy spends credits. Builder includes <span style={{ color: '#222', fontWeight: 700 }}>$20 in credits each month</span>; add more whenever you need them.
+            <p style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
+              Every prompt, generation and deploy spends credits. Builder includes <span style={{ color: 'var(--ink)', fontWeight: 700 }}>$20 in credits each month</span>; add more whenever you need them.
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {TOPUPS.map((t) => (
-              <div key={t} className="xlm-soft" style={{ border: '2px solid #222', borderRadius: 12, padding: '11px 18px', fontSize: 15, fontWeight: 700, color: '#222', background: '#fff', cursor: 'pointer' }}>{t}</div>
+              <div key={t} className="xlm-soft" style={{ border: '2px solid var(--ink)', borderRadius: 12, padding: '11px 18px', fontSize: 15, fontWeight: 700, color: 'var(--ink)', background: 'var(--surface)', cursor: 'pointer' }}>{t}</div>
             ))}
-            <div onClick={enter} className="xlm-pill" style={{ background: YELLOW, color: '#222', borderRadius: 12, padding: '11px 20px', fontSize: 15, fontWeight: 700, border: '2px solid #222', boxShadow: '3px 3px 0 #222', cursor: 'pointer' }}>Buy credits</div>
+            <div onClick={enter} className="xlm-pill" style={{ background: YELLOW, color: 'var(--gink)', borderRadius: 12, padding: '11px 20px', fontSize: 15, fontWeight: 700, border: '2px solid var(--ink)', boxShadow: '3px 3px 0 var(--shadow)', cursor: 'pointer' }}>Buy credits</div>
           </div>
         </div>
       </div>

@@ -53,7 +53,7 @@ export function Editor() {
   if (!project) {
     if (!ready) {
       return (
-        <div className="flex h-full items-center justify-center bg-[#FFFDF5] text-[13px] text-[#8a8266]">
+        <div className="flex h-full items-center justify-center bg-[var(--bg)] text-[13px] text-[var(--muted2)]">
           Loading project…
         </div>
       )
@@ -192,7 +192,7 @@ export function Editor() {
       </Panel>
       <PanelResizeHandle
         onDragging={setResizing}
-        className="w-1 bg-[#222] transition-colors hover:bg-[#FFD700]/70 data-[resize-handle-state=drag]:bg-[#FFD700]"
+        className="w-1 bg-[var(--ink)] transition-colors hover:bg-[var(--gold)]/70 data-[resize-handle-state=drag]:bg-[var(--gold)]"
       />
       <Panel defaultSize={66} minSize={30}>
         <div className={`h-full ${resizing ? 'pointer-events-none' : ''}`}>

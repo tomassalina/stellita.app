@@ -31,8 +31,8 @@ export function BuildHome() {
     count >= PROMPT_MAX
       ? 'text-[#dc2626]'
       : count >= PROMPT_MAX - 200
-        ? 'text-[#D9A400]'
-        : 'text-[#8a8266]'
+        ? 'text-[var(--gold-dk)]'
+        : 'text-[var(--muted2)]'
 
   return (
     <main className="flex flex-1 items-center justify-center px-4">
@@ -44,12 +44,12 @@ export function BuildHome() {
           height={72}
           className="mx-auto mb-4 block [image-rendering:pixelated]"
         />
-        <h1 className="mb-8 text-center text-3xl font-medium tracking-tight text-[#222222] sm:text-4xl">
+        <h1 className="mb-8 text-center text-3xl font-medium tracking-tight text-[var(--ink)] sm:text-4xl">
           What do you want to build?
         </h1>
         <div
-          className="relative mx-auto max-w-190 rounded-[20px] border-[2.5px] border-[#222] bg-white p-[22px_22px_16px] text-left"
-          style={{ boxShadow: '6px 6px 0 #FFD700' }}
+          className="relative mx-auto max-w-190 rounded-[20px] border-[2.5px] border-[var(--ink)] bg-[var(--surface)] p-[22px_22px_16px] text-left"
+          style={{ boxShadow: '6px 6px 0 var(--gold)' }}
         >
           <textarea
             value={prompt}
@@ -63,7 +63,7 @@ export function BuildHome() {
             rows={2}
             maxLength={PROMPT_MAX}
             placeholder='Describe a contract or dApp… e.g. "an NFT collection with royalties"'
-            className="min-h-14.5 w-full resize-none border-none bg-transparent font-sans text-[18px] leading-normal font-medium text-[#222222] outline-none placeholder:text-[#9a9384]"
+            className="min-h-14.5 w-full resize-none border-none bg-transparent font-sans text-[18px] leading-normal font-medium text-[var(--ink)] outline-none placeholder:text-[var(--placeholder)]"
           />
           <div className="mt-3.5 flex items-center justify-between">
             <span className={`text-[12.5px] font-semibold tabular-nums ${countColor}`}>
@@ -72,7 +72,7 @@ export function BuildHome() {
             <button
               onClick={submitPrompt}
               disabled={!prompt.trim()}
-              className="flex h-10 w-10 items-center justify-center rounded-[11px] border-2 border-[#222] bg-[#FFD700] text-[#222] shadow-[3px_3px_0_#222] transition-transform duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#222] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-[11px] border-2 border-[var(--ink)] bg-[var(--gold)] text-[var(--gink)] shadow-[3px_3px_0_var(--shadow)] transition-transform duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_var(--shadow)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6">
                 <line x1="12" y1="19" x2="12" y2="5" />
@@ -86,7 +86,7 @@ export function BuildHome() {
             <button
               key={t.token}
               onClick={() => navigate(`/p/${t.token}`)}
-              className="rounded-full border-2 border-[#222] bg-white px-4 py-2 text-[13px] font-medium text-[#6b6659] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#FFF3C4] hover:text-[#222222] hover:shadow-[3px_3px_0_#222]"
+              className="rounded-full border-2 border-[var(--ink)] bg-[var(--surface)] px-4 py-2 text-[13px] font-medium text-[var(--muted)] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[var(--gold-soft)] hover:text-[var(--ink)] hover:shadow-[3px_3px_0_var(--shadow)]"
             >
               {t.name}
             </button>

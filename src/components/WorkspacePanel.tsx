@@ -102,7 +102,7 @@ function CodeBar({
   const { code } = useActiveCode()
   const [copied, setCopied] = useState(false)
   return (
-    <div className="flex shrink-0 items-center justify-end gap-1.5 border-b-2 border-[#222222] bg-white px-2 py-1.5">
+    <div className="flex shrink-0 items-center justify-end gap-1.5 border-b-2 border-[var(--ink)] bg-[var(--surface)] px-2 py-1.5">
       <button
         onClick={() => {
           void navigator.clipboard?.writeText(code)
@@ -110,7 +110,7 @@ function CodeBar({
           setTimeout(() => setCopied(false), 1200)
         }}
         title="Copy file"
-        className="rounded-md border-2 border-[#222222] p-1.5 text-[#6b6659] transition-colors hover:bg-[#FFF3C4] hover:text-[#222222]"
+        className="rounded-md border-2 border-[var(--ink)] p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--gold-soft)] hover:text-[var(--ink)]"
       >
         {copied ? (
           <Check className="h-3.5 w-3.5 text-emerald-600" />
@@ -124,8 +124,8 @@ function CodeBar({
           title={editable ? 'Switch to read-only' : 'Edit file'}
           className={`rounded-md border-2 p-1.5 transition-colors ${
             editable
-              ? 'border-[#D9A400] bg-[#FFF3C4] text-[#D9A400]'
-              : 'border-[#222222] text-[#6b6659] hover:bg-[#FFF3C4] hover:text-[#222222]'
+              ? 'border-[var(--gold-dk)] bg-[var(--gold-soft)] text-[var(--gold-dk)]'
+              : 'border-[var(--ink)] text-[var(--muted)] hover:bg-[var(--gold-soft)] hover:text-[var(--ink)]'
           }`}
         >
           {editable ? <Eye className="h-3.5 w-3.5" /> : <SquarePen className="h-3.5 w-3.5" />}
@@ -166,13 +166,13 @@ function ConsolePanel() {
     setTimeout(() => setCopied(false), 1200)
   }
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#FFFDF5]">
-      <div className="flex shrink-0 items-center justify-between border-b-2 border-[#222222] bg-white px-3 py-1.5 text-[12px] text-[#8a8266]">
+    <div className="flex h-full min-h-0 flex-col bg-[var(--bg)]">
+      <div className="flex shrink-0 items-center justify-between border-b-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-1.5 text-[12px] text-[var(--muted2)]">
         <span>Console · {logs.length}</span>
         <div className="flex items-center gap-1.5">
           <button
             onClick={copy}
-            className="flex items-center gap-1 rounded-md border-2 border-[#222222] px-2 py-1 text-[#6b6659] transition-colors hover:bg-[#FFF3C4] hover:text-[#222222]"
+            className="flex items-center gap-1 rounded-md border-2 border-[var(--ink)] px-2 py-1 text-[var(--muted)] transition-colors hover:bg-[var(--gold-soft)] hover:text-[var(--ink)]"
           >
             {copied ? (
               <Check className="h-3.5 w-3.5 text-emerald-600" />
@@ -183,7 +183,7 @@ function ConsolePanel() {
           </button>
           <button
             onClick={reset}
-            className="rounded-md border-2 border-[#222222] px-2 py-1 text-[#6b6659] transition-colors hover:bg-[#FFF3C4] hover:text-[#222222]"
+            className="rounded-md border-2 border-[var(--ink)] px-2 py-1 text-[var(--muted)] transition-colors hover:bg-[var(--gold-soft)] hover:text-[var(--ink)]"
           >
             Clear
           </button>
@@ -191,7 +191,7 @@ function ConsolePanel() {
       </div>
       <div className="min-h-0 flex-1 select-text overflow-y-auto p-2 font-mono text-[12px]">
         {logs.length === 0 ? (
-          <p className="px-1 text-[#a89f80]">No console output.</p>
+          <p className="px-1 text-[var(--muted3)]">No console output.</p>
         ) : (
           logs.map((l, i) => (
             <div
@@ -201,7 +201,7 @@ function ConsolePanel() {
                   ? 'text-red-700'
                   : l.method === 'warn'
                     ? 'text-amber-700'
-                    : 'text-[#222222]'
+                    : 'text-[var(--ink)]'
               }`}
             >
               {lineOf(l.data)}
@@ -233,7 +233,7 @@ function VersionMenu({
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded-md border-2 border-[#222222] bg-white px-3 py-1.5 text-[#222222] transition-colors hover:bg-[#FFF3C4]"
+        className="flex items-center gap-1.5 rounded-md border-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-1.5 text-[var(--ink)] transition-colors hover:bg-[var(--gold-soft)]"
         title="Version history"
       >
         <History className="h-4 w-4" />
@@ -243,8 +243,8 @@ function VersionMenu({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            className="absolute right-0 z-50 mt-1 max-h-96 w-80 overflow-y-auto rounded-lg border-2 border-[#222222] bg-white p-1"
-            style={{ boxShadow: '5px 5px 0 #222' }}
+            className="absolute right-0 z-50 mt-1 max-h-96 w-80 overflow-y-auto rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] p-1"
+            style={{ boxShadow: '5px 5px 0 var(--shadow)' }}
           >
             {versions
               .map((v, i) => ({ v, n: i + 1, latest: i === versions.length - 1 }))
@@ -252,7 +252,7 @@ function VersionMenu({
               .map(({ v, n, latest }) => (
                 <div
                   key={v.id}
-                  className="group rounded-md px-2.5 py-2 hover:bg-[#FFF3C4]"
+                  className="group rounded-md px-2.5 py-2 hover:bg-[var(--gold-soft)]"
                 >
                   <button
                     onClick={() => {
@@ -262,17 +262,17 @@ function VersionMenu({
                     className="block w-full text-left"
                     title="Open this version"
                   >
-                    <div className="flex items-center gap-2 text-[12.5px] text-[#222222]">
-                      <span className="text-[#8a8266]">v{n}</span>
+                    <div className="flex items-center gap-2 text-[12.5px] text-[var(--ink)]">
+                      <span className="text-[var(--muted2)]">v{n}</span>
                       <span className="truncate font-medium">{v.label}</span>
                       {latest && (
-                        <span className="ml-auto shrink-0 rounded bg-[#FFF3C4] px-1.5 py-0.5 text-[10px] text-[#6b6659]">
+                        <span className="ml-auto shrink-0 rounded bg-[var(--gold-soft)] px-1.5 py-0.5 text-[10px] text-[var(--muted)]">
                           current
                         </span>
                       )}
                     </div>
                     {v.summary && (
-                      <p className="mt-0.5 line-clamp-2 text-[11.5px] text-[#8a8266]">
+                      <p className="mt-0.5 line-clamp-2 text-[11.5px] text-[var(--muted2)]">
                         {v.summary}
                       </p>
                     )}
@@ -282,7 +282,7 @@ function VersionMenu({
                   {onRestore && !latest && versions.length > 1 && (
                     <button
                       onClick={() => setConfirm({ id: v.id, n })}
-                      className="mt-1.5 rounded border-2 border-[#222222] px-2 py-0.5 text-[11px] text-[#6b6659] hover:border-red-700 hover:text-red-700"
+                      className="mt-1.5 rounded border-2 border-[var(--ink)] px-2 py-0.5 text-[11px] text-[var(--muted)] hover:border-red-700 hover:text-red-700"
                     >
                       Restore (discard newer)
                     </button>
@@ -325,16 +325,16 @@ function RestoreConfirm({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-xl border-2 border-[#222222] bg-white p-5"
-        style={{ boxShadow: '6px 6px 0 #222' }}
+        className="w-full max-w-sm rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-5"
+        style={{ boxShadow: '6px 6px 0 var(--shadow)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-[15px] font-medium text-red-700">Restore to v{n}?</h2>
-        <p className="mt-2 text-[13px] leading-relaxed text-[#6b6659]">
+        <p className="mt-2 text-[13px] leading-relaxed text-[var(--muted)]">
           This reverts the project to v{n} and{' '}
-          <span className="text-[#222222]">permanently discards every newer
+          <span className="text-[var(--ink)]">permanently discards every newer
           version</span>
-          . This can't be undone. Type <code className="text-[#222222]">restore</code>{' '}
+          . This can't be undone. Type <code className="text-[var(--ink)]">restore</code>{' '}
           to confirm.
         </p>
         <input
@@ -346,19 +346,19 @@ function RestoreConfirm({
             if (e.key === 'Escape') onClose()
           }}
           placeholder="restore"
-          className="mt-4 w-full select-text rounded-lg border-2 border-[#222222] bg-white px-3 py-2 text-[14px] text-[#222222] outline-none focus:border-[#D9A400]"
+          className="mt-4 w-full select-text rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-2 text-[14px] text-[var(--ink)] outline-none focus:border-[var(--gold-dk)]"
         />
         <div className="mt-5 flex justify-end gap-2 text-[13px]">
           <button
             onClick={onClose}
-            className="rounded-lg px-3.5 py-1.5 text-[#6b6659] hover:text-[#222222]"
+            className="rounded-lg px-3.5 py-1.5 text-[var(--muted)] hover:text-[var(--ink)]"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={!ok}
-            className="rounded-lg border-2 border-[#222222] bg-red-600 px-3.5 py-1.5 font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-lg border-2 border-[var(--ink)] bg-red-600 px-3.5 py-1.5 font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Restore
           </button>
@@ -397,20 +397,20 @@ function PreviewBar({
   onDownload: () => void
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-1.5 border-b-2 border-[#222222] bg-white px-2 py-1.5">
+    <div className="flex shrink-0 items-center gap-1.5 border-b-2 border-[var(--ink)] bg-[var(--surface)] px-2 py-1.5">
       <Navigator clientId="default" className="min-w-0 flex-1" />
-      <div className="flex items-center rounded-md border-2 border-[#222222] p-0.5">
+      <div className="flex items-center rounded-md border-2 border-[var(--ink)] p-0.5">
         <button
           onClick={() => setDevice('desktop')}
           title="Desktop"
-          className={`rounded p-1 transition-colors ${device === 'desktop' ? 'bg-[#FFD700] text-[#222222]' : 'text-[#8a8266] hover:text-[#222222]'}`}
+          className={`rounded p-1 transition-colors ${device === 'desktop' ? 'bg-[var(--gold)] text-[var(--gink)]' : 'text-[var(--muted2)] hover:text-[var(--ink)]'}`}
         >
           <Monitor className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => setDevice('mobile')}
           title="Mobile"
-          className={`rounded p-1 transition-colors ${device === 'mobile' ? 'bg-[#FFD700] text-[#222222]' : 'text-[#8a8266] hover:text-[#222222]'}`}
+          className={`rounded p-1 transition-colors ${device === 'mobile' ? 'bg-[var(--gold)] text-[var(--gink)]' : 'text-[var(--muted2)] hover:text-[var(--ink)]'}`}
         >
           <Smartphone className="h-3.5 w-3.5" />
         </button>
@@ -425,7 +425,7 @@ function PreviewBar({
       <button
         onClick={onDownload}
         title="Download project"
-        className="flex items-center gap-1.5 rounded-md border-2 border-[#222222] bg-white px-2.5 py-1.5 text-[12.5px] text-[#222222] transition-colors hover:bg-[#FFF3C4]"
+        className="flex items-center gap-1.5 rounded-md border-2 border-[var(--ink)] bg-[var(--surface)] px-2.5 py-1.5 text-[12.5px] text-[var(--ink)] transition-colors hover:bg-[var(--gold-soft)]"
       >
         <Download className="h-3.5 w-3.5" />
         Download
@@ -563,7 +563,7 @@ export function WorkspacePanel({
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col">
-      <nav className="flex shrink-0 items-center justify-between border-b-2 border-[#222222] bg-white px-3 py-2.5 text-[13px]">
+      <nav className="flex shrink-0 items-center justify-between border-b-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-2.5 text-[13px]">
         <div className="flex min-w-0 items-center gap-1 max-md:overflow-x-auto">
           {TABS.map((t) => (
             <button
@@ -571,8 +571,8 @@ export function WorkspacePanel({
               onClick={() => setTab(t.id)}
               className={`flex shrink-0 items-center gap-1.5 rounded-md border-2 px-3 py-1.5 font-medium transition-colors ${
                 tab === t.id
-                  ? 'border-[#222222] bg-[#FFD700] text-[#222222]'
-                  : 'border-transparent text-[#8a8266] hover:text-[#222222]'
+                  ? 'border-[var(--ink)] bg-[var(--gold)] text-[var(--gink)]'
+                  : 'border-transparent text-[var(--muted2)] hover:text-[var(--ink)]'
               }`}
             >
               {t.label}
@@ -585,7 +585,7 @@ export function WorkspacePanel({
         {!readOnly && (
           <div className="flex shrink-0 items-center gap-3 max-md:pl-2">
             <span
-              className="flex items-center gap-1 text-[11.5px] font-normal text-[#8a8266]"
+              className="flex items-center gap-1 text-[11.5px] font-normal text-[var(--muted2)]"
               title={vis === 'link' ? 'Anyone with the link can view and clone' : 'Only you can access this project'}
             >
               {vis === 'link' ? (
@@ -597,8 +597,8 @@ export function WorkspacePanel({
             </span>
             <button
               onClick={() => setShareOpen(true)}
-              className="rounded-full border-2 border-[#222222] bg-[#FFD700] px-3.5 py-1.5 font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
-              style={{ boxShadow: '3px 3px 0 #222' }}
+              className="rounded-full border-2 border-[var(--ink)] bg-[var(--gold)] px-3.5 py-1.5 font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5"
+              style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
             >
               Share
             </button>
@@ -606,7 +606,7 @@ export function WorkspacePanel({
         )}
       </nav>
 
-      <div className="relative min-h-0 flex-1 bg-[#FFFDF5]">
+      <div className="relative min-h-0 flex-1 bg-[var(--bg)]">
         <div className="absolute inset-0">
           <SandpackProvider
             key={generation}
@@ -634,7 +634,7 @@ export function WorkspacePanel({
                   onRestore={onRestore}
                   onDownload={() => setDownloadOpen(true)}
                 />
-                <div className="flex min-h-0 flex-1 justify-center bg-[#FFF9E0]">
+                <div className="flex min-h-0 flex-1 justify-center bg-[var(--bg2)]">
                   <div
                     className="h-full"
                     style={{ width: device === 'mobile' ? 390 : '100%' }}
@@ -692,13 +692,13 @@ export function WorkspacePanel({
 
         {previewError && (
           <div
-            className="absolute bottom-4 left-1/2 z-30 flex w-[min(92%,560px)] -translate-x-1/2 items-start gap-3 rounded-xl border-2 border-[#222222] bg-white px-3 py-2.5"
-            style={{ boxShadow: '5px 5px 0 #222' }}
+            className="absolute bottom-4 left-1/2 z-30 flex w-[min(92%,560px)] -translate-x-1/2 items-start gap-3 rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-2.5"
+            style={{ boxShadow: '5px 5px 0 var(--shadow)' }}
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
             <div className="min-w-0 flex-1">
               <p className="text-[12.5px] font-medium text-red-700">App error</p>
-              <p className="mt-0.5 max-h-16 select-text overflow-y-auto whitespace-pre-wrap font-mono text-[11.5px] text-[#222222]">
+              <p className="mt-0.5 max-h-16 select-text overflow-y-auto whitespace-pre-wrap font-mono text-[11.5px] text-[var(--ink)]">
                 {previewError}
               </p>
             </div>
@@ -706,15 +706,15 @@ export function WorkspacePanel({
               {onFixError && (
                 <button
                   onClick={() => onFixError(previewError)}
-                  className="flex items-center gap-1 rounded-md border-2 border-[#222222] bg-[#FFD700] px-2.5 py-1 text-[12px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
-                  style={{ boxShadow: '2px 2px 0 #222' }}
+                  className="flex items-center gap-1 rounded-md border-2 border-[var(--ink)] bg-[var(--gold)] px-2.5 py-1 text-[12px] font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5"
+                  style={{ boxShadow: '2px 2px 0 var(--shadow)' }}
                 >
                   <Wand2 className="h-3.5 w-3.5" /> Fix with AI
                 </button>
               )}
               <button
                 onClick={() => void navigator.clipboard?.writeText(previewError)}
-                className="rounded-md border-2 border-[#222222] px-2.5 py-1 text-[12px] text-red-700 transition-colors hover:bg-[#FFF3C4]"
+                className="rounded-md border-2 border-[var(--ink)] px-2.5 py-1 text-[12px] text-red-700 transition-colors hover:bg-[var(--gold-soft)]"
               >
                 Copy
               </button>
@@ -724,16 +724,16 @@ export function WorkspacePanel({
 
         {!previewError && dirty && (onDiscard || onSave) && (
           <div
-            className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-xl border-2 border-[#222222] bg-white px-3 py-2"
-            style={{ boxShadow: '5px 5px 0 #222' }}
+            className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-2"
+            style={{ boxShadow: '5px 5px 0 var(--shadow)' }}
           >
-            <span className="text-[13px] text-[#222222]">
+            <span className="text-[13px] text-[var(--ink)]">
               You have unsaved edits
             </span>
             {onDiscard && (
               <button
                 onClick={onDiscard}
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-[#6b6659] transition-colors hover:text-[#222222]"
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-[var(--muted)] transition-colors hover:text-[var(--ink)]"
               >
                 <X className="h-3.5 w-3.5" />
                 Discard
@@ -742,8 +742,8 @@ export function WorkspacePanel({
             {onSave && (
               <button
                 onClick={onSave}
-                className="rounded-md border-2 border-[#222222] bg-[#FFD700] px-3 py-1 text-[12.5px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
-                style={{ boxShadow: '2px 2px 0 #222' }}
+                className="rounded-md border-2 border-[var(--ink)] bg-[var(--gold)] px-3 py-1 text-[12.5px] font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5"
+                style={{ boxShadow: '2px 2px 0 var(--shadow)' }}
               >
                 Save
               </button>
@@ -758,20 +758,20 @@ export function WorkspacePanel({
           onClick={() => setDownloadOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-xl border-2 border-[#222222] bg-white p-5"
-            style={{ boxShadow: '6px 6px 0 #222' }}
+            className="w-full max-w-sm rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-5"
+            style={{ boxShadow: '6px 6px 0 var(--shadow)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-[15px] font-medium text-[#222222]">Download project</h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#6b6659]">
-              Download <span className="text-[#222222]">{projectName}</span> as a
+            <h2 className="text-[15px] font-medium text-[var(--ink)]">Download project</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-[var(--muted)]">
+              Download <span className="text-[var(--ink)]">{projectName}</span> as a
               complete Vite + React + TypeScript project (.zip) that runs locally
-              with <code className="text-[#6b6659]">pnpm install &amp;&amp; pnpm dev</code>.
+              with <code className="text-[var(--muted)]">pnpm install &amp;&amp; pnpm dev</code>.
             </p>
             <div className="mt-5 flex justify-end gap-2 text-[13px]">
               <button
                 onClick={() => setDownloadOpen(false)}
-                className="rounded-lg px-3.5 py-1.5 text-[#6b6659] hover:text-[#222222]"
+                className="rounded-lg px-3.5 py-1.5 text-[var(--muted)] hover:text-[var(--ink)]"
               >
                 Cancel
               </button>
@@ -780,8 +780,8 @@ export function WorkspacePanel({
                   void downloadProjectZip(projectName, fileTree)
                   setDownloadOpen(false)
                 }}
-                className="rounded-lg border-2 border-[#222222] bg-[#FFD700] px-3.5 py-1.5 font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
-                style={{ boxShadow: '3px 3px 0 #222' }}
+                className="rounded-lg border-2 border-[var(--ink)] bg-[var(--gold)] px-3.5 py-1.5 font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5"
+                style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
               >
                 Download
               </button>
@@ -796,28 +796,28 @@ export function WorkspacePanel({
           onClick={() => setShareOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-xl border-2 border-[#222222] bg-white p-5"
-            style={{ boxShadow: '6px 6px 0 #222' }}
+            className="w-full max-w-md rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-5"
+            style={{ boxShadow: '6px 6px 0 var(--shadow)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-[15px] font-medium text-[#222222]">Share “{projectName}”</h2>
+              <h2 className="text-[15px] font-medium text-[var(--ink)]">Share “{projectName}”</h2>
               <button
                 onClick={() => setShareOpen(false)}
-                className="rounded p-1 text-[#8a8266] hover:text-[#222222]"
+                className="rounded p-1 text-[var(--muted2)] hover:text-[var(--ink)]"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-[#6b6659]">
+            <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--muted)]">
               Anyone you share this with can{' '}
-              <span className="text-[#222222]">clone it</span> into their own
+              <span className="text-[var(--ink)]">clone it</span> into their own
               account — not just view.
             </p>
 
             {onEmailShare && (
               <div className="mt-4">
-                <label className="mb-1.5 block text-[12px] font-medium text-[#6b6659]">
+                <label className="mb-1.5 block text-[12px] font-medium text-[var(--muted)]">
                   Add people
                 </label>
                 <div className="flex gap-2">
@@ -827,12 +827,12 @@ export function WorkspacePanel({
                     onKeyDown={(e) => { if (e.key === 'Enter') void sendShareEmail() }}
                     type="email"
                     placeholder="name@email.com"
-                    className="min-w-0 flex-1 rounded-lg border-2 border-[#222222] bg-white px-3 py-2 text-[13px] text-[#222222] outline-none placeholder:text-[#a89f80] focus:border-[#D9A400]"
+                    className="min-w-0 flex-1 rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--muted3)] focus:border-[var(--gold-dk)]"
                   />
                   <button
                     onClick={() => void sendShareEmail()}
                     disabled={emailState === 'sending' || !emailTo.trim()}
-                    className="shrink-0 rounded-lg border-2 border-[#222222] bg-[#FFD700] px-3.5 py-2 text-[13px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                    className="shrink-0 rounded-lg border-2 border-[var(--ink)] bg-[var(--gold)] px-3.5 py-2 text-[13px] font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
                   >
                     {emailState === 'sending' ? 'Sending…' : 'Send'}
                   </button>
@@ -850,10 +850,10 @@ export function WorkspacePanel({
               </div>
             )}
 
-            <div className="mt-4 border-t-2 border-[#222222] pt-4">
-              <p className="mb-2 text-[12px] font-medium text-[#6b6659]">General access</p>
+            <div className="mt-4 border-t-2 border-[var(--ink)] pt-4">
+              <p className="mb-2 text-[12px] font-medium text-[var(--muted)]">General access</p>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-[#222222] bg-[#FFF9E0] text-[#222222]">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-[var(--ink)] bg-[var(--bg2)] text-[var(--ink)]">
                   {vis === 'link' ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -862,14 +862,14 @@ export function WorkspacePanel({
                       value={vis}
                       disabled={visBusy || !onSetVisibility}
                       onChange={(e) => void changeVisibility(e.target.value as 'private' | 'link')}
-                      className="cursor-pointer rounded-md bg-transparent py-0.5 text-[13.5px] font-medium text-[#222222] outline-none disabled:opacity-60"
+                      className="cursor-pointer rounded-md bg-transparent py-0.5 text-[13.5px] font-medium text-[var(--ink)] outline-none disabled:opacity-60"
                     >
-                      <option value="private" className="bg-white">Restricted</option>
-                      <option value="link" className="bg-white">Anyone with the link</option>
+                      <option value="private" className="bg-[var(--surface)]">Restricted</option>
+                      <option value="link" className="bg-[var(--surface)]">Anyone with the link</option>
                     </select>
-                    {visBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-[#8a8266]" />}
+                    {visBusy && <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--muted2)]" />}
                   </div>
-                  <p className="mt-0.5 text-[12px] text-[#8a8266]">
+                  <p className="mt-0.5 text-[12px] text-[var(--muted2)]">
                     {vis === 'link'
                       ? 'Anyone with the link can view and clone it.'
                       : 'Only you can open this project.'}
@@ -878,11 +878,11 @@ export function WorkspacePanel({
               </div>
 
               {vis === 'link' && url && (
-                <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border-2 border-[#222222] bg-[#FFFDF5] px-3 py-2">
-                  <code className="min-w-0 truncate font-mono text-[12px] text-[#6b6659]">{url}</code>
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border-2 border-[var(--ink)] bg-[var(--bg)] px-3 py-2">
+                  <code className="min-w-0 truncate font-mono text-[12px] text-[var(--muted)]">{url}</code>
                   <button
                     onClick={copyLink}
-                    className="flex shrink-0 items-center gap-1 rounded-md border-2 border-[#222222] bg-[#FFD700] px-2.5 py-1.5 text-[12px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
+                    className="flex shrink-0 items-center gap-1 rounded-md border-2 border-[var(--ink)] bg-[var(--gold)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5"
                   >
                     {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-700" /> : <Copy className="h-3.5 w-3.5" />}
                     {linkCopied ? 'Copied' : 'Copy link'}
@@ -894,7 +894,7 @@ export function WorkspacePanel({
             <div className="mt-5 flex justify-end">
               <button
                 onClick={() => setShareOpen(false)}
-                className="rounded-full border-2 border-[#222222] bg-[#FFD700] px-4 py-1.5 text-[13px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
+                className="rounded-full border-2 border-[var(--ink)] bg-[var(--gold)] px-4 py-1.5 text-[13px] font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5"
               >
                 Done
               </button>

@@ -8,12 +8,12 @@ const USECASE: Record<string, { tagline: string; body: string; icon: ReactNode }
   token: {
     tagline: 'A token dashboard',
     body: 'Mint, send and track a SEP-41 fungible token — name, symbol and supply. Wired to a live testnet contract with balances and transfers.',
-    icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#D9A400" strokeWidth="1.8"><circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /></svg>,
+    icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold-dk)" strokeWidth="1.8"><circle cx="8" cy="8" r="6" /><path d="M18.09 10.37A6 6 0 1 1 10.34 18" /></svg>,
   },
   nft: {
     tagline: 'An NFT collection',
     body: 'Mint unique collectibles and show them in a gallery. Deploy your own OpenZeppelin NFT contract and mint straight to testnet.',
-    icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#222222" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.5-3.5L9 20" /></svg>,
+    icon: <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.5-3.5L9 20" /></svg>,
   },
   swap: {
     tagline: 'A token swap',
@@ -27,7 +27,7 @@ export function TemplatesGallerySkeleton() {
   return (
     <div className="xlm-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 18 }}>
       {[0, 1, 2].map((i) => (
-        <div key={i} style={{ border: '2px solid #222', borderRadius: 18, padding: 30, background: '#fff', display: 'flex', flexDirection: 'column', minHeight: 260 }}>
+        <div key={i} style={{ border: '2px solid var(--ink)', borderRadius: 18, padding: 30, background: 'var(--surface)', display: 'flex', flexDirection: 'column', minHeight: 260 }}>
           <div className="xlm-skel" style={{ width: 52, height: 52, borderRadius: 13, marginBottom: 22 }} />
           <div className="xlm-skel" style={{ width: 110, height: 11, marginBottom: 14 }} />
           <div className="xlm-skel" style={{ width: '70%', height: 18, marginBottom: 14 }} />
@@ -53,13 +53,13 @@ export function TemplatesGallery() {
             key={t.token}
             onClick={() => navigate(`/p/${t.token}`)}
             className="st-lift st-lift-yellow"
-            style={{ border: '2px solid #222', borderRadius: 18, padding: 30, cursor: 'pointer', background: '#fff', color: '#222222', display: 'flex', flexDirection: 'column', minHeight: 260 }}
+            style={{ border: '2px solid var(--ink)', borderRadius: 18, padding: 30, cursor: 'pointer', background: 'var(--surface)', color: 'var(--ink)', display: 'flex', flexDirection: 'column', minHeight: 260 }}
           >
-            <div style={{ width: 52, height: 52, borderRadius: 13, border: '2px solid #222', background: '#FFF3C4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22 }}>{u.icon}</div>
-            <div style={{ fontSize: 12, letterSpacing: '0.12em', color: '#8a8266', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>{u.tagline}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 10, color: '#222222' }}>{t.name}</div>
-            <p style={{ fontSize: 14.5, color: '#6b6659', lineHeight: 1.55, margin: '0 0 22px', fontWeight: 500 }}>{u.body}</p>
-            <div style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: '#D9A400' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 13, border: '2px solid var(--ink)', background: 'var(--gold-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22 }}>{u.icon}</div>
+            <div style={{ fontSize: 12, letterSpacing: '0.12em', color: 'var(--muted2)', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>{u.tagline}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 10, color: 'var(--ink)' }}>{t.name}</div>
+            <p style={{ fontSize: 14.5, color: 'var(--muted)', lineHeight: 1.55, margin: '0 0 22px', fontWeight: 500 }}>{u.body}</p>
+            <div style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700, color: 'var(--gold-dk)' }}>
               Preview &amp; clone
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
             </div>

@@ -1,11 +1,11 @@
 /** Plan tier pill with a distinct look per tier. */
 const STYLES: Record<string, { label: string; cls: string }> = {
-  hacker: { label: 'Hacker', cls: 'border-[#222] bg-white text-[#6b6659]' },
-  builder: { label: 'Builder', cls: 'border-[#222] bg-sky-100 text-sky-700' },
-  studio: { label: 'Studio', cls: 'border-[#222] bg-violet-100 text-violet-700' },
+  hacker: { label: 'Hacker', cls: 'border-[var(--ink)] bg-[var(--surface)] text-[var(--muted)]' },
+  builder: { label: 'Builder', cls: 'border-[var(--ink)] bg-sky-100 text-sky-700' },
+  studio: { label: 'Studio', cls: 'border-[var(--ink)] bg-violet-100 text-violet-700' },
   admin: {
     label: 'Admin',
-    cls: 'border-[#222] bg-[#FFD700] text-[#222222]',
+    cls: 'border-[var(--ink)] bg-[var(--gold)] text-[var(--gink)]',
   },
 }
 

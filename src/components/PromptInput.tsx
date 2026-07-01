@@ -71,8 +71,8 @@ export function PromptInput({
     count >= PROMPT_MAX
       ? 'text-[#dc2626]'
       : count >= PROMPT_MAX - 200
-        ? 'text-[#D9A400]'
-        : 'text-[#8a8266]'
+        ? 'text-[var(--gold-dk)]'
+        : 'text-[var(--muted2)]'
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (menuOpen) {
@@ -105,9 +105,9 @@ export function PromptInput({
   }
 
   return (
-    <div className="relative rounded-xl border-2 border-[#222] bg-white p-2 transition-colors focus-within:border-[#D9A400]">
+    <div className="relative rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-2 transition-colors focus-within:border-[var(--gold-dk)]">
       {menuOpen && (
-        <div className="absolute bottom-full left-0 z-50 mb-1 w-72 overflow-hidden rounded-lg border-2 border-[#222] bg-white p-1 shadow-[4px_4px_0_#222]">
+        <div className="absolute bottom-full left-0 z-50 mb-1 w-72 overflow-hidden rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] p-1 shadow-[4px_4px_0_var(--shadow)]">
           {matches.map((p, i) => (
             <button
               key={p}
@@ -115,11 +115,11 @@ export function PromptInput({
               onMouseEnter={() => setActiveIndex(i)}
               className={`block w-full truncate rounded-md px-2.5 py-1.5 text-left text-[12.5px] ${
                 i === activeIndex
-                  ? 'bg-[#FFF3C4] text-[#222222]'
-                  : 'text-[#6b6659] hover:bg-[#FFF9E0] hover:text-[#222222]'
+                  ? 'bg-[var(--gold-soft)] text-[var(--ink)]'
+                  : 'text-[var(--muted)] hover:bg-[var(--bg2)] hover:text-[var(--ink)]'
               }`}
             >
-              <span className="text-[#a89f80]">@</span>
+              <span className="text-[var(--muted3)]">@</span>
               {p}
             </button>
           ))}
@@ -134,10 +134,10 @@ export function PromptInput({
         rows={2}
         maxLength={PROMPT_MAX}
         placeholder={placeholder}
-        className="max-h-40 w-full select-text resize-none bg-transparent px-2 py-1.5 text-[14px] text-[#222222] placeholder:text-[#a89f80] focus:outline-none"
+        className="max-h-40 w-full select-text resize-none bg-transparent px-2 py-1.5 text-[14px] text-[var(--ink)] placeholder:text-[var(--muted3)] focus:outline-none"
       />
       <div className="flex items-center justify-between px-1 pt-1">
-        <span className="text-[11px] text-[#8a8266]">
+        <span className="text-[11px] text-[var(--muted2)]">
           ↵ to send · ⇧↵ newline{filePaths.length ? ' · @ to reference a file' : ''}
         </span>
         <div className="flex items-center gap-2.5">
@@ -147,7 +147,7 @@ export function PromptInput({
           <button
             onClick={submit}
             disabled={busy || !value.trim()}
-            className="rounded-full border-2 border-[#222] bg-[#FFD700] px-3.5 py-1.5 text-[13px] font-medium text-[#222222] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_#222] disabled:cursor-not-allowed disabled:border-[#c9bf99] disabled:bg-[#FFF9E0] disabled:text-[#a89f80] disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            className="rounded-full border-2 border-[var(--ink)] bg-[var(--gold)] px-3.5 py-1.5 text-[13px] font-medium text-[var(--gink)] transition-all duration-150 ease-out hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0_var(--shadow)] disabled:cursor-not-allowed disabled:border-[var(--marquee)] disabled:bg-[var(--bg2)] disabled:text-[var(--muted3)] disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-none"
           >
             {busy ? 'Working…' : 'Send'}
           </button>

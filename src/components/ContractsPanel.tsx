@@ -69,10 +69,10 @@ export function ContractsPanel({
   const current = contracts[Math.min(selected, contracts.length - 1)]
 
   return (
-    <div className="absolute inset-0 flex bg-[#FFFDF5] text-[#222222]">
+    <div className="absolute inset-0 flex bg-[var(--bg)] text-[var(--ink)]">
       {/* Left: deployed list */}
-      <aside className="flex w-60 shrink-0 flex-col border-r-2 border-[#222222]">
-        <div className="flex items-center justify-between px-3 py-2.5 text-[12px] font-medium text-[#6b6659]">
+      <aside className="flex w-60 shrink-0 flex-col border-r-2 border-[var(--ink)]">
+        <div className="flex items-center justify-between px-3 py-2.5 text-[12px] font-medium text-[var(--muted)]">
           <span>Contracts · {contracts.length}</span>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-2">
@@ -81,21 +81,21 @@ export function ContractsPanel({
               key={c.contractId}
               onClick={() => setSelected(i)}
               className={`mb-1 flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[12.5px] transition-colors ${
-                i === selected ? 'bg-[#FFD700] text-[#222222]' : 'text-[#6b6659] hover:bg-[#FFF3C4]'
+                i === selected ? 'bg-[var(--gold)] text-[var(--gink)]' : 'text-[var(--muted)] hover:bg-[var(--gold-soft)]'
               }`}
             >
-              <CategoryIcon category={c.category} className="h-4 w-4 shrink-0 text-[#8a8266]" />
+              <CategoryIcon category={c.category} className="h-4 w-4 shrink-0 text-[var(--muted2)]" />
               <span className="min-w-0 flex-1 truncate">{c.name}</span>
               <span className="shrink-0 text-[10px] font-medium text-emerald-600">●</span>
             </button>
           ))}
         </div>
         {!readOnly && (
-          <div className="border-t-2 border-[#222222] p-2">
+          <div className="border-t-2 border-[var(--ink)] p-2">
             <button
               onClick={() => setCatalogOpen(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md border-2 border-[#222222] bg-[#FFD700] px-2.5 py-2 text-[12.5px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
-              style={{ boxShadow: '3px 3px 0 #222' }}
+              className="flex w-full items-center justify-center gap-1.5 rounded-md border-2 border-[var(--ink)] bg-[var(--gold)] px-2.5 py-2 text-[12.5px] font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5"
+              style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
             >
               <Plus className="h-4 w-4" /> Add contract
             </button>
@@ -109,8 +109,8 @@ export function ContractsPanel({
           <DeployedDetail contract={current} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-            <Boxes className="h-8 w-8 text-[#c9bf99]" />
-            <p className="max-w-xs text-[13px] leading-relaxed text-[#8a8266]">
+            <Boxes className="h-8 w-8 text-[var(--marquee)]" />
+            <p className="max-w-xs text-[13px] leading-relaxed text-[var(--muted2)]">
               {readOnly
                 ? 'This is a read-only view. Clone the project to deploy and wire your own contracts.'
                 : 'Deploy an audited contract to Stellar testnet, or connect an existing protocol. Its address is wired into src/contracts.ts.'}
@@ -118,8 +118,8 @@ export function ContractsPanel({
             {!readOnly && (
               <button
                 onClick={() => setCatalogOpen(true)}
-                className="flex items-center gap-1.5 rounded-md border-2 border-[#222222] bg-[#FFD700] px-3 py-2 text-[12.5px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5"
-                style={{ boxShadow: '3px 3px 0 #222' }}
+                className="flex items-center gap-1.5 rounded-md border-2 border-[var(--ink)] bg-[var(--gold)] px-3 py-2 text-[12.5px] font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5"
+                style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
               >
                 <Plus className="h-4 w-4" /> Add contract
               </button>
@@ -146,8 +146,8 @@ export function ContractsPanel({
 function Row({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-start justify-between gap-3 py-1.5 text-[12.5px]">
-      <span className="shrink-0 text-[#8a8266]">{label}</span>
-      <span className={`min-w-0 break-all text-right text-[#222222] ${mono ? 'font-mono' : ''}`}>
+      <span className="shrink-0 text-[var(--muted2)]">{label}</span>
+      <span className={`min-w-0 break-all text-right text-[var(--ink)] ${mono ? 'font-mono' : ''}`}>
         {value}
       </span>
     </div>
@@ -163,7 +163,7 @@ function CopyChip({ text }: { text: string }) {
         setCopied(true)
         setTimeout(() => setCopied(false), 1200)
       }}
-      className="rounded p-1 text-[#8a8266] transition-colors hover:text-[#222222]"
+      className="rounded p-1 text-[var(--muted2)] transition-colors hover:text-[var(--ink)]"
       title="Copy"
     >
       {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
@@ -175,40 +175,40 @@ function DeployedDetail({ contract: c }: { contract: DeployedContract }) {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-[#222222] bg-white">
-          <CategoryIcon category={c.category} className="h-5 w-5 text-[#222222]" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)]">
+          <CategoryIcon category={c.category} className="h-5 w-5 text-[var(--ink)]" />
         </div>
         <div>
-          <h2 className="text-[16px] font-medium text-[#222222]">{c.name}</h2>
-          <p className="text-[12px] text-[#8a8266]">
+          <h2 className="text-[16px] font-medium text-[var(--ink)]">{c.name}</h2>
+          <p className="text-[12px] text-[var(--muted2)]">
             {c.category} · {c.network}
           </p>
         </div>
       </div>
 
-      <div className="mt-5 rounded-xl border-2 border-[#222222] bg-white p-4">
+      <div className="mt-5 rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-4">
         <div className="flex items-center justify-between">
-          <span className="text-[12.5px] text-[#8a8266]">Contract ID</span>
+          <span className="text-[12.5px] text-[var(--muted2)]">Contract ID</span>
           <div className="flex items-center gap-1">
             <CopyChip text={c.contractId} />
             <a
               href={c.explorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded p-1 text-[#8a8266] transition-colors hover:text-[#222222]"
+              className="rounded p-1 text-[var(--muted2)] transition-colors hover:text-[var(--ink)]"
               title="View on Stellar Expert"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
         </div>
-        <code className="mt-1 block break-all font-mono text-[12.5px] text-[#222222]">
+        <code className="mt-1 block break-all font-mono text-[12.5px] text-[var(--ink)]">
           {c.contractId}
         </code>
       </div>
 
-      <div className="mt-4 rounded-xl border-2 border-[#222222] bg-white p-4">
-        <h3 className="mb-1 text-[12px] font-medium uppercase tracking-wide text-[#8a8266]">
+      <div className="mt-4 rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-4">
+        <h3 className="mb-1 text-[12px] font-medium uppercase tracking-wide text-[var(--muted2)]">
           Configuration
         </h3>
         {Object.entries(c.config).map(([k, v]) => (
@@ -218,9 +218,9 @@ function DeployedDetail({ contract: c }: { contract: DeployedContract }) {
         {c.txHash && <Row label="deploy tx" value={c.txHash} mono />}
       </div>
 
-      <p className="mt-4 text-[12px] leading-relaxed text-[#8a8266]">
-        Wired into your app at <code className="text-[#6b6659]">src/contracts.ts</code> as{' '}
-        <code className="text-[#6b6659]">CONTRACTS["{c.manifestId}"]</code>.
+      <p className="mt-4 text-[12px] leading-relaxed text-[var(--muted2)]">
+        Wired into your app at <code className="text-[var(--muted)]">src/contracts.ts</code> as{' '}
+        <code className="text-[var(--muted)]">CONTRACTS["{c.manifestId}"]</code>.
       </p>
     </div>
   )
@@ -404,7 +404,7 @@ function ProtocolLogo({
       />
     )
   }
-  return <Icon className="h-5 w-5 text-[#222222]" />
+  return <Icon className="h-5 w-5 text-[var(--ink)]" />
 }
 
 function AddContractModal({
@@ -437,8 +437,8 @@ function AddContractModal({
       onClick={onClose}
     >
       <div
-        className="flex h-[560px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-2 border-[#222222] bg-white"
-        style={{ boxShadow: '8px 8px 0 #222' }}
+        className="flex h-[560px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-2 border-[var(--ink)] bg-[var(--surface)]"
+        style={{ boxShadow: '8px 8px 0 var(--shadow)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {picked ? (
@@ -450,15 +450,15 @@ function AddContractModal({
           />
         ) : (
           <>
-            <div className="flex items-center gap-1 border-b-2 border-[#222222] px-3 py-2.5">
+            <div className="flex items-center gap-1 border-b-2 border-[var(--ink)] px-3 py-2.5">
               {MODES.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setMode(m.id)}
                   className={`rounded-md border-2 px-3 py-1.5 text-[13px] font-medium transition-colors ${
                     mode === m.id
-                      ? 'border-[#222222] bg-[#FFD700] text-[#222222]'
-                      : 'border-transparent text-[#8a8266] hover:text-[#222222]'
+                      ? 'border-[var(--ink)] bg-[var(--gold)] text-[var(--gink)]'
+                      : 'border-transparent text-[var(--muted2)] hover:text-[var(--ink)]'
                   }`}
                 >
                   {m.label}
@@ -486,12 +486,12 @@ function AddContractModal({
                         <button
                           key={entry.name}
                           onClick={() => setPicked(manifest)}
-                          className="flex flex-col gap-2 rounded-xl border-2 border-[#222222] bg-white p-3.5 text-left transition-transform hover:-translate-y-0.5"
-                          style={{ boxShadow: '3px 3px 0 #222' }}
+                          className="flex flex-col gap-2 rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-3.5 text-left transition-transform hover:-translate-y-0.5"
+                          style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
                         >
-                          <Icon className="h-5 w-5 text-[#222222]" />
-                          <span className="text-[13px] font-medium text-[#222222]">{entry.name}</span>
-                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[#8a8266]">
+                          <Icon className="h-5 w-5 text-[var(--ink)]" />
+                          <span className="text-[13px] font-medium text-[var(--ink)]">{entry.name}</span>
+                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[var(--muted2)]">
                             {entry.blurb}
                           </span>
                         </button>
@@ -501,14 +501,14 @@ function AddContractModal({
                     return (
                       <div
                         key={entry.name}
-                        className="relative flex flex-col gap-2 rounded-xl border-2 border-[#222222] bg-[#FFF9E0] p-3.5 opacity-60"
+                        className="relative flex flex-col gap-2 rounded-xl border-2 border-[var(--ink)] bg-[var(--bg2)] p-3.5 opacity-60"
                       >
-                        <Icon className="h-5 w-5 text-[#222222]" />
-                        <span className="text-[13px] font-medium text-[#222222]">{entry.name}</span>
-                        <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[#8a8266]">
+                        <Icon className="h-5 w-5 text-[var(--ink)]" />
+                        <span className="text-[13px] font-medium text-[var(--ink)]">{entry.name}</span>
+                        <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[var(--muted2)]">
                           {entry.blurb}
                         </span>
-                        <span className="absolute right-2.5 top-2.5 rounded-full border border-[#222222] bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#6b6659]">
+                        <span className="absolute right-2.5 top-2.5 rounded-full border border-[var(--ink)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted)]">
                           Soon
                         </span>
                       </div>
@@ -519,7 +519,7 @@ function AddContractModal({
 
               {mode === 'existing' && (
                 <div className="flex flex-col gap-3">
-                  <p className="text-[12px] leading-relaxed text-[#8a8266]">
+                  <p className="text-[12px] leading-relaxed text-[var(--muted2)]">
                     Connect to a live, audited protocol by its contract ID — no deploy needed.
                   </p>
                   <div className="grid grid-cols-2 gap-2.5">
@@ -543,21 +543,21 @@ function AddContractModal({
                                   })
                               : undefined
                           }
-                          className={`relative flex flex-col gap-2 rounded-xl border-2 border-[#222222] bg-white p-3.5 transition-transform ${
+                          className={`relative flex flex-col gap-2 rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-3.5 transition-transform ${
                             live ? 'cursor-pointer hover:-translate-y-0.5' : 'opacity-60'
                           }`}
-                          style={live ? { boxShadow: '3px 3px 0 #222' } : undefined}
+                          style={live ? { boxShadow: '3px 3px 0 var(--shadow)' } : undefined}
                         >
                           <ProtocolLogo logo={entry.logo} name={entry.name} icon={entry.icon} />
-                          <span className="text-[13px] font-medium text-[#222222]">{entry.name}</span>
-                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[#8a8266]">
+                          <span className="text-[13px] font-medium text-[var(--ink)]">{entry.name}</span>
+                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[var(--muted2)]">
                             {entry.blurb}
                           </span>
                           <span
                             className={`absolute right-2.5 top-2.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
                               live
-                                ? 'border-[#D9A400] bg-[#FFF3C4] text-[#D9A400]'
-                                : 'border-[#222222] bg-white text-[#6b6659]'
+                                ? 'border-[var(--gold-dk)] bg-[var(--gold-soft)] text-[var(--gold-dk)]'
+                                : 'border-[var(--ink)] bg-[var(--surface)] text-[var(--muted)]'
                             }`}
                           >
                             {live ? 'Connect' : 'Soon'}
@@ -634,27 +634,27 @@ function ConfigForm({
 
   return (
     <>
-      <div className="flex items-center gap-2 border-b-2 border-[#222222] px-3 py-2.5">
+      <div className="flex items-center gap-2 border-b-2 border-[var(--ink)] px-3 py-2.5">
         <button
           onClick={onBack}
           disabled={deploying}
-          className="rounded-md p-1.5 text-[#6b6659] transition-colors hover:bg-[#FFF3C4] hover:text-[#222222] disabled:opacity-40"
+          className="rounded-md p-1.5 text-[var(--muted)] transition-colors hover:bg-[var(--gold-soft)] hover:text-[var(--ink)] disabled:opacity-40"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <CategoryIcon category={manifest.category} className="h-4 w-4 text-[#222222]" />
-        <span className="text-[13px] font-medium text-[#222222]">{manifest.name}</span>
+        <CategoryIcon category={manifest.category} className="h-4 w-4 text-[var(--ink)]" />
+        <span className="text-[13px] font-medium text-[var(--ink)]">{manifest.name}</span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <p className="mb-4 text-[12.5px] leading-relaxed text-[#8a8266]">{manifest.description}</p>
+        <p className="mb-4 text-[12.5px] leading-relaxed text-[var(--muted2)]">{manifest.description}</p>
         <div className="space-y-3">
           {manifest.config.map((f) => (
             <label key={f.key} className="block">
-              <span className="mb-1 block text-[12px] font-medium text-[#6b6659]">
+              <span className="mb-1 block text-[12px] font-medium text-[var(--muted)]">
                 {f.label}
                 {f.type === 'address' && (
-                  <span className="ml-1.5 font-normal text-[#a89f80]">
+                  <span className="ml-1.5 font-normal text-[var(--muted3)]">
                     · defaults to deployer
                   </span>
                 )}
@@ -665,7 +665,7 @@ function ConfigForm({
                 disabled={deploying}
                 onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
                 inputMode={f.type === 'number' ? 'numeric' : 'text'}
-                className="w-full rounded-lg border-2 border-[#222222] bg-white px-3 py-2 font-mono text-[13px] text-[#222222] outline-none focus:border-[#D9A400] disabled:opacity-50"
+                className="w-full rounded-lg border-2 border-[var(--ink)] bg-[var(--surface)] px-3 py-2 font-mono text-[13px] text-[var(--ink)] outline-none focus:border-[var(--gold-dk)] disabled:opacity-50"
               />
             </label>
           ))}
@@ -679,15 +679,15 @@ function ConfigForm({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t-2 border-[#222222] px-4 py-3">
-        <span className="text-[11.5px] text-[#a89f80]">
+      <div className="flex items-center justify-between gap-3 border-t-2 border-[var(--ink)] px-4 py-3">
+        <span className="text-[11.5px] text-[var(--muted3)]">
           {deploying ? 'Funding deployer · uploading WASM · invoking constructor…' : 'Deploys to Stellar testnet'}
         </span>
         <button
           onClick={deploy}
           disabled={deploying}
-          className="flex items-center gap-1.5 rounded-lg border-2 border-[#222222] bg-[#FFD700] px-4 py-2 text-[13px] font-medium text-[#222222] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
-          style={{ boxShadow: '3px 3px 0 #222' }}
+          className="flex items-center gap-1.5 rounded-lg border-2 border-[var(--ink)] bg-[var(--gold)] px-4 py-2 text-[13px] font-medium text-[var(--gink)] transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
+          style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
         >
           {deploying && <Loader2 className="h-4 w-4 animate-spin" />}
           {deploying ? 'Deploying…' : 'Deploy to testnet'}
@@ -708,9 +708,9 @@ function ComingSoon({
 }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-      <Icon className="h-7 w-7 text-[#c9bf99]" />
-      <p className="text-[13px] font-medium text-[#222222]">{title}</p>
-      <p className="max-w-sm text-[12px] leading-relaxed text-[#8a8266]">{body}</p>
+      <Icon className="h-7 w-7 text-[var(--marquee)]" />
+      <p className="text-[13px] font-medium text-[var(--ink)]">{title}</p>
+      <p className="max-w-sm text-[12px] leading-relaxed text-[var(--muted2)]">{body}</p>
     </div>
   )
 }
@@ -719,7 +719,7 @@ function Skeletons() {
   return (
     <>
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="h-28 animate-pulse rounded-xl border-2 border-[#222222] bg-[#FFF9E0]" />
+        <div key={i} className="h-28 animate-pulse rounded-xl border-2 border-[var(--ink)] bg-[var(--bg2)]" />
       ))}
     </>
   )

@@ -26,13 +26,13 @@ export function AppShell() {
   // below a slim top bar. Desktop layout below is left untouched.
   if (isMobile) {
     return (
-      <div className="flex h-full flex-col bg-[#FFFDF5] text-[#222222]">
-        <header className="flex h-12 shrink-0 items-center gap-2.5 border-b-2 border-[#222] bg-white px-3">
+      <div className="flex h-full flex-col bg-[var(--bg)] text-[var(--ink)]">
+        <header className="flex h-12 shrink-0 items-center gap-2.5 border-b-2 border-[var(--ink)] bg-[var(--surface)] px-3">
           <button
             onClick={() => setNavOpen(true)}
             title="Menu"
             aria-label="Open menu"
-            className="-ml-1 rounded-md p-1.5 text-[#222222] transition-colors hover:bg-[#FFF3C4]"
+            className="-ml-1 rounded-md p-1.5 text-[var(--ink)] transition-colors hover:bg-[var(--gold-soft)]"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -48,7 +48,7 @@ export function AppShell() {
   }
 
   return (
-    <div className="flex h-full select-none bg-[#FFFDF5] text-[#222222]">
+    <div className="flex h-full select-none bg-[var(--bg)] text-[var(--ink)]">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Outlet />

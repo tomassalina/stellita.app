@@ -26,7 +26,7 @@ export function MobileSidebarDrawer({
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-black/40" />
         <Drawer.Content
-          className="fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-[300px] flex-col border-r-2 border-[#222] bg-[#FFF9E0] outline-none"
+          className="fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-[300px] flex-col border-r-2 border-[var(--ink)] bg-[var(--bg2)] outline-none"
           aria-describedby={undefined}
         >
           <Drawer.Title className="sr-only">Navigation</Drawer.Title>
