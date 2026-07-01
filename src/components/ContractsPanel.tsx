@@ -384,6 +384,24 @@ const EXISTING_PROTOCOLS: ProtocolEntry[] = [
   },
 ]
 
+/** SOON badge — matches the landing contract library pill. */
+function SoonPill() {
+  return (
+    <span className="rounded-full border border-[var(--soon-line)] bg-[var(--gold-soft)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--soon-ink)]">
+      SOON
+    </span>
+  )
+}
+
+/** Connect badge — a live, connectable protocol (gold, like the landing LIVE pill). */
+function ConnectPill() {
+  return (
+    <span className="rounded-full border-2 border-[var(--ink)] bg-[var(--gold)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--gink)]">
+      CONNECT
+    </span>
+  )
+}
+
 function ProtocolLogo({
   logo,
   name,
@@ -450,14 +468,14 @@ function AddContractModal({
           />
         ) : (
           <>
-            <div className="flex items-center gap-1 border-b-2 border-[var(--ink)] px-3 py-2.5">
+            <div className="flex items-center gap-1.5 border-b-2 border-[var(--ink)] bg-[var(--bg)] px-4 py-3">
               {MODES.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => setMode(m.id)}
-                  className={`rounded-md border-2 px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                  className={`rounded-[10px] border-2 px-4 py-2 text-[13.5px] font-semibold transition-colors ${
                     mode === m.id
-                      ? 'border-[var(--ink)] bg-[var(--gold)] text-[var(--gink)]'
+                      ? 'border-[var(--ink)] bg-[var(--gold-soft)] text-[var(--ink)]'
                       : 'border-transparent text-[var(--muted2)] hover:text-[var(--ink)]'
                   }`}
                 >
@@ -474,55 +492,60 @@ function AddContractModal({
               )}
 
               {mode === 'configurable' && (
-                <div className="grid grid-cols-2 gap-2.5">
-                  {!catalog && <Skeletons />}
-                  {CONFIGURABLE_REF.map((entry) => {
-                    const Icon = entry.icon
-                    const isAvailable = entry.manifestId != null && availableIds.has(entry.manifestId)
-                    const manifest = entry.manifestId ? manifestById.get(entry.manifestId) : undefined
+                <div className="flex flex-col gap-4">
+                  <p className="text-[13px] font-medium leading-relaxed text-[var(--muted)]">
+                    Audited OpenZeppelin contracts for Soroban. Configure, then deploy.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3.5">
+                    {!catalog && <Skeletons />}
+                    {CONFIGURABLE_REF.map((entry) => {
+                      const Icon = entry.icon
+                      const isAvailable = entry.manifestId != null && availableIds.has(entry.manifestId)
+                      const manifest = entry.manifestId ? manifestById.get(entry.manifestId) : undefined
 
-                    if (isAvailable && manifest) {
+                      if (isAvailable && manifest) {
+                        return (
+                          <button
+                            key={entry.name}
+                            onClick={() => setPicked(manifest)}
+                            className="group flex flex-col rounded-[14px] border-2 border-[var(--ink)] bg-[var(--surface)] p-[18px] text-left transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_var(--gold)]"
+                            style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
+                          >
+                            <Icon className="mb-3.5 h-6 w-6 text-[var(--gold-dk)]" />
+                            <span className="mb-1.5 text-[15px] font-bold text-[var(--ink)]">{entry.name}</span>
+                            <span className="text-[13px] leading-relaxed text-[var(--muted)]">
+                              {entry.blurb}
+                            </span>
+                          </button>
+                        )
+                      }
+
                       return (
-                        <button
+                        <div
                           key={entry.name}
-                          onClick={() => setPicked(manifest)}
-                          className="flex flex-col gap-2 rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-3.5 text-left transition-transform hover:-translate-y-0.5"
-                          style={{ boxShadow: '3px 3px 0 var(--shadow)' }}
+                          className="flex flex-col rounded-[14px] border-2 border-dashed border-[var(--line-soft)] bg-[var(--surface2)] p-[18px]"
                         >
-                          <Icon className="h-5 w-5 text-[var(--ink)]" />
-                          <span className="text-[13px] font-medium text-[var(--ink)]">{entry.name}</span>
-                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[var(--muted2)]">
+                          <div className="mb-3.5 flex items-start justify-between">
+                            <Icon className="h-6 w-6 text-[var(--muted3)]" />
+                            <SoonPill />
+                          </div>
+                          <span className="mb-1.5 text-[15px] font-bold text-[var(--muted2)]">{entry.name}</span>
+                          <span className="text-[13px] leading-relaxed text-[var(--muted3)]">
                             {entry.blurb}
                           </span>
-                        </button>
+                        </div>
                       )
-                    }
-
-                    return (
-                      <div
-                        key={entry.name}
-                        className="relative flex flex-col gap-2 rounded-xl border-2 border-[var(--ink)] bg-[var(--bg2)] p-3.5 opacity-60"
-                      >
-                        <Icon className="h-5 w-5 text-[var(--ink)]" />
-                        <span className="text-[13px] font-medium text-[var(--ink)]">{entry.name}</span>
-                        <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[var(--muted2)]">
-                          {entry.blurb}
-                        </span>
-                        <span className="absolute right-2.5 top-2.5 rounded-full border border-[var(--ink)] bg-[var(--surface)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted)]">
-                          Soon
-                        </span>
-                      </div>
-                    )
-                  })}
+                    })}
+                  </div>
                 </div>
               )}
 
               {mode === 'existing' && (
-                <div className="flex flex-col gap-3">
-                  <p className="text-[12px] leading-relaxed text-[var(--muted2)]">
-                    Connect to a live, audited protocol by its contract ID — no deploy needed.
+                <div className="flex flex-col gap-4">
+                  <p className="text-[13px] font-medium leading-relaxed text-[var(--muted)]">
+                    Connect to a live, audited protocol by its contract ID. Soroswap is live; more soon.
                   </p>
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-2 gap-3.5">
                     {EXISTING_PROTOCOLS.map((entry) => {
                       const live = entry.connect
                       return (
@@ -543,24 +566,28 @@ function AddContractModal({
                                   })
                               : undefined
                           }
-                          className={`relative flex flex-col gap-2 rounded-xl border-2 border-[var(--ink)] bg-[var(--surface)] p-3.5 transition-transform ${
-                            live ? 'cursor-pointer hover:-translate-y-0.5' : 'opacity-60'
+                          className={`flex flex-col rounded-[14px] border-2 p-[18px] transition-all ${
+                            live
+                              ? 'cursor-pointer border-[var(--ink)] bg-[var(--surface)] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_var(--gold)]'
+                              : 'border-dashed border-[var(--line-soft)] bg-[var(--surface2)]'
                           }`}
                           style={live ? { boxShadow: '3px 3px 0 var(--shadow)' } : undefined}
                         >
-                          <ProtocolLogo logo={entry.logo} name={entry.name} icon={entry.icon} />
-                          <span className="text-[13px] font-medium text-[var(--ink)]">{entry.name}</span>
-                          <span className="line-clamp-3 text-[11.5px] leading-relaxed text-[var(--muted2)]">
-                            {entry.blurb}
+                          <div className="mb-3.5 flex items-start justify-between">
+                            <div
+                              className={`flex h-10 w-10 items-center justify-center rounded-[10px] border-2 ${
+                                live ? 'border-[var(--ink)] bg-[var(--surface)]' : 'border-[var(--line-soft)] bg-[var(--surface2)] opacity-85'
+                              }`}
+                            >
+                              <ProtocolLogo logo={entry.logo} name={entry.name} icon={entry.icon} />
+                            </div>
+                            {live ? <ConnectPill /> : <SoonPill />}
+                          </div>
+                          <span className={`mb-1.5 text-[15px] font-bold ${live ? 'text-[var(--ink)]' : 'text-[var(--muted2)]'}`}>
+                            {entry.name}
                           </span>
-                          <span
-                            className={`absolute right-2.5 top-2.5 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
-                              live
-                                ? 'border-[var(--gold-dk)] bg-[var(--gold-soft)] text-[var(--gold-dk)]'
-                                : 'border-[var(--ink)] bg-[var(--surface)] text-[var(--muted)]'
-                            }`}
-                          >
-                            {live ? 'Connect' : 'Soon'}
+                          <span className={`text-[13px] leading-relaxed ${live ? 'text-[var(--muted)]' : 'text-[var(--muted3)]'}`}>
+                            {entry.blurb}
                           </span>
                         </div>
                       )

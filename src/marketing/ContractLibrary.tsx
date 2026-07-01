@@ -26,15 +26,33 @@ const CONFIGURABLE: Card[] = [
   { name: 'Smart Account', blurb: 'Programmable auth (signers + policies).', soon: true, icon: <S color="var(--muted3)"><circle cx="9" cy="8" r="3.5" /><path d="M3 20c0-3.3 2.7-6 6-6" /><circle cx="17.5" cy="16.5" r="3" /></S> },
 ]
 
-const EXISTING: { name: string; blurb: string; tint: string; icon: ReactNode; wide?: boolean; live?: boolean }[] = [
-  { name: 'Soroswap', blurb: 'DEX + liquidity aggregator. Best-price swaps (XLM/USDC).', tint: '#EDE3FA', live: true, icon: <S color="#6a3fb0" w={18}><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></S> },
-  { name: 'Blend', blurb: 'Lending / borrowing pools with backstop.', tint: '#D8F3E2', icon: <S color="#1f7a4d" w={18}><path d="M12 2s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z" /></S> },
-  { name: 'Reflector', blurb: 'Price oracle (SEP-40). Read-only, low risk.', tint: 'var(--gold-soft)', icon: <S color="#8a6a00" w={18}><path d="M2 12h3l2-7 4 14 3-9 2 4h6" /></S> },
-  { name: 'DeFindex', blurb: 'Yield infrastructure: automated vault strategies.', tint: '#D9E6FA', icon: <S color="#2b5bab" w={18}><polygon points="12 2 22 8.5 12 15 2 8.5" /><polyline points="2 15.5 12 22 22 15.5" /></S> },
-  { name: 'Trustless Work', blurb: 'Non-custodial milestone escrow in USDC.', tint: '#D9E6FA', icon: <S color="#2b5bab" w={18}><polygon points="12 2 20 7 20 17 12 22 4 17 4 7" /><path d="m9 12 2 2 4-4" /></S> },
-  { name: 'USDC (Stellar Asset Contract)', blurb: 'The asset most flows touch. First-class citizen.', tint: '#F0EBDD', icon: <S color="var(--muted)" w={18}><circle cx="12" cy="12" r="10" /><path d="M14.5 9.5a3 3 0 0 0-5 2.5 3 3 0 0 0 5 2.5" /></S> },
-  { name: 'x402', blurb: 'HTTP-request payments / micropayments / agent payments.', tint: 'var(--gold-soft)', wide: true, icon: <S color="#8a6a00" w={18}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></S> },
+const EXISTING: { name: string; blurb: string; logo?: string; icon: ReactNode; wide?: boolean; live?: boolean }[] = [
+  { name: 'Soroswap', blurb: 'DEX + liquidity aggregator. Best-price swaps (XLM/USDC).', logo: '/logos/soroswap.svg', live: true, icon: <S color="#6a3fb0" w={18}><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></S> },
+  { name: 'Blend', blurb: 'Lending / borrowing pools with backstop.', logo: '/logos/blend.svg', icon: <S color="#1f7a4d" w={18}><path d="M12 2s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z" /></S> },
+  { name: 'Reflector', blurb: 'Price oracle (SEP-40). Read-only, low risk.', logo: '/logos/reflector.png', icon: <S color="#8a6a00" w={18}><path d="M2 12h3l2-7 4 14 3-9 2 4h6" /></S> },
+  { name: 'DeFindex', blurb: 'Yield infrastructure: automated vault strategies.', logo: '/logos/defindex.svg', icon: <S color="#2b5bab" w={18}><polygon points="12 2 22 8.5 12 15 2 8.5" /><polyline points="2 15.5 12 22 22 15.5" /></S> },
+  { name: 'Trustless Work', blurb: 'Non-custodial milestone escrow in USDC.', logo: '/logos/trustless-work.png', icon: <S color="#2b5bab" w={18}><polygon points="12 2 20 7 20 17 12 22 4 17 4 7" /><path d="m9 12 2 2 4-4" /></S> },
+  { name: 'USDC (Stellar Asset Contract)', blurb: 'The asset most flows touch. First-class citizen.', logo: '/logos/usdc.svg', icon: <S color="var(--muted)" w={18}><circle cx="12" cy="12" r="10" /><path d="M14.5 9.5a3 3 0 0 0-5 2.5 3 3 0 0 0 5 2.5" /></S> },
+  { name: 'x402', blurb: 'HTTP-request payments / micropayments / agent payments.', logo: '/logos/x402.svg', wide: true, icon: <S color="#8a6a00" w={18}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></S> },
 ]
+
+/** Real protocol logo with graceful fallback to the line-icon. */
+function ProtoLogo({ logo, name, icon }: { logo?: string; name: string; icon: ReactNode }) {
+  const [failed, setFailed] = useState(false)
+  if (logo && !failed) {
+    return (
+      <img
+        src={logo}
+        alt={name}
+        width={26}
+        height={26}
+        style={{ objectFit: 'contain' }}
+        onError={() => setFailed(true)}
+      />
+    )
+  }
+  return <>{icon}</>
+}
 
 const SOON = (
   <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--soon-ink)', background: 'var(--gold-soft)', border: '1.5px solid var(--soon-line)', borderRadius: 999, padding: '3px 10px' }}>SOON</span>
@@ -109,8 +127,8 @@ export function ContractLibrary({ onCustom }: { onCustom: () => void }) {
                   style={{ border: '2px solid var(--ink)', borderRadius: 14, padding: 22, background: 'var(--surface)', gridColumn: c.wide ? '1 / -1' : undefined }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid var(--ink)', background: c.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {c.icon}
+                    <div style={{ width: 40, height: 40, borderRadius: 10, border: '2px solid var(--ink)', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ProtoLogo logo={c.logo} name={c.name} icon={c.icon} />
                     </div>
                     {LIVE}
                   </div>
@@ -123,8 +141,8 @@ export function ContractLibrary({ onCustom }: { onCustom: () => void }) {
                   style={{ border: '2px dashed var(--line-soft)', borderRadius: 14, padding: 22, background: 'var(--surface2)', gridColumn: c.wide ? '1 / -1' : undefined }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid var(--line-soft)', background: '#F3ECD8', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.7 }}>
-                      {c.icon}
+                    <div style={{ width: 40, height: 40, borderRadius: 10, border: '2px solid var(--line-soft)', background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.85 }}>
+                      <ProtoLogo logo={c.logo} name={c.name} icon={c.icon} />
                     </div>
                     {SOON}
                   </div>
