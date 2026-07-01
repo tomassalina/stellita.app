@@ -28,9 +28,35 @@ function initials(name: string): string {
 
 /**
  * v0-style collapsible sidebar: brand → home, new project, project history, and
- * the user profile pinned bottom-left. Collapses to an icon rail.
+ * the user profile pinned bottom-left. Collapses to an icon rail on desktop.
+ *
+ * The desktop chrome (the fixed-width `<aside>`) lives here; the actual content
+ * lives in `SidebarInner` so the mobile Drawer can reuse it verbatim.
  */
 export function Sidebar({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean
+  onToggle: () => void
+}) {
+  return (
+    <aside
+      className={`flex shrink-0 flex-col border-r-2 border-[#222] bg-[#FFF9E0] transition-[width] duration-200 ${
+        collapsed ? 'w-14' : 'w-64'
+      }`}
+    >
+      <SidebarInner collapsed={collapsed} onToggle={onToggle} />
+    </aside>
+  )
+}
+
+/**
+ * The sidebar's contents, with no outer container. Rendered inside the desktop
+ * `<aside>` and inside the mobile Drawer. On mobile it's always expanded
+ * (`collapsed={false}`) and `onToggle` closes the drawer.
+ */
+export function SidebarInner({
   collapsed,
   onToggle,
 }: {
@@ -61,11 +87,7 @@ export function Sidebar({
   }
 
   return (
-    <aside
-      className={`flex shrink-0 flex-col border-r-2 border-[#222] bg-[#FFF9E0] transition-[width] duration-200 ${
-        collapsed ? 'w-14' : 'w-64'
-      }`}
-    >
+    <>
       {/* Brand → home, with the collapse toggle to its right */}
       <div className="flex h-14 items-center justify-between px-3">
         {!collapsed && (
@@ -293,6 +315,6 @@ export function Sidebar({
           onConfirm={handleDelete}
         />
       )}
-    </aside>
+    </>
   )
 }

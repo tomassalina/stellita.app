@@ -6,6 +6,8 @@ import { useProjects } from '../projects/store'
 import { LoginModal } from '../auth/LoginModal'
 import { ChatPanel } from '../components/ChatPanel'
 import { WorkspacePanel } from '../components/WorkspacePanel'
+import { MobileEditor } from '../components/MobileEditor'
+import { useIsMobile } from '../hooks/useIsMobile'
 import type { Version } from '../projects/store'
 import { fetchShared } from '../lib/backend'
 import { useFreighterBridge } from '../wallet/freighterBridge'
@@ -27,6 +29,7 @@ export function SharedProject() {
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const isMobile = useIsMobile()
   const { cloneSharedProject } = useProjects()
   const [data, setData] = useState<Loaded | null>(null)
   const [error, setError] = useState('')
@@ -132,9 +135,8 @@ export function SharedProject() {
         <span className="truncate text-[13px] text-[#8a8266]">{data.name}</span>
       </header>
 
-      <PanelGroup direction="horizontal" className="relative min-h-0 flex-1">
-        {resizing && <div className="fixed inset-0 z-50 cursor-col-resize select-none" />}
-        <Panel defaultSize={34} minSize={22} maxSize={50}>
+      {(() => {
+        const chatPanel = (
           <ChatPanel
             projectName={data.name}
             onRename={() => {}}
@@ -152,25 +154,45 @@ export function SharedProject() {
             onClone={clone}
             cloning={cloning}
           />
-        </Panel>
-        <PanelResizeHandle
-          onDragging={setResizing}
-          className="w-1 bg-[#222] transition-colors hover:bg-[#FFD700]/70 data-[resize-handle-state=drag]:bg-[#FFD700]"
-        />
-        <Panel defaultSize={66} minSize={30}>
-          <div className={`h-full ${resizing ? 'pointer-events-none' : ''}`}>
-            <WorkspacePanel
-              fileTree={view ?? data.files}
-              projectName={data.name}
-              contracts={data.contracts}
-              versions={data.versions}
-              onOpenVersion={openVersion}
-              readOnly
-              generation={gen}
+        )
+        const workspacePanel = (
+          <WorkspacePanel
+            fileTree={view ?? data.files}
+            projectName={data.name}
+            contracts={data.contracts}
+            versions={data.versions}
+            onOpenVersion={openVersion}
+            readOnly
+            generation={gen}
+          />
+        )
+
+        if (isMobile) {
+          return (
+            <div className="min-h-0 flex-1">
+              <MobileEditor chat={chatPanel} workspace={workspacePanel} />
+            </div>
+          )
+        }
+
+        return (
+          <PanelGroup direction="horizontal" className="relative min-h-0 flex-1">
+            {resizing && <div className="fixed inset-0 z-50 cursor-col-resize select-none" />}
+            <Panel defaultSize={34} minSize={22} maxSize={50}>
+              {chatPanel}
+            </Panel>
+            <PanelResizeHandle
+              onDragging={setResizing}
+              className="w-1 bg-[#222] transition-colors hover:bg-[#FFD700]/70 data-[resize-handle-state=drag]:bg-[#FFD700]"
             />
-          </div>
-        </Panel>
-      </PanelGroup>
+            <Panel defaultSize={66} minSize={30}>
+              <div className={`h-full ${resizing ? 'pointer-events-none' : ''}`}>
+                {workspacePanel}
+              </div>
+            </Panel>
+          </PanelGroup>
+        )
+      })()}
 
       {showLogin && (
         <LoginModal

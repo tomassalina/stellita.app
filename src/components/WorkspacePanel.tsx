@@ -564,12 +564,12 @@ export function WorkspacePanel({
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col">
       <nav className="flex shrink-0 items-center justify-between border-b-2 border-[#222222] bg-white px-3 py-2.5 text-[13px]">
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-0 items-center gap-1 max-md:overflow-x-auto">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-1.5 rounded-md border-2 px-3 py-1.5 font-medium transition-colors ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-md border-2 px-3 py-1.5 font-medium transition-colors ${
                 tab === t.id
                   ? 'border-[#222222] bg-[#FFD700] text-[#222222]'
                   : 'border-transparent text-[#8a8266] hover:text-[#222222]'
@@ -583,7 +583,7 @@ export function WorkspacePanel({
           ))}
         </div>
         {!readOnly && (
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3 max-md:pl-2">
             <span
               className="flex items-center gap-1 text-[11.5px] font-normal text-[#8a8266]"
               title={vis === 'link' ? 'Anyone with the link can view and clone' : 'Only you can access this project'}

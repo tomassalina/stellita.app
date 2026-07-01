@@ -3,6 +3,8 @@ import { Navigate, useParams, useNavigate } from 'react-router-dom'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { ChatPanel } from '../components/ChatPanel'
 import { WorkspacePanel } from '../components/WorkspacePanel'
+import { MobileEditor } from '../components/MobileEditor'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { useProjects } from '../projects/store'
 import { useAuth } from '../auth/store'
 import { getFreighterAddress } from '../wallet/freighterBridge'
@@ -32,6 +34,7 @@ export function Editor() {
     setVisibility,
   } = useProjects()
   const { refreshCredits } = useAuth()
+  const isMobile = useIsMobile()
   const project = slug ? getProject(slug) : undefined
   // While dragging the divider, kill pointer events on the preview so the
   // Sandpack iframe doesn't swallow the mouse and freeze the resize.
@@ -120,6 +123,63 @@ export function Editor() {
     )
   }
 
+  const chatPanel = (
+    <ChatPanel
+      projectName={project.name}
+      onRename={(name) => renameProject(project.slug, name)}
+      messages={project.messages}
+      busy={project.busy}
+      error={project.error}
+      activity={project.activity}
+      streamingMessage={project.streamingMessage}
+      filePaths={Object.keys(project.fileTree)}
+      onSend={(text) => send(project.slug, text)}
+      onRunActions={handleRunActions}
+      onSkipActions={handleSkipActions}
+      readOnly={project.readOnly}
+      onClone={handleClone}
+    />
+  )
+
+  const workspacePanel = (
+    <WorkspacePanel
+      fileTree={project.fileTree}
+      projectId={project.id ?? ''}
+      projectName={project.slug}
+      versions={project.versions}
+      onOpenVersion={(id) => openVersion(project.slug, id)}
+      onRestore={(id) => restoreVersion(project.slug, id)}
+      generation={project.generation}
+      dirty={project.dirty}
+      onSyncFiles={(files) => syncFiles(project.slug, files)}
+      onDiscard={() => discardEdits(project.slug)}
+      onSave={() => markSaved(project.slug)}
+      onCreateFile={(path) => createEntry(project.slug, path)}
+      onCreateFolder={(folder) => createEntry(project.slug, `${folder}/.keep`)}
+      onDeleteEntry={(path) => deleteEntry(project.slug, path)}
+      contracts={project.contracts}
+      onDeployed={(c) => addDeployedContract(project.slug, c)}
+      readOnly={project.readOnly}
+      visibility={project.visibility ?? 'private'}
+      shareUrl={
+        project.shareToken
+          ? `${window.location.origin}/p/${project.shareToken}`
+          : ''
+      }
+      onSetVisibility={(v) => setVisibility(project.id ?? '', v)}
+      onEmailShare={(to) => emailShareLink(project.id ?? '', to)}
+      onFixError={(err) =>
+        send(project.slug, `The app has an error. Please fix it:\n\n${err}`)
+      }
+    />
+  )
+
+  // Mobile: chat + workspace as a top switcher (see MobileEditor). Desktop
+  // keeps the resizable side-by-side split, untouched.
+  if (isMobile) {
+    return <MobileEditor chat={chatPanel} workspace={workspacePanel} />
+  }
+
   return (
     <PanelGroup direction="horizontal" className="relative min-h-0 flex-1">
       {/* While dragging, this overlay sits above the Sandpack iframe so it can't
@@ -128,21 +188,7 @@ export function Editor() {
         <div className="fixed inset-0 z-50 cursor-col-resize select-none" />
       )}
       <Panel defaultSize={34} minSize={22} maxSize={50}>
-        <ChatPanel
-          projectName={project.name}
-          onRename={(name) => renameProject(project.slug, name)}
-          messages={project.messages}
-          busy={project.busy}
-          error={project.error}
-          activity={project.activity}
-          streamingMessage={project.streamingMessage}
-          filePaths={Object.keys(project.fileTree)}
-          onSend={(text) => send(project.slug, text)}
-          onRunActions={handleRunActions}
-          onSkipActions={handleSkipActions}
-          readOnly={project.readOnly}
-          onClone={handleClone}
-        />
+        {chatPanel}
       </Panel>
       <PanelResizeHandle
         onDragging={setResizing}
@@ -150,41 +196,7 @@ export function Editor() {
       />
       <Panel defaultSize={66} minSize={30}>
         <div className={`h-full ${resizing ? 'pointer-events-none' : ''}`}>
-          <WorkspacePanel
-            fileTree={project.fileTree}
-            projectId={project.id ?? ''}
-            projectName={project.slug}
-            versions={project.versions}
-            onOpenVersion={(id) => openVersion(project.slug, id)}
-            onRestore={(id) => restoreVersion(project.slug, id)}
-            generation={project.generation}
-            dirty={project.dirty}
-            onSyncFiles={(files) => syncFiles(project.slug, files)}
-            onDiscard={() => discardEdits(project.slug)}
-            onSave={() => markSaved(project.slug)}
-            onCreateFile={(path) => createEntry(project.slug, path)}
-            onCreateFolder={(folder) =>
-              createEntry(project.slug, `${folder}/.keep`)
-            }
-            onDeleteEntry={(path) => deleteEntry(project.slug, path)}
-            contracts={project.contracts}
-            onDeployed={(c) => addDeployedContract(project.slug, c)}
-            readOnly={project.readOnly}
-            visibility={project.visibility ?? 'private'}
-            shareUrl={
-              project.shareToken
-                ? `${window.location.origin}/p/${project.shareToken}`
-                : ''
-            }
-            onSetVisibility={(v) => setVisibility(project.id ?? '', v)}
-            onEmailShare={(to) => emailShareLink(project.id ?? '', to)}
-            onFixError={(err) =>
-              send(
-                project.slug,
-                `The app has an error. Please fix it:\n\n${err}`,
-              )
-            }
-          />
+          {workspacePanel}
         </div>
       </Panel>
     </PanelGroup>
