@@ -297,9 +297,9 @@ const CONFIGURABLE: Card[] = [
   { name: 'Smart Account', blurb: 'Programmable auth (signers + policies).', soon: true, icon: <Svg color="#a89f80"><circle cx="9" cy="8" r="3.5" /><path d="M3 20c0-3.3 2.7-6 6-6" /><circle cx="17.5" cy="16.5" r="3" /></Svg> },
 ]
 
-type Protocol = { name: string; desc: string; initial: string; tint: string; wide?: boolean }
+type Protocol = { name: string; desc: string; initial: string; tint: string; wide?: boolean; live?: boolean }
 const EXISTING: Protocol[] = [
-  { name: 'Soroswap', desc: 'DEX + liquidity aggregator. Best-price swaps (XLM/USDC).', initial: 'S', tint: '#EDE3FA' },
+  { name: 'Soroswap', desc: 'DEX + liquidity aggregator. Best-price swaps (XLM/USDC).', initial: 'S', tint: '#EDE3FA', live: true },
   { name: 'Blend', desc: 'Lending / borrowing pools with backstop.', initial: 'B', tint: '#D8F3E2' },
   { name: 'Reflector', desc: 'Price oracle (SEP-40). Read-only, low risk.', initial: 'R', tint: '#FFF3C4' },
   { name: 'DeFindex', desc: 'Yield infrastructure: automated vault strategies.', initial: 'D', tint: '#D9E6FA' },
@@ -310,6 +310,9 @@ const EXISTING: Protocol[] = [
 
 const SOON_PILL = (
   <span style={{ fontSize: 10, fontWeight: 700, color: '#7a6a1a', background: '#FFF3C4', border: '1.5px solid #E8D98A', borderRadius: 999, padding: '3px 10px' }}>SOON</span>
+)
+const LIVE_PILL = (
+  <span style={{ fontSize: 10, fontWeight: 800, color: '#222', background: '#FFD700', border: '2px solid #222', borderRadius: 999, padding: '2px 10px' }}>LIVE</span>
 )
 
 function tabStyle(active: boolean): CSSProperties {
@@ -364,13 +367,13 @@ function ContractLibrary({ onCustom }: { onCustom: () => void }) {
 
       {tab === 'ext' && (
         <div style={{ padding: 26 }}>
-          <div style={{ fontSize: 14.5, color: '#6b6659', marginBottom: 22, fontWeight: 500 }}>Connect to a live, audited protocol by its contract ID — coming soon.</div>
+          <div style={{ fontSize: 14.5, color: '#6b6659', marginBottom: 22, fontWeight: 500 }}>Connect to a live, audited protocol by its contract ID. Soroswap is live — more coming soon.</div>
           <div className="st-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             {EXISTING.map((p) => (
               <div key={p.name} className="st-lift st-lift-yellow" style={{ border: '2px solid #222', borderRadius: 14, padding: 22, background: '#fff', gridColumn: p.wide ? '1 / -1' : undefined }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid #222', background: p.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#222', fontWeight: 800, fontSize: 16 }}>{p.initial}</div>
-                  {SOON_PILL}
+                  {p.live ? LIVE_PILL : SOON_PILL}
                 </div>
                 <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7 }}>{p.name}</div>
                 <div style={{ fontSize: 14.5, color: '#6b6659', lineHeight: 1.5, fontWeight: 500 }}>{p.desc}</div>

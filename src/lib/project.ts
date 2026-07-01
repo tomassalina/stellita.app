@@ -11,38 +11,38 @@ export const SANDPACK_TEMPLATE = 'react-ts' as const
 export const TAILWIND_CDN = 'https://cdn.tailwindcss.com'
 
 /**
- * Dark Sandpack theme matching the platform (zinc + Geist). Safe to use now that
- * the loading overlay hides correctly (the stuck black overlay was a StrictMode
- * bug, not the theme). The generated app renders its own (usually light) UI in
- * the preview; this theme only styles the code editor + Sandpack chrome.
+ * Light Stellita theme for the in-workspace code editor + Sandpack chrome
+ * (the browser Navigator: back/forward/reload/URL bar read these surface and
+ * clickable colors too). The generated app renders its own UI in the preview;
+ * this theme only styles our editor + chrome, not the generated output.
  */
 export const sandpackTheme: SandpackTheme = {
   colors: {
-    surface1: '#09090b',
-    surface2: '#18181b',
-    surface3: '#27272a',
-    clickable: '#a1a1aa',
-    base: '#e4e4e7',
-    disabled: '#52525b',
-    hover: '#fafafa',
-    accent: '#c084fc',
-    error: '#f87171',
-    errorSurface: '#27272a',
+    surface1: '#FFFDF5',
+    surface2: '#FFF9E0',
+    surface3: '#FFF3C4',
+    clickable: '#8a8266',
+    base: '#222222',
+    disabled: '#a89f80',
+    hover: '#222222',
+    accent: '#D9A400',
+    error: '#dc2626',
+    errorSurface: '#FFE0E0',
   },
   syntax: {
-    plain: '#e4e4e7',
-    comment: { color: '#52525b', fontStyle: 'italic' },
-    keyword: '#c084fc',
-    tag: '#7dd3fc',
-    punctuation: '#a1a1aa',
-    definition: '#fafafa',
-    property: '#7dd3fc',
-    static: '#fca5a5',
-    string: '#86efac',
+    plain: '#222222',
+    comment: { color: '#8a8266', fontStyle: 'italic' },
+    keyword: '#a15c00',
+    tag: '#2563eb',
+    punctuation: '#6b6659',
+    definition: '#111827',
+    property: '#2563eb',
+    static: '#dc2626',
+    string: '#15803d',
   },
   font: {
-    body: '"Geist Variable", ui-sans-serif, system-ui, sans-serif',
-    mono: '"Geist Mono Variable", ui-monospace, monospace',
+    body: "'Poppins', ui-sans-serif, system-ui, sans-serif",
+    mono: "'JetBrains Mono', ui-monospace, monospace",
     size: '13px',
     lineHeight: '20px',
   },
