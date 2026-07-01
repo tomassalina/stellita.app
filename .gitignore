@@ -18,6 +18,10 @@ _reference/
 # Vercel
 .vercel
 
+# Supabase CLI local state (per-machine; not part of the repo)
+supabase/.temp/
+supabase/.branches/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
