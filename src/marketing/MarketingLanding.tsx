@@ -6,6 +6,7 @@ import { LoginModal } from '../auth/LoginModal'
 import { TEMPLATES, type StaticTemplate } from '../lib/templates'
 import { StellitaPromptComposer } from './StellitaPromptComposer'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { ProtocolLogo } from '../components/ProtocolLogo'
 import './marketing.css'
 import { useMarketingSeo } from './seo'
 
@@ -295,15 +296,15 @@ const CONFIGURABLE: Card[] = [
   { name: 'Smart Account', blurb: 'Programmable auth (signers + policies).', soon: true, icon: <Svg color="var(--muted3)"><circle cx="9" cy="8" r="3.5" /><path d="M3 20c0-3.3 2.7-6 6-6" /><circle cx="17.5" cy="16.5" r="3" /></Svg> },
 ]
 
-type Protocol = { name: string; desc: string; initial: string; tint: string; wide?: boolean; live?: boolean }
+type Protocol = { name: string; desc: string; initial: string; logo?: string; wide?: boolean; live?: boolean }
 const EXISTING: Protocol[] = [
-  { name: 'Soroswap', desc: 'DEX + liquidity aggregator. Best-price swaps (XLM/USDC).', initial: 'S', tint: '#EDE3FA', live: true },
-  { name: 'Blend', desc: 'Lending / borrowing pools with backstop.', initial: 'B', tint: '#D8F3E2' },
-  { name: 'Reflector', desc: 'Price oracle (SEP-40). Read-only, low risk.', initial: 'R', tint: 'var(--gold-soft)' },
-  { name: 'DeFindex', desc: 'Yield infrastructure: automated vault strategies.', initial: 'D', tint: '#D9E6FA' },
-  { name: 'Trustless Work', desc: 'Non-custodial milestone escrow in USDC.', initial: 'T', tint: '#D9E6FA' },
-  { name: 'USDC (Stellar Asset Contract)', desc: 'The asset most flows touch. First-class citizen.', initial: '$', tint: '#F0EBDD' },
-  { name: 'x402', desc: 'HTTP-request payments / micropayments / agent payments.', initial: 'x', tint: 'var(--gold-soft)', wide: true },
+  { name: 'Soroswap', desc: 'DEX + liquidity aggregator. Best-price swaps (XLM/USDC).', initial: 'S', logo: '/logos/soroswap.svg', live: true },
+  { name: 'Blend', desc: 'Lending / borrowing pools with backstop.', initial: 'B', logo: '/logos/blend.svg' },
+  { name: 'Reflector', desc: 'Price oracle (SEP-40). Read-only, low risk.', initial: 'R', logo: '/logos/reflector.png' },
+  { name: 'DeFindex', desc: 'Yield infrastructure: automated vault strategies.', initial: 'D', logo: '/logos/defindex.svg' },
+  { name: 'Trustless Work', desc: 'Non-custodial milestone escrow in USDC.', initial: 'T', logo: '/logos/trustless-work.png' },
+  { name: 'USDC (Stellar Asset Contract)', desc: 'The asset most flows touch. First-class citizen.', initial: '$', logo: '/logos/usdc.svg' },
+  { name: 'x402', desc: 'HTTP-request payments / micropayments / agent payments.', initial: 'x', logo: '/logos/x402.svg', wide: true },
 ]
 
 const SOON_PILL = (
@@ -371,7 +372,9 @@ function ContractLibrary({ onCustom }: { onCustom: () => void }) {
               p.live ? (
                 <div key={p.name} className="st-lift st-lift-yellow" style={{ border: '2px solid var(--ink)', borderRadius: 14, padding: 22, background: 'var(--surface)', gridColumn: p.wide ? '1 / -1' : undefined }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid var(--ink)', background: p.tint, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink)', fontWeight: 800, fontSize: 16 }}>{p.initial}</div>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, border: '2px solid var(--ink)', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ProtocolLogo logo={p.logo} name={p.name} size={26} fallback={<span style={{ color: 'var(--ink)', fontWeight: 800, fontSize: 16 }}>{p.initial}</span>} />
+                    </div>
                     {LIVE_PILL}
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7 }}>{p.name}</div>
@@ -380,7 +383,9 @@ function ContractLibrary({ onCustom }: { onCustom: () => void }) {
               ) : (
                 <div key={p.name} style={{ border: '2px dashed var(--line-soft)', borderRadius: 14, padding: 22, background: 'var(--surface2)', gridColumn: p.wide ? '1 / -1' : undefined }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 9, border: '2px solid var(--line-soft)', background: '#F3ECD8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted3)', fontWeight: 800, fontSize: 16 }}>{p.initial}</div>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, border: '2px solid var(--line-soft)', background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.85 }}>
+                      <ProtocolLogo logo={p.logo} name={p.name} size={26} fallback={<span style={{ color: 'var(--muted3)', fontWeight: 800, fontSize: 16 }}>{p.initial}</span>} />
+                    </div>
                     {SOON_PILL}
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 7, color: 'var(--muted2)' }}>{p.name}</div>
